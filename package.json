@@ -1,0 +1,36 @@
+{
+  "name": "otp-slate-ui",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "overrides": {
+    "shell-quote": "1.11.0"
+  },
+  "description": "OTP Slate React portals and Node API, with standalone UI references",
+  "scripts": {
+    "build": "node build-standalone.mjs",
+    "test": "node tests/ui-smoke.cjs && node tests/admin-smoke.cjs && node tests/organization-smoke.cjs",
+    "build:packages": "npm run build -w @slate/contracts",
+    "sync:student-design": "node scripts/sync-student-design.mjs",
+    "build:app": "npm run build:packages && npm run build -w @slate/api && npm run build -w @slate/student && npm run build -w @slate/platform-admin && npm run build -w @slate/organization-admin",
+    "dev": "npm run build:packages && concurrently --kill-others-on-fail -n api,student,platform,organization \"npm run dev -w @slate/api\" \"npm run dev -w @slate/student\" \"npm run dev -w @slate/platform-admin\" \"npm run dev -w @slate/organization-admin\"",
+    "db:migrate": "npm run migrate -w @slate/api",
+    "db:bootstrap": "npm run bootstrap -w @slate/api --",
+    "seed:dev": "npm run seed:dev -w @slate/api",
+    "seed:demo": "npm run seed:demo -w @slate/api",
+    "test:app": "npm run build:packages && npm run build -w @slate/api && npm run test -w @slate/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "jsdom": "23.0.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@neon/config": "^1.8.4",
+    "@neon/env": "^1.5.1"
+  }
+}

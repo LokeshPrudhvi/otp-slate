@@ -1,0 +1,11 @@
+node_modules/
+.local/
+.env
+.env.*
+!.env.example
+apps/*/dist/
+packages/*/dist/
+coverage/
+.neon
+.DS_Store
+.artifact-work/
