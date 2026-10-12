@@ -2,7 +2,13 @@
 
 Each React portal is a separate Pages project. The browser keeps using its existing same-origin `/api` paths; a small Pages Function proxies them to the Render API. Pages receives only the API origin and a dedicated server-to-server proxy secret. The separate private R2 bucket is accessed through short-lived URLs signed by Render; the four R2 credentials/settings remain server-only on Render. No database URL, email key, or Better Auth secret belongs in Cloudflare. No secret belongs in a `VITE_*` variable or browser build.
 
-## Live portals — 12 October 2026
+## Live portals — 13 October 2026
+
+The live exams release uses source `5edd008`, with Admin Pages deployment `53f3b26f` and Student `888ad46d`. Open **Admin → Learning → Live exams** to create and schedule MCQ/coding assessments for an organization, selected branches or selected students. Eligible students open **Live exams** to start or resume their timed attempt. Coding uses a plain source textbox and manual Admin marks/feedback; there are no exam Run buttons or third-party execution calls. MCQs grade automatically, and Admin releases results after the exam closes and grading is complete. The standalone Compiler remains separate optional practice.
+
+Both public exam deep links returned the exact tested bundle bytes, API health returned 200 and anonymous exam reads/mutations returned 401. Browser acceptance checks used isolated synthetic accounts. The Organization bundle remains `50c314db`. See the [current API and migration verification](deployment-render.md#live-exams-release--13-october-2026).
+
+## Earlier branch releases — 12 October 2026
 
 Branch editing is deployed to Platform Admin (`fc39000a`), built from source `2c99cc7`. Open **Admin → Access → select organization → Branches → select branch → Edit branch** to change its name or code. Save updates assigned students and branch references while retaining their course access, version pins and progress. Save or reset any unsaved learning-access changes before opening the editor. See the [release verification](deployment-render.md#branch-editing-release--12-october-2026).
 
@@ -16,7 +22,7 @@ Announcements remain available under **Admin → Announcements**. Choose an orga
 | Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
 | Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
 
-All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#branch-editing-release--12-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#live-exams-release--13-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
 
 ## Build configuration
 
