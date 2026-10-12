@@ -1,6 +1,6 @@
 # Cloudflare Pages: three free portals
 
-Each React portal is a separate Pages project. The browser keeps using its existing same-origin `/api` paths; a small Pages Function proxies them to the Render API. Cloudflare receives only the API origin and a dedicated server-to-server proxy secret. No database URL, email key, or Better Auth secret belongs in Cloudflare. No secret belongs in a `VITE_*` variable or browser build.
+Each React portal is a separate Pages project. The browser keeps using its existing same-origin `/api` paths; a small Pages Function proxies them to the Render API. Pages receives only the API origin and a dedicated server-to-server proxy secret. The separate private R2 bucket is accessed through short-lived URLs signed by Render; the four R2 credentials/settings remain server-only on Render. No database URL, email key, or Better Auth secret belongs in Cloudflare. No secret belongs in a `VITE_*` variable or browser build.
 
 ## Live portals — 12 October 2026
 
@@ -10,7 +10,7 @@ Each React portal is a separate Pages project. The browser keeps using its exist
 | Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
 | Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
 
-All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. Real-account sign-in, email delivery and load testing remain outstanding. The [Render rollout record](deployment-render.md#live-rollout--12-october-2026) identifies the deployed backend commit and database setup. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. Those checks describe the initial rollout; its verification scope is historical. The [current Render record](deployment-render.md#current-api-and-lesson-storage--12-october-2026) identifies the latest backend commit, database migration and private R2 setup. The updated Platform Admin (`7603acfb`), Student (`ed483d0a`) and Organization (`50c314db`) bundles are now live, with expected asset hashes and API health verified. Cloudflare initially returned internal function-publication errors; subsequent retries succeeded. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
 
 ## Build configuration
 
@@ -61,6 +61,6 @@ Run proxy checks with `node --test deployment/cloudflare/proxy.test.mjs`. After 
 
 Only `/api` and `/api/*` invoke the Function. Static assets and React navigation stay on Pages' free static hosting. Pages supplies SPA fallback when no top-level `404.html` exists. [SPA behavior](https://developers.cloudflare.com/pages/configuration/serving-pages/#single-page-application-spa-rendering)
 
-Pages Functions share the account's Workers Free allowance of **100,000 requests per day**, resetting at midnight UTC; static requests that bypass Functions are unlimited. All three portals and other Workers in the account share that allowance. This is a free pilot setup, not a guarantee for 2,000 simultaneously active students or a scheduled live exam. Stay on the Free plan; this setup adds no paid storage, Worker subscription, or automatic plan upgrade. [Free pricing](https://developers.cloudflare.com/pages/functions/pricing/)
+Pages Functions share the account's Workers Free allowance of **100,000 requests per day**, resetting at midnight UTC; static requests that bypass Functions are unlimited. All three portals and other Workers in the account share that allowance. This is a free pilot setup, not a guarantee for 2,000 simultaneously active students or a scheduled live exam. The Pages projects remain on Free, with no paid Worker subscription or automatic plan upgrade. The separately configured private R2 bucket uses Standard storage; Pages being free does not remove storage usage from R2. [Free pricing](https://developers.cloudflare.com/pages/functions/pricing/)
 
 Render's free API can sleep, so the first API call after inactivity may be slow. Existing Neon data stays in Neon; the Pages build and proxy never migrate or seed a database.

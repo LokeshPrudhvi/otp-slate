@@ -1,6 +1,18 @@
 # Application setup and implementation status
 
-Updated 11 October 2026. The [production architecture](production-architecture.md) specifies the full product; this guide describes what the repository currently runs. The application connects to the supplied Neon PostgreSQL database using self-hosted Better Auth. Managed Neon Auth remains a separate, uncompleted migration. Student self-registration approval and direct admin provisioning with welcome emails are implemented; the selected Resend sender is `OTP Slate <noreply@resumeehub.in>`. Actual inbox delivery remains unverified.
+Updated 12 October 2026. The [production architecture](production-architecture.md) specifies the full product; this guide describes what the repository currently runs. The application connects to the supplied Neon PostgreSQL database using self-hosted Better Auth. Managed Neon Auth remains a separate, uncompleted migration. Student self-registration approval and direct admin provisioning with welcome emails are implemented; the selected Resend sender is `OTP Slate <noreply@resumeehub.in>`. Actual inbox delivery remains unverified.
+
+## Rich lessons and private storage — 12 October 2026
+
+Course authoring now supports Markdown text (headings, lists, formatting and code), video links or private MP4/WebM uploads with descriptions, assignments accepting written answers/links/files, and MCQ assignments with server-side grading. Published versions remain immutable. Students retain their assigned version; assignment submission records completion, and an MCQ requires a passing score. A failed retake does not erase previously earned completion. Answers are withheld from course responses and returned with the student's submitted result. Platform Admin can review submissions against the original lesson/version.
+
+The backend release `05b5a0a` is live on Render and private R2 storage is configured. All three updated portal bundles are live; their deployed asset hashes and API health were verified. See the [current deployment record](deployment-render.md#current-api-and-lesson-storage--12-october-2026).
+
+The private `otp-slate-lessons` bucket uses Standard storage with an APAC location hint. Its four server-only settings are `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` and `R2_BUCKET`. CORS permits only the production Admin and Student origins. Pending `lesson-staging/` objects expire after one day; retained `lesson-assets/` objects do not. Limits are 250 MiB per MP4/WebM video and three assignment attachments of up to 10 MiB each. Credentials and signed URLs do not belong in frontend builds or this guide.
+
+Migration `006-rich-lessons` was applied to the existing Neon database while preserving 21 course-version records and 58 lesson-progress rows. A real R2 integration using synthetic files and isolated in-memory PGlite passed upload/finalization, private playback, assignment submission/download, admin review and MCQ grading. All synthetic storage keys were removed and verified absent. No real student records or emails were touched. Adaptive encoding/renditions, live-class management and production practice/code judging remain separate work.
+
+The dated verification sections below are historical snapshots. Consult the current deployment record for infrastructure and release status rather than treating an earlier unconfigured-provider statement as current.
 
 ## Verified baseline — 9 October 2026
 
@@ -166,14 +178,14 @@ In a controlled local API restart trace, the first account check changed from 2.
 | Account access         | Current role, organization, status and onboarding checked on every protected request. Organization limits, branch inheritance and student overrides govern features, courses and practice |
 | Provisioning           | Platform creates individual/bulk students immediately and approves public self-registrations; both queue temporary credentials by email. Viewer accounts remain separate. Suspend/disable revokes sessions |
 | Onboarding             | Required temporary-password change; student WhatsApp phone challenge. Verification consumes the challenge and revokes old sessions before fresh sign-in         |
-| Course authoring       | Create a draft course, author text lessons and publish immutable versions at any time. Existing assignments retain their version until Platform Admin reassigns |
+| Course authoring       | Create drafts with Markdown text, video, written/link/file assignments or MCQ lessons; publish immutable versions. Existing students retain their assigned version |
 | Student learning       | Assigned courses and toolkit tracks, course-module accordions, idempotent lesson completion; populated local practice/exam previews and normal empty states     |
 | Organization analytics | Fixed organization, actual student counts, assigned-course coverage, completion bars, student search/status filtering/pagination and individual progress        |
 | Rankings               | Organization student names on the dashboard. Seeded local organizations show labeled sample rankings; other organizations remain unranked                       |
 | Jobs                   | Platform manually publishes dated HTTPS job cards to an organization. Eligible students open the original external application page                             |
 | Resume                 | Original form and four single-column templates, immediate preview, automatic PostgreSQL saves and browser Print/Save PDF. Conflicting revisions return 409      |
 | Email                  | Encrypted durable welcome/reset-email outbox with leases, retries, quota handling and Resend idempotency. Sender: `OTP Slate <noreply@resumeehub.in>`; inbox delivery unverified |
-| Storage                | Server-only R2 presigned-upload adapter. Upload UI, asset verification and authorized video delivery are not implemented yet                                    |
+| Storage                | Private R2 direct uploads, immutable assets, size/type/ownership checks and authorized playback/download are implemented; Admin and Student bundles are live; see the 12 October release status                                    |
 
 Local analytics measures recorded lesson completion, not skills, exam scores or cheating. Current roster endpoints are bounded to 2,000 records; server pagination must replace that limit before exceeding the initial population. The current SQL file is an initial foundation migration, not a complete future schema migration system.
 
@@ -210,7 +222,7 @@ The development servers preserve the requested local portal hostname and correct
 Suggested walkthrough:
 
 1. Sign into Platform Admin and create an organization and viewer accounts. Students can self-register for approval, or Platform Admin can directly create individual accounts or import a reviewed roster. Direct creation and self-registration approval queue welcome credentials by email.
-2. Create a course, add text lessons and publish. In Access, choose the organization, allow its course catalog and tools, and click Update access. Optionally create branch selections or individual overrides.
+2. Create a course, add text, video, assignment or MCQ lessons and publish. In Access, choose the organization, allow its course catalog and tools, and click Update access. Optionally create branch selections or individual overrides.
 3. In the seeded student portal, open the assigned Python course and mark a lesson complete. Confirm that Organization Admin shows the completion.
 4. Publish a revised version of that course. Existing student content stays pinned until explicitly reassigned.
 5. Publish a job for the fixture organization, then open it from the student portal. Edit/save a resume and switch templates.
@@ -345,7 +357,7 @@ npm run start -w @slate/api
 
 Deploy each frontend's `dist` independently, with SPA fallback to `index.html` and same-host `/api/*` forwarding. Disable CDN caching for authentication/API responses. Lock the API origin to the trusted ingress, strip client-supplied forwarded headers and supply a validated single client IP for Better Auth rate limits. Its default login protection uses three attempts per ten-second IP/path window; test real college NAT login bursts before launch and add suitable per-account/edge controls before changing limits. A publicly reachable origin accepting arbitrary forwarded headers is not ready for release.
 
-The CI workflow is configured to run builds, legacy tests and application integration tests on Node.js 24, using the official [checkout](https://github.com/actions/checkout) and [setup-node](https://github.com/actions/setup-node) actions. It has not been executed on GitHub. Infrastructure deployment, containers, backup schedules and staging URLs still need implementation under the production release gates.
+The CI workflow is configured to run builds, legacy tests and application integration tests on Node.js 24, using the official [checkout](https://github.com/actions/checkout) and [setup-node](https://github.com/actions/setup-node) actions. It has not been executed on GitHub. The Render/Cloudflare deployment is recorded in the deployment guides. Backup schedules, staging environments and the remaining release gates still need verification.
 
 ## Provider setup
 
@@ -353,7 +365,7 @@ The CI workflow is configured to run builds, legacy tests and application integr
 | ------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Resend        | `RESEND_API_KEY`, verified `EMAIL_FROM`                                                                       | Test reset delivery and bounce/error behavior. Reserve daily quota for resets; no blanket onboarding email burst         |
 | Meta WhatsApp | Access token, phone-number ID, authentication template name/language and a supported `WHATSAPP_GRAPH_VERSION` | Approve the sender/template and test actual OTP delivery. Add delivery webhooks and phone/IP abuse budgets before launch |
-| R2            | Account ID, scoped access-key pair and private bucket                                                         | Configure upload CORS, asset validation, encoding/renditions, playback authorization and media delivery Worker           |
+| R2 | Four server-only `R2_*` settings; private `otp-slate-lessons` Standard/APAC bucket | Upload CORS, validation and private playback/download are connected and tested. Adaptive encoding/renditions remain future work; preserve `lesson-assets/`. |
 | Execution     | `EXECUTION_PROVIDER=unconfigured` until the benchmark                                                         | No compiler runs in the API. Submissions currently fail explicitly; choose and implement a provider only after the trial |
 
 Do not put provider keys in frontend `VITE_*` variables. The Services page reports configuration presence, not a successful connection or verified production readiness. Local tests replace only message transport; they still test the real OTP state transitions.
@@ -362,7 +374,7 @@ Do not put provider keys in frontend `VITE_*` variables. The Services page repor
 
 1. **Production foundation:** Neon role/migration rehearsal, ingress/IP validation, deployment/secret management, persistent logs, backups and staging browser tests.
 2. **Provisioning at scale:** Registration/import/approval, organization/branch/student access policies, course/practice/toolkit selection, compiler controls, branch assignment and account suspension now work. Next add enrollment expiry controls, explicit course-version upgrades, student-ID/cohort corrections and server pagination beyond the initial 2,000-student roster.
-3. **Learning media:** Course/module CMS beyond text lessons, R2 asset processing and protected video playback, authorized Zoom/Meet class links, project/repository submissions.
+3. **Learning media:** Publish and verify the remaining frontend bundles for the implemented rich lessons and private uploads. Next add adaptive encoding/renditions and managed Zoom/Meet class links. Course assignments already accept written answers, project/repository links and files; MCQ assignments grade on the server.
 4. **Practice:** Connect the existing practice and coding UI to versioned question/problem banks, durable attempts, a runtime registry, managed external execution, quotas and authoritative grading.
 5. **Live exams:** Admin release/audiences, admission, server deadlines, autosave/reconnect, browser-event monitoring, review and result-release policy.
 6. **Analytics and career completion:** Durable learning events, assessment/skill/ranking definitions, aggregate graphs/exports, job editing/archiving, validated resume PDF generation.
@@ -370,7 +382,7 @@ Do not put provider keys in frontend `VITE_*` variables. The Services page repor
 
 The initial conversion does not transplant browser-stored passwords or treat browser-local compiler verdicts as official grades. Local demo rosters and learning records are seeded through the database; synthetic assessment data is separately labeled and gated. Production live exams and code execution remain gated on these phases.
 
-## Capability audit — 11 October 2026
+## Capability audit — 11 October 2026, with lesson-media status updated 12 October
 
 This audit covers the current React portals and API, not the older standalone HTML prototypes. A database column or installed authentication plugin does not by itself establish a working product feature.
 
@@ -385,10 +397,10 @@ This audit covers the current React portals and API, not the older standalone HT
 | High · UI gap | MFA recovery-code sign-in | The `/api/auth/two-factor/verify-backup-code` endpoint is exposed through the enabled plugin, and onboarding provides recovery codes. Login exposes only authenticator codes. Add recovery-code input using the existing endpoint; see [auth allowlist](../apps/api/src/app.ts) and [login/onboarding](../packages/ui/src/kit.tsx). |
 | High · partial backend | Upgrade an existing course assignment | Published versions and enrollment pins work. Access deliberately preserves prior pins, including after deselection/reselection; the legacy assignment endpoint rejects policy-managed organizations. Add an explicit audited upgrade operation and version selection/history. Rechecking a course does **not** upgrade it. See [access updates](../apps/api/src/access.ts). |
 | Medium · stored data only | Audit history viewer | Management actions already create audit records. No read API, pagination/filtering or admin history page exists; see [audit schema](../apps/api/src/schema.ts) and [event writes](../apps/api/src/service.ts). |
-| Medium · API without full workflow | Course media uploads | Private R2 upload signing exists when configured. No upload UI, lesson-asset association or authorized playback/download flow exists. Adding a file input alone would not complete media support; see [upload endpoint](../apps/api/src/controller.ts) and [R2 provider](../apps/api/src/providers.ts). |
+| Implemented · live | Course media and assignment uploads | Private upload/finalization, lesson association, authorized playback/download and assignment submissions are implemented. Real R2 service verification passed and all three updated portals are live. See [lesson service](../apps/api/src/lessons.ts) and [R2 lesson provider](../apps/api/src/lesson-storage.ts). |
 | Medium · model/read support | Enrollment expiry | Enrollment expiry is stored and enforced on reads. No admin API/UI sets it. Add expiry management that respects access-policy inheritance; see [grant resolution](../apps/api/src/access.ts). |
 | Medium · missing management workflows | Student-profile corrections and job maintenance | People supports account status and editing student names, login emails, phone numbers and branches. Student-ID/cohort corrections still need a management workflow. Academic branch assignment is also available in **Access → student → Academic branch**. Jobs supports creation/listing, but editing and closing/archiving postings need backend and UI work; see [controllers](../apps/api/src/controller.ts). |
 | High · preview only | Official exams and announcements | Current admin assessment screens show sample data. Exam creation/release/audiences, server deadlines, persistent monitoring, grading and result release remain unimplemented; announcements are also fixtures. See [assessment preview](../apps/platform-admin/src/assessments.tsx) and [student feeds](../apps/api/src/service.ts). |
-| High · preview only | Durable practice, projects and coding results | Quiz/coding history is browser-local; project submissions remain in-page previews. Browser execution and the compiler embed do not create authoritative server submissions. The submissions API remains unavailable. Add durable attempts, server-owned judging and reviewed project submissions before using these results in organization analytics; see [practice](../apps/student/src/assessments.tsx), [coding](../apps/student/src/coding.tsx) and [submission endpoint](../apps/api/src/controller.ts). |
+| High · preview only | Durable practice, projects and coding results | Practice/coding history is browser-local; practice-area project submissions remain in-page previews. Browser execution and the compiler embed do not create authoritative server submissions, and the coding submissions API remains unavailable. This limitation does not apply to the new course-lesson assignment/MCQ submission endpoints. Add durable attempts, server-owned judging and reviewed project submissions before using these results in organization analytics; see [practice](../apps/student/src/assessments.tsx), [coding](../apps/student/src/coding.tsx) and [submission endpoint](../apps/api/src/controller.ts). |
 
 Already available: direct individual/bulk student creation, student-profile editing, self-registration approval and welcome-email retry/status; organization-viewer creation; member suspend/disable/reactivate; organization/branch/student access controls; branch management; course creation/publication; job creation; password reset; MFA enrollment; WhatsApp onboarding; and provider-configuration status. Provider configuration indicators do not verify external delivery. Better Auth session-management/admin endpoints outside the application allowlist are not exposed product features.

@@ -2,13 +2,23 @@
 
 The root `render.yaml` defines one **Free** Node web service in Ohio, close to the existing Neon database in AWS us-east-2. Cloudflare hosts the portals separately. The Blueprint does not create a database, paid worker or persistent disk. Automatic deploys and previews are disabled so releases are deliberate.
 
-## Live rollout — 12 October 2026
+## Current API and lesson storage — 12 October 2026
 
-The API is live at [otp-slate-api.onrender.com](https://otp-slate-api.onrender.com), with `/api/health` configured as its health check. The **Slate** workspace (`tea-db6a5ll9fdbs73fdgmh0`) contains service `srv-db6a8jdckfvc73cnigm0`, named `otp-slate-api`, on **Free / Ohio**. Its deployed source is commit `82bff362c2a2726504093ecf29e737c80f0b580f` on `codex/free-cloud-deployment`. Automatic deploys are off.
+The Render API is live at commit `05b5a0a` on the existing **Free / Ohio** service. Private lesson storage is now configured in Cloudflare R2: bucket **`otp-slate-lessons`**, **Standard** storage with the **APAC** location hint. It is not a public media bucket. Pages releases are independent of the API. The updated Platform Admin, Student and Organization bundles are live (deployment prefixes `7603acfb`, `ed483d0a` and `50c314db`, respectively), with deployed asset hashes and API health verified.
 
-The existing Neon project `small-shape-18661054` retains its schema and application data. Its organization Free plan was confirmed using the Neon CLI. The new restricted `slate_api_render` login was created and verified; the owner credential is not used by the deployed API. Existing Resend settings were carried over. WhatsApp, R2 and code-execution providers remain unconfigured.
+The additive `006-rich-lessons` migration has been applied separately to the existing Neon database. Its new `lesson_uploads` and `lesson_submissions` tables use scoped row security. Verification preserved all **21 course versions** and **58 lesson-progress rows**; no existing lessons or progress were reset.
 
-Health and unauthenticated access checks passed for the API and [three deployed portals](deployment-cloudflare.md#live-portals--12-october-2026). Real-account sign-in, email delivery and load testing have **not** been performed. This is an initial free rollout, not a completed capacity or end-to-end acceptance test.
+The real R2 service integration passed with an isolated in-memory PGlite database, synthetic identities, a generated 1,854-byte MP4 and a 99-byte text attachment. It exercised admin upload/finalization/publication, assigned-student private playback, assignment upload/submission/download, admin review, completion tracking and MCQ grading. Signed playback matched the source bytes; unassigned access and unsigned object access were denied. All synthetic R2 objects were removed and their absence verified. No production student data or emails were used. Provider checks also verified production-origin CORS, PUT, HEAD, server-side copy and signed GET; this does not substitute for a published-frontend browser acceptance test.
+
+## Historical initial rollout — 12 October 2026
+
+This section records the original rollout before the lesson-storage release above; its commit and verification scope are historical.
+
+The API is live at [otp-slate-api.onrender.com](https://otp-slate-api.onrender.com), with `/api/health` configured as its health check. The **Slate** workspace (`tea-db6a5ll9fdbs73fdgmh0`) contains service `srv-db6a8jdckfvc73cnigm0`, named `otp-slate-api`, on **Free / Ohio**. Its initial deployed source was commit `82bff362c2a2726504093ecf29e737c80f0b580f` on `codex/free-cloud-deployment`. Automatic deploys are off.
+
+The existing Neon project `small-shape-18661054` retains its schema and application data. Its organization Free plan was confirmed using the Neon CLI. The new restricted `slate_api_render` login was created and verified; the owner credential is not used by the deployed API. Existing Resend settings were carried over. WhatsApp, R2 and code-execution providers were unconfigured during this initial rollout. R2 was subsequently connected as recorded above; WhatsApp and code execution remain separate setup work.
+
+Health and unauthenticated access checks passed for the API and [three deployed portals](deployment-cloudflare.md#live-portals--12-october-2026). At that point, real-account sign-in, email delivery and load testing had **not** been performed. These statements describe the initial verification only, not subsequent work or current acceptance status.
 
 For subsequent releases, push reviewed changes to `codex/free-cloud-deployment`, then manually deploy the chosen commit from the Render service's **Manual Deploy** menu. A push alone does not release the API. Cloudflare Direct Upload releases are separate; use the portal commands in its deployment guide and verify API compatibility before uploading new frontend bundles.
 
@@ -28,6 +38,7 @@ For subsequent releases, push reviewed changes to `codex/free-cloud-deployment`,
 | `TRUSTED_ORIGINS`              | Exact HTTPS portal origins, comma separated, with no paths, trailing slashes, wildcards or preview domains.                                                          |
 | `STUDENT_PORTAL_URL`           | The exact deployed student origin, also listed in `TRUSTED_ORIGINS`; welcome emails link here.                                                                       |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Add the existing private Resend key and verified sender to enable welcome/password-reset emails. Omit both until ready to send. Never put them in a `VITE_*` value.  |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Server-only R2 account ID, bucket-scoped access-key pair and `otp-slate-lessons`. Keep these on Render; never copy them into Pages bindings or browser builds. |
 
 Render supplies `PORT`; production reads it before any `API_PORT` value. Local development retains `API_PORT` priority. HTTPS URLs and the authentication secret are checked at startup. The existing database-role check rejects domain-table owners, superusers and roles that bypass row security.
 
@@ -42,6 +53,17 @@ The login is `NOINHERIT` and can explicitly switch into the four existing applic
 Do not migrate, bootstrap or seed the existing Neon database as part of building or starting the web service. The compiled start command is `node apps/api/dist/main.js`. Keep `MIGRATION_DATABASE_URL` off Render. If a future release needs a migration, rehearse it on an isolated database branch, then run it separately from an authorized workstation before deploying the compatible application version. Free Render services do not provide interactive shell/one-off jobs.
 
 Email work stays in the API process and its durable queue stays in Neon. While the free service is asleep, pending emails wait until it wakes. No second local API with email sending enabled should compete against the same live queue during deployment verification.
+
+## Private lesson storage operations
+
+- Keep all four `R2_*` values server-only. The scoped key must support reading, writing, copying and deleting objects in `otp-slate-lessons`; it does not need access to unrelated buckets.
+- Bucket CORS allows only `https://otp-slate-admin.pages.dev` and `https://otp-slate-student.pages.dev`. Organization viewers, preview domains and arbitrary origins do not receive upload access. CORS is separate from authorization: the API checks the current account, assigned course version, lesson and file ownership before issuing a signed URL.
+- The browser uploads directly to a signed `lesson-staging/` key. Completion checks the stored size/type, copies the object to an immutable `lesson-assets/` key, and then records it as ready. File bytes do not pass through Render.
+- A lifecycle rule expires **`lesson-staging/` after one day** to clear abandoned uploads. **Never apply that expiration rule to `lesson-assets/`**: published lessons and submitted attachments depend on those retained objects.
+- Video files are MP4 or WebM, at most **250 MiB** each. Assignment attachments are PDF, TXT, ZIP, PNG, JPG/JPEG or DOCX, at most **10 MiB** each and **three files per submission**. Video links remain available without uploading a file.
+- Signed video GETs expire after one hour; assignment downloads expire after five minutes and use attachment disposition. The bucket remains private and unsigned object access is denied. A signed URL can remain usable until its expiry, so do not treat it as a permanent public link or include it in documentation/logs.
+
+R2 is a separate storage service from the Render compute plan. Retained lesson assets are intentional; staging cleanup must not delete published learning or submission history.
 
 ## Keep the rollout free
 
