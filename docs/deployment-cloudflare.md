@@ -4,6 +4,8 @@ Each React portal is a separate Pages project. The browser keeps using its exist
 
 ## Live portals — 12 October 2026
 
+The announcements update is deployed to Platform Admin (`e615ddd2`) and Student (`d72027f9`), built from source `5fceb85`. Use **Admin → Announcements**, choose an organization and **All branches** or a specific branch, enter a title and message, then preview and publish. The notices appear in the student's Announcements section; they are not emails. See the [release verification](deployment-render.md#announcements-release--12-october-2026).
+
 | Portal         | Production URL                                                               | Pages project            |
 | -------------- | ---------------------------------------------------------------------------- | ------------------------ |
 | Student        | [otp-slate-student.pages.dev](https://otp-slate-student.pages.dev)           | `otp-slate-student`      |

@@ -2,9 +2,17 @@
 
 The root `render.yaml` defines one **Free** Node web service in Ohio, close to the existing Neon database in AWS us-east-2. Cloudflare hosts the portals separately. The Blueprint does not create a database, paid worker or persistent disk. Automatic deploys and previews are disabled so releases are deliberate.
 
+## Announcements release — 12 October 2026
+
+The current API source is `5fceb85`, deployed to the existing Free / Ohio service as `dep-db6f7jad0e5s73ahcsvg`. Platform Admin can publish a rich-text announcement to one organization, choosing either **All branches** or a specific branch. Published and archived history supports archive/restore. Students see published notices for their current organization and branch when their Announcements section is enabled. Publishing does not send email, and Organization Admin remains read-only.
+
+The additive `007-announcements` migration was rehearsed twice on an auto-expiring Neon branch before production. Forced row-level security restricts tenant and branch reads and platform-only writes. Production verification preserved 4 organizations, 11 members, 21 course versions and 58 lesson-progress rows. No real notices were published during testing.
+
+Verification: 169 API checks passed (one optional integration check skipped), 13 announcement component checks passed, and 38 rich-text/rendering checks passed. Isolated browser checks covered branch publishing, student visibility, archive and restore. Render health and both portal proxies returned 200. The affected Pages releases are admin `e615ddd2` and student `d72027f9`; the organization bundle remains `50c314db`. Production source hashes and unauthenticated access checks were verified; authenticated publish tests used synthetic local accounts only.
+
 ## Current API and lesson storage — 12 October 2026
 
-The Render API is live at commit `05b5a0a` on the existing **Free / Ohio** service. Private lesson storage is now configured in Cloudflare R2: bucket **`otp-slate-lessons`**, **Standard** storage with the **APAC** location hint. It is not a public media bucket. Pages releases are independent of the API. The updated Platform Admin, Student and Organization bundles are live (deployment prefixes `7603acfb`, `ed483d0a` and `50c314db`, respectively), with deployed asset hashes and API health verified.
+The earlier lesson-storage release used API commit `05b5a0a` on the existing **Free / Ohio** service; the announcements release above supersedes it. Private lesson storage is configured in Cloudflare R2: bucket **`otp-slate-lessons`**, **Standard** storage with the **APAC** location hint. It is not a public media bucket. Pages releases are independent of the API.
 
 The additive `006-rich-lessons` migration has been applied separately to the existing Neon database. Its new `lesson_uploads` and `lesson_submissions` tables use scoped row security. Verification preserved all **21 course versions** and **58 lesson-progress rows**; no existing lessons or progress were reset.
 
