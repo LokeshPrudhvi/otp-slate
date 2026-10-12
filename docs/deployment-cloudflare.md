@@ -4,7 +4,9 @@ Each React portal is a separate Pages project. The browser keeps using its exist
 
 ## Live portals — 12 October 2026
 
-The announcements update is deployed to Platform Admin (`e615ddd2`) and Student (`d72027f9`), built from source `5fceb85`. Use **Admin → Announcements**, choose an organization and **All branches** or a specific branch, enter a title and message, then preview and publish. The notices appear in the student's Announcements section; they are not emails. See the [release verification](deployment-render.md#announcements-release--12-october-2026).
+The organization branch catalog update is deployed to Platform Admin (`5c58f53d`) and Student (`d63c5064`), built from source `54ae644`. Create branches using **Admin → Access → select organization → Branches → Add branch**, entering the official name and code. Student create/edit/registration forms then show that organization's branches in a searchable dropdown and fill the code automatically. Existing branches and student progress were preserved. See the [release verification](deployment-render.md#organization-branch-catalog-release--12-october-2026).
+
+Announcements remain available under **Admin → Announcements**. Choose an organization and **All branches** or a saved branch, enter a title and message, then preview and publish. Notices appear in the student's Announcements section; they are not emails.
 
 | Portal         | Production URL                                                               | Pages project            |
 | -------------- | ---------------------------------------------------------------------------- | ------------------------ |
@@ -12,7 +14,7 @@ The announcements update is deployed to Platform Admin (`e615ddd2`) and Student 
 | Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
 | Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
 
-All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. Those checks describe the initial rollout; its verification scope is historical. The [current Render record](deployment-render.md#current-api-and-lesson-storage--12-october-2026) identifies the latest backend commit, database migration and private R2 setup. The updated Platform Admin (`7603acfb`), Student (`ed483d0a`) and Organization (`50c314db`) bundles are now live, with expected asset hashes and API health verified. Cloudflare initially returned internal function-publication errors; subsequent retries succeeded. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#organization-branch-catalog-release--12-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
 
 ## Build configuration
 
