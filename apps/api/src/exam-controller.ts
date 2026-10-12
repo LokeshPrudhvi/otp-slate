@@ -19,7 +19,6 @@ import {
   examAnswersInput,
   examEventsInput,
   examRevisionInput,
-  examRunInput,
   updateExamInput,
   manualExamGradeInput,
 } from "./exams.js";
@@ -110,17 +109,6 @@ export class ExamController {
     @Body() body: unknown,
   ) {
     return this.exams.release(
-      await this.service.actor(req, "platform_admin"),
-      uuid.parse(id),
-      examRevisionInput.parse(body).revision,
-    );
-  }
-  @Post("platform/exams/:id/regrade") async regrade(
-    @Req() req: Request,
-    @Param("id") id: string,
-    @Body() body: unknown,
-  ) {
-    return this.exams.regrade(
       await this.service.actor(req, "platform_admin"),
       uuid.parse(id),
       examRevisionInput.parse(body).revision,
@@ -223,17 +211,6 @@ export class ExamController {
       await this.service.actor(req, "student"),
       uuid.parse(id),
       examEventsInput.parse(body),
-    );
-  }
-  @Post("student/exam-attempts/:id/run") async run(
-    @Req() req: Request,
-    @Param("id") id: string,
-    @Body() body: unknown,
-  ) {
-    return this.exams.run(
-      await this.service.actor(req, "student"),
-      uuid.parse(id),
-      examRunInput.parse(body),
     );
   }
 }

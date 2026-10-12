@@ -52,7 +52,9 @@ export function Exams() {
     `platform/exams${organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : ""}`,
   );
   useEffect(() => {
-    const timer = window.setInterval(() => { if (document.visibilityState === "visible") void exams.refetch(); }, 30_000);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void exams.refetch();
+    }, 30_000);
     return () => window.clearInterval(timer);
   }, [exams.refetch]);
   const [status, setStatus] = useState("all"),
@@ -305,11 +307,8 @@ function ExamPreview({ exam }: { exam: ExamDraft }) {
             : `${exam.audience.studentIds.length} selected students`}
       </p>
       <p>
-        <strong>Coding grading:</strong>{" "}
-        {exam.codingGrading === "manual"
-          ? "Manual review by admin"
-          : "Automatic through OneCompiler"}{" "}
-        · <strong>Monitoring:</strong>{" "}
+        <strong>Coding grading:</strong> Manual review by admin ·{" "}
+        <strong>Monitoring:</strong>{" "}
         {exam.monitoring.enabled
           ? `Enabled${exam.monitoring.requireFullscreen ? " · Full screen required" : ""}${exam.monitoring.recordClipboard ? " · Clipboard events recorded" : ""}`
           : "Disabled"}
@@ -377,10 +376,6 @@ export function ExamEditor() {
     "organizations",
     "platform/organizations",
   );
-  const capabilities = useData<{
-    codingExecutionConfigured: boolean;
-    provider: string;
-  }>("exam-capabilities", "platform/exams/capabilities");
   return (
     <DataState pending={Boolean(id) && exam.isPending} error={exam.error}>
       <ExamEditorState
@@ -389,10 +384,6 @@ export function ExamEditor() {
         requestedOrganizationId={params.get("organizationId") || ""}
         organizations={organizations.data || []}
         organizationsError={organizations.error}
-        codingExecutionConfigured={
-          capabilities.data?.codingExecutionConfigured ?? false
-        }
-        capabilitiesError={capabilities.error}
       />
     </DataState>
   );
@@ -403,15 +394,11 @@ function ExamEditorState({
   requestedOrganizationId,
   organizations,
   organizationsError,
-  codingExecutionConfigured,
-  capabilitiesError,
 }: {
   initial?: AdminExam;
   requestedOrganizationId: string;
   organizations: Organization[];
   organizationsError: unknown;
-  codingExecutionConfigured: boolean;
-  capabilitiesError: unknown;
 }) {
   const navigate = useNavigate(),
     client = useQueryClient();
@@ -428,7 +415,15 @@ function ExamEditorState({
   >(null);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const issuesRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (errors.length) { issuesRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }); issuesRef.current?.focus({ preventScroll: true }); } }, [errors]);
+  useEffect(() => {
+    if (errors.length) {
+      issuesRef.current?.scrollIntoView({
+        block: "center",
+        behavior: "smooth",
+      });
+      issuesRef.current?.focus({ preventScroll: true });
+    }
+  }, [errors]);
   const audience = useData<ExamAudienceOptions>(
     `exam-audience:${draft.organizationId}`,
     `platform/exams/audience?organizationId=${encodeURIComponent(draft.organizationId)}`,
@@ -478,7 +473,7 @@ function ExamEditorState({
       kind,
       revision,
     }: {
-      kind: "publish" | "cancel" | "release-results" | "regrade";
+      kind: "publish" | "cancel" | "release-results";
       revision?: number;
     }) =>
       api<AdminExam>(`platform/exams/${saved!.id}/${kind}`, "POST", {
@@ -493,9 +488,7 @@ function ExamEditorState({
           ? `Exam published to ${value.audienceCount} students. The roster is now fixed.`
           : input.kind === "cancel"
             ? "Exam cancelled. It can no longer be started."
-            : input.kind === "regrade"
-              ? "Pending grading retried. Refresh results to see the latest status."
-              : "Results released to students.",
+            : "Results released to students.",
       );
       client.setQueryData(["platform", `exam:${value.id}`], value);
       void client.invalidateQueries({
@@ -623,7 +616,7 @@ function ExamEditorState({
         </div>
       }
     >
-      <ErrorMessage error={organizationsError || capabilitiesError} />
+      <ErrorMessage error={organizationsError} />
       {notice && (
         <p className="success-note" role="status">
           {notice}
@@ -745,7 +738,6 @@ function ExamEditorState({
                 value={draft}
                 onChange={setDraft}
                 audience={audience.data}
-                codingExecutionConfigured={codingExecutionConfigured}
                 disabled={busy || archived}
               />
             </fieldset>

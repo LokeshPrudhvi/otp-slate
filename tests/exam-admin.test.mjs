@@ -73,7 +73,7 @@ test("invalid MCQ answer, empty options, fractional points and date window are r
   assert.ok(errors.some((error) => /points must/.test(error)));
   assert.ok(errors.some((error) => /exam window/.test(error)));
 });
-test("coding draft needs languages, public and hidden cases, and bounded source", () => {
+test("coding draft needs languages and bounded source, with no executable tests required", () => {
   const exam = draft(),
     coding = newExamQuestion("coding");
   Object.assign(coding, {
@@ -82,15 +82,38 @@ test("coding draft needs languages, public and hidden cases, and bounded source"
     languages: [],
     starterCode: { Python: "x".repeat(30001) },
   });
-  coding.testCases = coding.testCases.map((testCase) => ({
-    ...testCase,
-    hidden: true,
-  }));
   exam.questions = [coding];
   const errors = validateExamDraft(exam);
   assert.ok(errors.some((error) => /programming language/.test(error)));
-  assert.ok(errors.some((error) => /public example/.test(error)));
   assert.ok(errors.some((error) => /starter code/.test(error)));
+});
+test("submission-only coding drafts can be saved with a prompt and no test cases", () => {
+  const exam = draft();
+  const coding = newExamQuestion("coding", "coding-prompt");
+  coding.title = "Reverse a string";
+  coding.prompt =
+    "Write a function that reverses its input. Explain its complexity.";
+  exam.questions = [coding];
+  assert.deepEqual(coding.testCases, []);
+  assert.deepEqual(validateExamDraft(exam), []);
+  assert.equal(examDraftFrom(exam).codingGrading, "manual");
+});
+test("editing a historical draft uses manual review while preserving saved references", () => {
+  const exam = draft();
+  const coding = newExamQuestion("coding", "coding-old");
+  coding.title = "Echo";
+  coding.prompt = "Return the input";
+  coding.testCases = [
+    { id: "old-example", input: "hello", output: "hello", hidden: false },
+  ];
+  exam.questions = [coding];
+  exam.codingGrading = "automatic";
+  const payload = examDraftFrom(exam);
+  assert.equal(payload.codingGrading, "manual");
+  assert.deepEqual(payload.questions[0].testCases, coding.testCases);
+  assert.deepEqual(validateExamDraft(payload), []);
+  payload.questions[0].testCases[0].input = "Changed";
+  assert.equal(coding.testCases[0].input, "hello");
 });
 test("test and question identities must be unique", () => {
   const exam = draft();
@@ -100,7 +123,10 @@ test("test and question identities must be unique", () => {
   );
   const question = newExamQuestion("coding");
   Object.assign(question, { title: "Program", prompt: "Print 1" });
-  question.testCases[1].id = question.testCases[0].id;
+  question.testCases = [
+    { id: "duplicate", input: "a", output: "a", hidden: false },
+    { id: "duplicate", input: "b", output: "b", hidden: true },
+  ];
   exam.questions = [question];
   assert.ok(
     validateExamDraft(exam).some((error) => /test case IDs/.test(error)),

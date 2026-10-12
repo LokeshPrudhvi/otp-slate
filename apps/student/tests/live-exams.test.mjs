@@ -30,7 +30,7 @@ const bundle = new URL(
 await build({
   stdin: {
     contents:
-      'export * from "./live-exam-session.ts"; export * from "./exam-onecompiler.tsx"; export {ExamAttempt} from "./live-exams.tsx"; export {AccessRoute} from "./access.tsx"; export {StudentShell} from "./design.tsx";',
+      'export * from "./live-exam-session.ts"; export {ExamAttempt} from "./live-exams.tsx"; export {AccessRoute} from "./access.tsx"; export {StudentShell} from "./design.tsx";',
     resolveDir: fileURLToPath(new URL("../src/", import.meta.url)),
   },
   outfile: fileURLToPath(bundle),
@@ -51,15 +51,8 @@ await build({
     "remark-gfm",
   ],
 });
-const {
-  ExamSession,
-  ExamEventBuffer,
-  compilerSourceMessage,
-  ExamOneCompiler,
-  ExamAttempt,
-  AccessRoute,
-  StudentShell,
-} = await import(bundle.href);
+const { ExamSession, ExamEventBuffer, ExamAttempt, AccessRoute, StudentShell } =
+  await import(bundle.href);
 const { createElement: h, act } = await import("react");
 const { createRoot } = await import("react-dom/client");
 const { MemoryRouter, Routes, Route } = await import("react-router-dom");
@@ -372,48 +365,6 @@ test("monitoring has bounded batches, stable retry IDs and no clipboard contents
     assert.equal(entry.occurredAt, stamp);
   }
 });
-test("OneCompiler sync requires exact origin, the current frame, mapped language/file and bounded source", () => {
-  const source = {},
-    other = {};
-  const event = {
-    origin: "https://onecompiler.com",
-    source,
-    data: {
-      language: "python",
-      files: [{ name: "main.py", content: "print(3)" }],
-    },
-  };
-  assert.equal(compilerSourceMessage(event, source, "Python"), "print(3)");
-  assert.equal(
-    compilerSourceMessage(
-      { ...event, origin: "https://onecompiler.com.attacker.test" },
-      source,
-      "Python",
-    ),
-    null,
-  );
-  assert.equal(compilerSourceMessage(event, other, "Python"), null);
-  assert.equal(compilerSourceMessage(event, null, "Python"), null);
-  assert.equal(compilerSourceMessage(event, source, "JavaScript"), null);
-  for (const files of [
-    [],
-    [{ name: "evil.py", content: "bad" }],
-    [{ name: "main.py", content: "a".repeat(30001) }],
-    [{ name: "main.py", content: { secret: true } }],
-    [
-      { name: "main.py", content: "x" },
-      { name: "main.py", content: "y" },
-    ],
-  ])
-    assert.equal(
-      compilerSourceMessage(
-        { ...event, data: { language: "python", files } },
-        source,
-        "Python",
-      ),
-      null,
-    );
-});
 let root, client;
 const originalFetch = globalThis.fetch;
 const response = (status, body) =>
@@ -482,7 +433,7 @@ after(async () => {
   dom.window.close();
   await rm(bundle, { force: true });
 });
-test("student with live-exams only sees MCQ and coding, autosaves actual answers and optional manual runner", async () => {
+test("student with live-exams only autosaves MCQ and code text, then submits for manual review", async () => {
   const calls = [];
   let view = fixture();
   await mount(
@@ -492,6 +443,16 @@ test("student with live-exams only sees MCQ and coding, autosaves actual answers
       if (url.endsWith("/answers")) {
         const body = JSON.parse(init.body);
         view = { ...view, revision: body.revision + 1, answers: body.answers };
+      }
+      if (url.endsWith("/submit")) {
+        const body = JSON.parse(init.body);
+        view = {
+          ...view,
+          status: "submitted",
+          submittedAt: stamp,
+          revision: body.revision + 1,
+          answers: body.answers,
+        };
       }
       return response(200, view);
     },
@@ -510,10 +471,40 @@ test("student with live-exams only sees MCQ and coding, autosaves actual answers
   assert.match(text(), /All answers saved/);
   await click(button("Next →"));
   assert.equal(document.getElementById("exam-source").value, "# start here");
-  assert.ok(button("Run in OneCompiler"));
+  assert.equal(button("Run in OneCompiler"), undefined);
   assert.equal(button("Run examples"), undefined);
   assert.match(text(), /administrator reviews/);
   assert.equal(document.querySelector("iframe"), null);
+  const source = document.getElementById("exam-source");
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(
+      window.HTMLTextAreaElement.prototype,
+      "value",
+    ).set.call(source, "print(sum(map(int, input().split())))");
+    source.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await pause(750);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(
+    JSON.parse(calls[1].init.body).answers.find(
+      (item) => item.questionId === "q2",
+    ),
+    {
+      questionId: "q2",
+      language: "Python",
+      code: "print(sum(map(int, input().split())))",
+    },
+  );
+  await click(button("Submit exam"));
+  await click(button("Submit answers"));
+  assert.match(calls.at(-1).url, /\/submit$/);
+  assert.equal(JSON.parse(calls.at(-1).init.body).answers.length, 2);
+  assert.match(text(), /Your exam has been submitted/);
+  assert.equal(document.querySelector("textarea"), null);
+  assert.equal(
+    calls.some((call) => call.url.endsWith("/run")),
+    false,
+  );
 });
 test("autosave conflicts make answers read-only and expose a deliberate reload confirmation", async () => {
   await mount(fixture(), (url) =>
@@ -726,90 +717,16 @@ test("account-menu navigation can cancel without losing unsaved exam answers", a
   }
 });
 
-test("runner executes only after echoing the latest primary-editor source and never overwrites it with stale events", async () => {
-  const sent = [],
-    edits = [];
-  root = createRoot(document.getElementById("root"));
-  async function render(code, editable = true) {
-    await act(async () =>
-      root.render(
-        h(ExamOneCompiler, {
-          language: "Python",
-          code,
-          input: "1 2",
-          editable,
-          onCode: (value) => edits.push(value),
-        }),
-      ),
-    );
-  }
-  await render("print(1)");
-  await click(button("Run in OneCompiler"));
-  const frame = document.querySelector("iframe"),
-    source = frame.contentWindow;
-  source.postMessage = (message, target) => sent.push({ message, target });
-  async function echo(content) {
-    await act(async () =>
-      window.dispatchEvent(
-        new MessageEvent("message", {
-          origin: "https://onecompiler.com",
-          source,
-          data: { language: "python", files: [{ name: "main.py", content }] },
-        }),
-      ),
-    );
-  }
-  await act(async () => frame.dispatchEvent(new Event("load")));
-  await echo("print(1)");
-  assert.equal(
-    sent.filter((x) => x.message.eventType === "triggerRun").length,
-    0,
+test("manual coding questions without examples render only the prompt, language and code entry", async () => {
+  const view = fixture();
+  view.questions[1].testCases = [];
+  await mount(view);
+  await click(button("Next →"));
+  assert.ok(document.getElementById("exam-source"));
+  assert.match(text(), /administrator reviews your submitted code/);
+  assert.doesNotMatch(
+    text(),
+    /Example input and output|Run examples|OneCompiler/,
   );
-  await render("print(2)");
-  assert.equal(sent.at(-1).message.files[0].content, "print(2)");
-  await echo("print(1)");
-  assert.deepEqual(edits, []);
-  await click(button("Run code in runner"));
-  assert.equal(sent.at(-1).message.eventType, "populateCode");
-  assert.equal(sent.at(-1).message.files[0].content, "print(2)");
-  assert.equal(
-    sent.filter((x) => x.message.eventType === "triggerRun").length,
-    0,
-  );
-  // A further answer edit while the Run handshake is pending must win too.
-  await render("print(3)");
-  await echo("print(2)");
-  assert.equal(
-    sent.filter((x) => x.message.eventType === "triggerRun").length,
-    0,
-  );
-  assert.deepEqual(edits, []);
-  await echo("print(3)");
-  assert.equal(
-    sent.filter((x) => x.message.eventType === "triggerRun").length,
-    1,
-  );
-  assert.equal(sent.at(-1).target, "https://onecompiler.com");
-  await echo("print(3)");
-  assert.equal(
-    sent.filter((x) => x.message.eventType === "triggerRun").length,
-    1,
-  );
-  await echo("print(4)");
-  assert.deepEqual(edits, ["print(4)"]);
-  const before = sent.length;
-  await render("print(4)");
-  assert.equal(
-    sent.length,
-    before,
-    "runner edits do not create a populate echo loop",
-  );
-  await click(button("Run code in runner"));
-  await render("print(4)", false);
-  await echo("print(4)");
-  assert.equal(
-    sent.filter((x) => x.message.eventType === "triggerRun").length,
-    1,
-    "expiry cancels a pending run",
-  );
+  assert.equal(document.querySelector("iframe"), null);
 });

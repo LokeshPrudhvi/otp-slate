@@ -37,14 +37,7 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
     },
     true,
   );
-  const disabledExecutor = {
-    configured: false,
-    provider: "OneCompiler",
-    async execute() {
-      return { available: false, message: "Unconfigured", cases: [] };
-    },
-  };
-  const exams = new ExamService(service, disabledExecutor);
+  const exams = new ExamService(service);
   const [org, other] = await scoped(connection.db, { platform: true }, (tx) =>
     tx
       .insert(s.organizations)
@@ -560,216 +553,91 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
       },
     );
     await t.test(
-      "automatic coding refuses unconfigured publication and keeps provider failures pending",
+      "coding is submission-only, accepts a prompt without tests or a language answer, and requires manual review",
       async () => {
         const coding = {
-          id: "code-auto",
+          id: "text-code",
           kind: "coding" as const,
-          title: "Echo",
-          prompt: "Echo input.",
-          points: 10,
+          title: "Write a function",
+          prompt:
+            "Write a function that reverses a string and explain your approach in comments.",
+          points: 20,
           languages: ["Python" as const],
           starterCode: {},
-          testCases: [
-            { id: "sample", input: "a", output: "a", hidden: false },
-            { id: "hidden", input: "b", output: "b", hidden: true },
-          ],
+          testCases: [],
         };
+        assert.equal(
+          examDraftInput.safeParse({ ...draft(), codingGrading: "automatic" })
+            .success,
+          false,
+        );
         const input = draft({
           audience: {
             mode: "students",
             branchCodes: [],
             studentIds: [student.id],
           },
-          codingGrading: "automatic",
-          questions: [coding],
+          questions: [...draft().questions, coding],
         });
-        let auto = await exams.create(admin, {
+        let manual = await exams.create(admin, {
           ...input,
           clientId: randomUUID(),
         });
-        await assert.rejects(
-          () => exams.publish(admin, auto.id, auto.revision),
-          /Configure/,
+        // Historical drafts use the manual flow when published; no provider exists.
+        await scoped(connection.db, { platform: true }, (tx) =>
+          tx
+            .update(s.liveExams)
+            .set({ codingGrading: "automatic" })
+            .where(eq(s.liveExams.id, manual.id)),
         );
-        let online = false;
-        const executor = {
-          configured: true,
-          provider: "OneCompiler",
-          async execute(arg: { tests: { id: string }[] }) {
-            return online
-              ? {
-                  available: true,
-                  message: "Done",
-                  cases: arg.tests.map((t) => ({
-                    id: t.id,
-                    passed: true,
-                    stdout: "",
-                    stderr: "",
-                    verdict: "Passed",
-                  })),
-                }
-              : { available: false, message: "Outage", cases: [] };
-          },
-        };
-        const automatic = new ExamService(service, executor);
-        auto = await automatic.publish(admin, auto.id, auto.revision);
-        await open(auto);
-        const a = await automatic.start(student, auto.id);
-        await automatic.save(
+        manual = await exams.publish(admin, manual.id, manual.revision);
+        assert.equal(manual.codingGrading, "manual");
+        await open(manual);
+        const attempt = await exams.start(student, manual.id);
+        const code =
+          "function reverse(text) { return [...text].reverse().join(''); }";
+        const submitted = await exams.save(
           student,
-          a.id,
+          attempt.id,
           {
-            revision: 0,
+            revision: attempt.revision,
             answers: [
-              {
-                questionId: "code-auto",
-                language: "Python",
-                code: "print(input())",
-              },
+              { questionId: "mcq-1", selectedOption: 1 },
+              { questionId: coding.id, code },
             ],
           },
           true,
         );
-        await automatic.waitForGrading();
-        const pending = await automatic.adminAttempt(admin, auto.id, a.id);
-        assert.equal(pending.status, "submitted");
-        assert.equal(pending.result.earnedPoints, null);
-        online = true;
-        await automatic.regrade(admin, auto.id, auto.revision);
-        await automatic.waitForGrading();
-        const graded = await automatic.adminAttempt(admin, auto.id, a.id);
-        assert.equal(graded.status, "graded");
-        assert.equal(graded.result.earnedPoints, 10);
-      },
-    );
-    await t.test(
-      "automatic compilation is nonblocking, sample-only, quota bounded, and recovers a stale lease",
-      async () => {
-        const coding = {
-          id: "async-code",
-          kind: "coding" as const,
-          title: "Echo",
-          prompt: "Echo input.",
-          points: 10,
-          languages: ["Python" as const],
-          starterCode: {},
-          testCases: [
-            { id: "sample", input: "a", output: "a", hidden: false },
-            { id: "hidden", input: "private", output: "private", hidden: true },
+        assert.equal(submitted.status, "submitted");
+        assert.equal(submitted.answers[1].code, code);
+        assert.equal(submitted.answers[1].language, undefined);
+        const review = await exams.adminAttempt(admin, manual.id, attempt.id);
+        assert.equal(review.result.questions[0].earnedPoints, 10);
+        assert.equal(review.result.questions[1].earnedPoints, null);
+        assert.equal(
+          review.result.questions[1].verdict,
+          "Awaiting manual review",
+        );
+        await close(manual);
+        await assert.rejects(
+          () => exams.release(admin, manual.id, manual.revision),
+          /still need review/,
+        );
+        // A historical published record also permits human review without execution.
+        await scoped(connection.db, { platform: true }, (tx) =>
+          tx
+            .update(s.liveExams)
+            .set({ codingGrading: "automatic" })
+            .where(eq(s.liveExams.id, manual.id)),
+        );
+        const graded = await exams.manualGrade(admin, manual.id, attempt.id, {
+          revision: review.revision,
+          scores: [
+            { questionId: coding.id, points: 18, feedback: "Good approach." },
           ],
-        };
-        let release!: () => void;
-        const gate = new Promise<void>((resolve) => {
-          release = resolve;
         });
-        const calls: { id: string; hidden: boolean }[][] = [];
-        let hold = false;
-        const executor = {
-          configured: true,
-          provider: "OneCompiler",
-          async execute(input: { tests: { id: string; hidden: boolean }[] }) {
-            calls.push(input.tests);
-            if (hold) await gate;
-            return {
-              available: true,
-              message: "Done",
-              cases: input.tests.map((test) => ({
-                id: test.id,
-                passed: true,
-                stdout: "",
-                stderr: "",
-                verdict: "Accepted",
-              })),
-            };
-          },
-        };
-        const automatic = new ExamService(service, executor);
-        let exam = await automatic.create(admin, {
-          ...draft({
-            codingGrading: "automatic",
-            audience: {
-              mode: "students",
-              branchCodes: [],
-              studentIds: [student.id],
-            },
-            questions: [coding],
-          }),
-          clientId: randomUUID(),
-        });
-        exam = await automatic.publish(admin, exam.id, exam.revision);
-        await open(exam);
-        const started = await automatic.start(student, exam.id);
-        const run = await automatic.run(student, started.id, {
-          questionId: coding.id,
-          language: "Python",
-          code: "print(input())",
-        });
-        assert.equal(run.status, "completed");
-        assert.equal(calls[0].length, 1);
-        assert.equal(calls[0][0].hidden, false);
-        await scoped(connection.db, { platform: true }, (tx) =>
-          tx
-            .update(s.liveExamAttempts)
-            .set({ codeRuns: 30, lastRunAt: null })
-            .where(eq(s.liveExamAttempts.id, started.id)),
-        );
-        await assert.rejects(
-          () =>
-            automatic.run(student, started.id, {
-              questionId: coding.id,
-              language: "Python",
-              code: "print(input())",
-            }),
-          /limited to 30/,
-        );
-        hold = true;
-        const submission = await automatic.save(
-          student,
-          started.id,
-          {
-            revision: 0,
-            answers: [
-              {
-                questionId: coding.id,
-                language: "Python",
-                code: "print(input())",
-              },
-            ],
-          },
-          true,
-        );
-        assert.equal(submission.status, "grading");
-        assert.equal(
-          (await automatic.attempt(student, started.id)).status,
-          "grading",
-        );
-        assert.equal(calls[1].length, 2);
-        release();
-        await automatic.waitForGrading();
-        assert.equal(
-          (await automatic.adminAttempt(admin, exam.id, started.id)).result
-            .earnedPoints,
-          10,
-        );
-        // Simulate a process restart after a durable claim, before it stored its result.
-        await scoped(connection.db, { platform: true }, (tx) =>
-          tx
-            .update(s.liveExamAttempts)
-            .set({
-              status: "grading",
-              result: null,
-              gradingToken: randomUUID(),
-              gradingStartedAt: new Date(Date.now() - 6 * 60000),
-            })
-            .where(eq(s.liveExamAttempts.id, started.id)),
-        );
-        await automatic.attempt(student, started.id);
-        await automatic.waitForGrading();
-        assert.equal(
-          (await automatic.adminAttempt(admin, exam.id, started.id)).status,
-          "graded",
-        );
+        assert.equal(graded.result.earnedPoints, 28);
+        assert.equal(graded.status, "graded");
       },
     );
     await t.test(
@@ -795,12 +663,8 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
         );
         await assert.rejects(
           () =>
-            exams.run(student, a.id, {
-              questionId: "mcq-1",
-              language: "Python",
-              code: "print(1)",
-            }),
-          /no longer/,
+            exams.save(student, a.id, { revision: a.revision, answers: [] }),
+          /already been submitted/,
         );
         await scoped(connection.db, { platform: true }, (tx) =>
           tx
@@ -877,6 +741,15 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
             (await request("platform/exams/capabilities", adminCookie)).status,
             200,
           );
+          const capabilities = await request(
+            "platform/exams/capabilities",
+            adminCookie,
+          );
+          assert.deepEqual(await capabilities.json(), {
+            codingExecutionConfigured: false,
+            codingGrading: "manual",
+            provider: null,
+          });
           const list = await request("student/exams", studentCookie);
           assert.equal(list.status, 200);
           assert.ok(Array.isArray(await list.json()));
@@ -931,6 +804,32 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
             })),
           };
           assert.ok(Buffer.byteLength(JSON.stringify(payload)) > 512 * 1024);
+          assert.equal(
+            (
+              await request(
+                `student/exam-attempts/${attempt.id}/run`,
+                studentCookie,
+                "POST",
+                {
+                  questionId: questions[0].id,
+                  language: "Python",
+                  code: "print(1)",
+                },
+              )
+            ).status,
+            404,
+          );
+          assert.equal(
+            (
+              await request(
+                `platform/exams/${unicodeExam.id}/regrade`,
+                adminCookie,
+                "POST",
+                { revision: unicodeExam.revision },
+              )
+            ).status,
+            404,
+          );
           const saved = await request(
             `student/exam-attempts/${attempt.id}/answers`,
             studentCookie,

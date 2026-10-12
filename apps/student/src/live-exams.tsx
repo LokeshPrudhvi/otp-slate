@@ -5,14 +5,12 @@ import type {
   ExamAnswer,
   ExamAttemptView,
   ExamLanguage,
-  ExamRunResult,
   StudentExamDetail,
   StudentExamSummary,
 } from "@slate/contracts";
 import { api, LessonContent, Select } from "@slate/ui";
 import { Heading, NoResults, Status } from "./design";
 import { useStudentData } from "./access";
-import { ExamOneCompiler } from "./exam-onecompiler";
 import { ExamEventBuffer, ExamSession } from "./live-exam-session";
 
 const date = (value: string) =>
@@ -40,8 +38,7 @@ function Monitoring({ exam }: { exam: StudentExamDetail }) {
       {exam.monitoring.enabled && exam.monitoring.recordClipboard && (
         <p>
           Copy, cut and paste event counts are recorded. Clipboard contents are
-          never collected. Clipboard events inside an external coding runner
-          cannot be observed.
+          never collected.
         </p>
       )}
       {exam.monitoring.enabled && exam.monitoring.requireFullscreen && (
@@ -253,10 +250,9 @@ function ExamInstructions({
           />
           <Monitoring exam={exam} />
           <p className="hub-note">
-            {exam.codingGrading === "manual"
-              ? "Multiple-choice answers are graded automatically. Coding answers are reviewed by your administrator; example runs are optional and do not assign marks."
-              : "Multiple-choice and coding answers are graded on the server. Public example runs are not your final grade."}{" "}
-            Results appear after your administrator releases them.
+            Multiple-choice answers are graded automatically. Your submitted
+            code is reviewed by your administrator. Results appear after your
+            administrator releases them.
           </p>
           <label className="exam-agree">
             <input
@@ -358,11 +354,8 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
     [online, setOnline] = useState(navigator.onLine),
     [confirm, setConfirm] = useState<"submit" | "reload" | null>(null),
     [fullscreen, setFullscreen] = useState(Boolean(document.fullscreenElement)),
-    [run, setRun] = useState<ExamRunResult | null>(null),
-    [running, setRunning] = useState(false),
-    [runError, setRunError] = useState("");
-  const expiredOnce = useRef(false),
-    runSerial = useRef(0);
+    [fullscreenError, setFullscreenError] = useState("");
+  const expiredOnce = useRef(false);
   const dialogRef = useRef<HTMLElement>(null);
   const monitor = useRef<ExamEventBuffer | null>(null);
   const query = useQueryClient();
@@ -601,12 +594,6 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
       window.removeEventListener("student-before-navigation", directNavigation);
     };
   }, [finished, state.dirty]);
-  useEffect(() => {
-    runSerial.current++;
-    setRun(null);
-    setRunError("");
-    setRunning(false);
-  }, [question?.id]);
   if (finished)
     return (
       <ExamSubmitted
@@ -615,30 +602,6 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
         error={state.error}
       />
     );
-  async function runCode() {
-    if (question?.kind !== "coding" || !editable || running) return;
-    const serial = ++runSerial.current;
-    const language = answer?.language || question.languages[0];
-    setRunning(true);
-    setRunError("");
-    setRun(null);
-    try {
-      const result = await api<ExamRunResult>(
-        `student/exam-attempts/${view.id}/run`,
-        "POST",
-        {
-          questionId: question.id,
-          language,
-          code: answer?.code ?? question.starterCode[language] ?? "",
-        },
-      );
-      if (serial === runSerial.current) setRun(result);
-    } catch (error) {
-      if (serial === runSerial.current) setRunError((error as Error).message);
-    } finally {
-      if (serial === runSerial.current) setRunning(false);
-    }
-  }
   return (
     <>
       <div className="exam-session-header">
@@ -730,7 +693,7 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
                 void document.documentElement
                   .requestFullscreen?.()
                   .catch(() =>
-                    setRunError(
+                    setFullscreenError(
                       "Could not enter fullscreen. Check your browser permissions.",
                     ),
                   );
@@ -740,6 +703,11 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
             </button>
           </div>
         )}
+      {fullscreenError && (
+        <p className="exam-alert" role="alert">
+          {fullscreenError}
+        </p>
+      )}
       <div className="exam-session-layout">
         <aside className="exam-question-nav" aria-label="Question navigator">
           <h2>Questions</h2>
@@ -778,28 +746,27 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
               </span>
               <h2>{question.title}</h2>
               <LessonContent body={question.prompt} format="markdown" />
-              {question.kind === "coding" && (
-                <div className="exam-public-cases">
-                  <h3>Sample test cases</h3>
-                  {question.testCases
-                    .filter((item) => !item.hidden)
-                    .map((item, index) => (
-                      <div key={item.id}>
-                        <b>Example {index + 1}</b>
-                        <pre>
-                          Input: {item.input}
-                          {"\n"}Output: {item.output}
-                        </pre>
-                      </div>
-                    ))}
-                  <p>
-                    Run checks the public examples.{" "}
-                    {view.exam.codingGrading === "manual"
-                      ? "Your administrator reviews your submitted code. Example runs do not assign marks."
-                      : "Submission may include hidden tests."}
-                  </p>
-                </div>
-              )}
+              {question.kind === "coding" &&
+                question.testCases.some((item) => !item.hidden) && (
+                  <div className="exam-public-cases">
+                    <h3>Example input and output</h3>
+                    {question.testCases
+                      .filter((item) => !item.hidden)
+                      .map((item, index) => (
+                        <div key={item.id}>
+                          <b>Example {index + 1}</b>
+                          <pre>
+                            Input: {item.input}
+                            {"\n"}Output: {item.output}
+                          </pre>
+                        </div>
+                      ))}
+                    <p>
+                      Use these examples to understand the expected input and
+                      output. Your administrator reviews your submitted code.
+                    </p>
+                  </div>
+                )}
             </div>
             {question.kind === "mcq" ? (
               <fieldset className="exam-mcq" disabled={!editable}>
@@ -869,15 +836,6 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
                       });
                     }}
                   />
-                  {view.exam.codingGrading !== "manual" && (
-                    <button
-                      className="a-btn"
-                      disabled={!editable || running || !online}
-                      onClick={() => void runCode()}
-                    >
-                      {running ? "Running…" : "Run examples"}
-                    </button>
-                  )}
                 </div>
                 <label className="student-skip" htmlFor="exam-source">
                   Code for {question.title}
@@ -906,61 +864,9 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
                   }
                 />
                 <p className="exam-source-limit">
-                  Maximum 30,000 characters. Your source above is the answer
-                  saved for submission.
+                  Maximum 30,000 characters. Your administrator reviews your
+                  submitted code.
                 </p>
-                {view.exam.codingGrading === "manual" && (
-                  <ExamOneCompiler
-                    key={`${question.id}:${answer?.language || question.languages[0]}`}
-                    language={answer?.language || question.languages[0]}
-                    code={
-                      answer?.code ??
-                      question.starterCode[
-                        answer?.language || question.languages[0]
-                      ] ??
-                      ""
-                    }
-                    input={
-                      question.testCases.find((item) => !item.hidden)?.input ||
-                      ""
-                    }
-                    editable={editable}
-                    onCode={(code) =>
-                      session.edit({
-                        questionId: question.id,
-                        language: answer?.language || question.languages[0],
-                        code,
-                      })
-                    }
-                  />
-                )}
-                {runError && (
-                  <p className="exam-alert" role="alert">
-                    {runError}
-                  </p>
-                )}
-                {run && (
-                  <section className="exam-run-results" aria-live="polite">
-                    <h3>
-                      {run.status === "unavailable"
-                        ? "Execution unavailable"
-                        : "Example results"}
-                    </h3>
-                    <p>{run.message}</p>
-                    {run.cases.map((item, index) => (
-                      <details key={item.id}>
-                        <summary>
-                          Example {index + 1}:{" "}
-                          {item.passed ? "Passed" : item.verdict}
-                        </summary>
-                        <pre>
-                          {item.stdout || "No output"}
-                          {item.stderr ? `\n${item.stderr}` : ""}
-                        </pre>
-                      </details>
-                    ))}
-                  </section>
-                )}
               </div>
             )}
           </section>

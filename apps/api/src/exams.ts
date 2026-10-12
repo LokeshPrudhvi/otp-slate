@@ -4,10 +4,8 @@ import {
   ForbiddenException,
   HttpException,
   NotFoundException,
-  ServiceUnavailableException,
 } from "@nestjs/common";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
   examLanguages,
@@ -22,7 +20,6 @@ import {
   type ExamQuestion,
   type ExamResult,
   type ExamResults,
-  type ExamRunResult,
   type StudentExamDetail,
   type StudentExamQuestion,
   type StudentExamSummary,
@@ -31,7 +28,6 @@ import type { Actor, SlateService } from "./service.js";
 import type { Transaction } from "./database.js";
 import { lockOrganizationBranches, branchCodeInput } from "./branches.js";
 import { resolvePolicies } from "./access.js";
-import { examExecutor, type ExamExecutor } from "./exam-execution.js";
 import * as s from "./schema.js";
 
 const text = (max: number) => z.string().trim().min(1).max(max);
@@ -78,14 +74,14 @@ const question = z.discriminatedUnion("kind", [
             })
             .strict(),
         )
-        .min(1)
-        .max(10),
+        .max(10)
+        .default([]),
     })
     .strict(),
 ]);
 export const examDraftInput = z
   .object({
-    codingGrading: z.enum(["manual", "automatic"]),
+    codingGrading: z.literal("manual"),
     organizationId: z.uuid(),
     title: text(150),
     description: z.string().max(2000),
@@ -137,13 +133,6 @@ export const examDraftInput = z
           issue("Starter code must use the question's selected languages.");
         if (new Set(q.testCases.map((c) => c.id)).size !== q.testCases.length)
           issue("Test case IDs must be unique within each question.");
-        if (
-          !q.testCases.some((c) => c.hidden) ||
-          !q.testCases.some((c) => !c.hidden)
-        )
-          issue(
-            "Coding questions need at least one sample and one hidden test.",
-          );
       }
     }
     const a = value.audience;
@@ -226,16 +215,6 @@ export const manualExamGradeInput = z
       .max(10),
   })
   .strict();
-export const examRunInput = z
-  .object({
-    questionId: key,
-    language,
-    code: sourceCode.refine(
-      (value) => value.length > 0,
-      "Add code before running.",
-    ),
-  })
-  .strict();
 type ExamRow = typeof s.liveExams.$inferSelect;
 type AttemptRow = typeof s.liveExamAttempts.$inferSelect;
 const iso = (d: Date | null) => d?.toISOString() ?? null;
@@ -277,25 +256,21 @@ function validateAnswers(
     if (
       q.kind === "coding" &&
       (a.selectedOption !== undefined ||
-        (a.language !== undefined && !q.languages.includes(a.language)) ||
-        (a.code && !a.language))
+        (a.language !== undefined && !q.languages.includes(a.language)))
     )
       throw new BadRequestException(
         "Choose an allowed language for this coding answer.",
       );
   }
 }
-const automaticGrades = new WeakMap<object, Map<string, Promise<void>>>();
 export class ExamService {
-  constructor(
-    private readonly service: SlateService,
-    private readonly executor: ExamExecutor = examExecutor(),
-  ) {}
+  constructor(private readonly service: SlateService) {}
   capabilities(actor: Actor) {
     this.admin(actor);
     return {
-      codingExecutionConfigured: this.executor.configured,
-      provider: "OneCompiler",
+      codingExecutionConfigured: false,
+      codingGrading: "manual" as const,
+      provider: null,
     };
   }
   private admin(actor: Actor) {
@@ -518,7 +493,7 @@ export class ExamService {
         organizationName: m.organizationName,
         title: row.title,
         description: row.description,
-        codingGrading: row.codingGrading as "manual" | "automatic",
+        codingGrading: "manual" as const,
         status: row.status as ExamAdminSummary["status"],
         phase: this.phase(row),
         startsAt: row.startsAt.toISOString(),
@@ -719,14 +694,6 @@ export class ExamService {
         .from(s.liveExamQuestions)
         .where(eq(s.liveExamQuestions.examId, id));
       if (!key) throw new BadRequestException("Add exam questions first.");
-      if (
-        current.codingGrading === "automatic" &&
-        key.questions.some((q) => q.kind === "coding") &&
-        !this.executor.configured
-      )
-        throw new ServiceUnavailableException(
-          "Configure the code execution provider before publishing a coding exam.",
-        );
       const recipients = await this.recipients(tx, org, current.audience);
       if (!recipients.length)
         throw new BadRequestException(
@@ -749,6 +716,7 @@ export class ExamService {
         .update(s.liveExams)
         .set({
           status: "published",
+          codingGrading: "manual",
           revision: current.revision + 1,
           publishedAt: new Date(),
           updatedAt: new Date(),
@@ -838,7 +806,7 @@ export class ExamService {
     return {
       ...this.studentSummary(row, attempt),
       instructions: row.instructions,
-      codingGrading: row.codingGrading as "manual" | "automatic",
+      codingGrading: "manual" as const,
       passingPercentage: row.passingPercentage,
       monitoring: row.monitoring,
       serverNow: new Date().toISOString(),
@@ -1129,72 +1097,6 @@ export class ExamService {
       return { accepted: inserted.length };
     });
   }
-  async run(
-    actor: Actor,
-    id: string,
-    supplied: z.infer<typeof examRunInput>,
-  ): Promise<ExamRunResult> {
-    this.student(actor);
-    const input = examRunInput.parse(supplied);
-    const tests = await this.service.scope(actor, async (tx) => {
-      await this.currentStudent(tx, actor);
-      const attempt = await this.ownedAttempt(tx, actor, id, true);
-      const exam = await this.row(tx, attempt.examId);
-      if (
-        attempt.status !== "in_progress" ||
-        Date.now() >= attempt.deadlineAt.getTime() ||
-        exam.status !== "published"
-      )
-        throw new ConflictException(
-          "This attempt is no longer accepting code runs.",
-        );
-      const q = exam.publicQuestions.find((q) => q.id === input.questionId);
-      if (!q || q.kind !== "coding" || !q.languages.includes(input.language))
-        throw new BadRequestException(
-          "Choose an allowed coding question and language.",
-        );
-      if (
-        attempt.codeRuns >= 30 ||
-        (attempt.lastRunAt && Date.now() - attempt.lastRunAt.getTime() < 5000)
-      )
-        throw new HttpException(
-          "Code runs are limited to 30 per exam and one every five seconds.",
-          429,
-        );
-      if (!this.executor.configured)
-        throw new ServiceUnavailableException(
-          "Code execution is not configured.",
-        );
-      await tx
-        .update(s.liveExamAttempts)
-        .set({ codeRuns: attempt.codeRuns + 1, lastRunAt: new Date() })
-        .where(eq(s.liveExamAttempts.id, id));
-      return q.testCases;
-    });
-    try {
-      const result = await this.executor.execute({
-        language: input.language,
-        code: input.code,
-        tests,
-      });
-      return {
-        questionId: input.questionId,
-        status: result.available ? "completed" : "unavailable",
-        message: result.message,
-        cases: result.available
-          ? result.cases.filter((c) => tests.some((t) => t.id === c.id))
-          : [],
-      };
-    } catch {
-      return {
-        questionId: input.questionId,
-        status: "unavailable",
-        message:
-          "The execution provider is unavailable. Your saved answer is unaffected.",
-        cases: [],
-      };
-    }
-  }
   private async finalizeExpired(
     actor: Actor,
     examId?: string,
@@ -1223,8 +1125,9 @@ export class ExamService {
   private internalActor(actor: Actor): Actor {
     return { ...actor, role: "platform_admin" };
   }
-  private async grade(actor: Actor, id: string, force = false) {
-    // Establish ownership in the caller's scope before reading server-only keys.
+  private async grade(actor: Actor, id: string) {
+    // Ownership is checked under the caller's RLS before server-only MCQ keys
+    // are read. Coding source is never executed or sent to another service.
     const visible = await this.service.scope(actor, async (tx) => {
       const [attempt] = await tx
         .select()
@@ -1237,245 +1140,116 @@ export class ExamService {
         throw new NotFoundException("Exam attempt not found.");
       return attempt;
     });
-    if (visible.status === "in_progress" || visible.status === "graded") return;
-    const mode = await this.service.scope(actor, async (tx) => {
-      const exam = await this.row(tx, visible.examId);
-      return (
-        exam.codingGrading === "automatic" &&
-        exam.publicQuestions.some(
-          (q) =>
-            q.kind === "coding" &&
-            visible.answers.some(
-              (a) => a.questionId === q.id && a.code?.trim(),
-            ),
-        )
-      );
-    });
-    let jobs = automaticGrades.get(this.service.db);
-    if (!jobs) {
-      jobs = new Map();
-      automaticGrades.set(this.service.db, jobs);
-    }
-    if (mode && (jobs.has(id) || jobs.size >= 2)) return;
-    // Reserve the in-process slot before awaiting a database lease. A crashed
-    // process leaves a durable lease which a later read can recover after 5 min.
-    if (mode) jobs.set(id, Promise.resolve());
-    let claim;
-    try {
-      claim = await this.service.scope(
-        this.internalActor(actor),
-        async (tx) => {
-          const [attempt] = await tx
-            .select()
-            .from(s.liveExamAttempts)
-            .where(eq(s.liveExamAttempts.id, id))
-            .for("update");
-          if (
-            !attempt ||
-            attempt.status === "in_progress" ||
-            attempt.status === "graded"
-          )
-            return null;
-          const exam = await this.row(tx, attempt.examId);
-          if (
-            exam.status === "cancelled" ||
-            (exam.codingGrading === "manual" && attempt.result)
-          )
-            return null;
-          const org = await this.organization(tx, exam.organizationId);
-          if (org.status !== "active") return null;
-          if (
-            attempt.gradingStartedAt &&
-            Date.now() - attempt.gradingStartedAt.getTime() <
-              (attempt.status === "grading" ? 300000 : 120000) &&
-            (!force || attempt.status === "grading")
-          )
-            return null;
-          const [keys] = await tx
-            .select()
-            .from(s.liveExamQuestions)
-            .where(eq(s.liveExamQuestions.examId, exam.id));
-          if (!keys) throw new Error("Missing exam questions");
-          const token = randomUUID();
-          await tx
-            .update(s.liveExamAttempts)
-            .set({
-              status: "grading",
-              gradingToken: token,
-              gradingStartedAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .where(eq(s.liveExamAttempts.id, id));
-          return { attempt, exam, questions: keys.questions, token };
+    if (
+      visible.status === "in_progress" ||
+      visible.status === "graded" ||
+      (visible.result && visible.status !== "grading")
+    )
+      return;
+    await this.service.scope(this.internalActor(actor), async (tx) => {
+      const [attempt] = await tx
+        .select()
+        .from(s.liveExamAttempts)
+        .where(eq(s.liveExamAttempts.id, id))
+        .for("update");
+      if (
+        !attempt ||
+        attempt.status === "in_progress" ||
+        attempt.status === "graded" ||
+        (attempt.result && attempt.status !== "grading")
+      )
+        return;
+      const exam = await this.row(tx, attempt.examId);
+      if (
+        exam.status === "cancelled" ||
+        (await this.organization(tx, exam.organizationId)).status !== "active"
+      )
+        return;
+      const [keys] = await tx
+        .select()
+        .from(s.liveExamQuestions)
+        .where(eq(s.liveExamQuestions.examId, exam.id));
+      if (!keys) throw new Error("Missing exam questions");
+      const questions: ExamResult["questions"] = keys.questions.map(
+        (question) => {
+          const answer = attempt.answers.find(
+            (item) => item.questionId === question.id,
+          );
+          const base = {
+            questionId: question.id,
+            kind: question.kind,
+            title: question.title,
+            points: question.points,
+          };
+          if (question.kind === "mcq")
+            return {
+              ...base,
+              earnedPoints:
+                answer?.selectedOption === question.correctOption
+                  ? question.points
+                  : 0,
+              verdict:
+                answer?.selectedOption === question.correctOption
+                  ? "Correct"
+                  : answer?.selectedOption == null
+                    ? "Unanswered"
+                    : "Incorrect",
+              correctOption: question.correctOption,
+              explanation: question.explanation,
+            };
+          const reviewed = attempt.result?.questions.find(
+            (item) =>
+              item.questionId === question.id &&
+              item.verdict === "Manually reviewed",
+          );
+          if (reviewed) return reviewed;
+          return {
+            ...base,
+            earnedPoints: answer?.code?.trim() ? null : 0,
+            verdict: answer?.code?.trim()
+              ? "Awaiting manual review"
+              : "Unanswered",
+          };
         },
       );
-    } catch (error) {
-      if (mode) jobs.delete(id);
-      throw error;
-    }
-    if (!claim) {
-      if (mode) jobs.delete(id);
-      return;
-    }
-    if (mode) {
-      const job = this.evaluateClaim(actor, claim)
-        .catch(() => undefined)
-        .finally(() => jobs!.delete(id));
-      jobs.set(id, job);
-      return;
-    }
-    await this.evaluateClaim(actor, claim);
-  }
-  // An explicit test/shutdown hook; ordinary HTTP requests never wait on remote compilation.
-  async waitForGrading() {
-    await Promise.all(automaticGrades.get(this.service.db)?.values() || []);
-  }
-  private async evaluateClaim(
-    actor: Actor,
-    claim: {
-      attempt: AttemptRow;
-      exam: ExamRow;
-      questions: ExamQuestion[];
-      token: string;
-    },
-  ) {
-    const id = claim.attempt.id;
-    const questions: ExamResult["questions"] = [];
-    for (const q of claim.questions) {
-      const answer = claim.attempt.answers.find((a) => a.questionId === q.id);
-      if (q.kind === "mcq") {
-        questions.push({
-          questionId: q.id,
-          kind: q.kind,
-          title: q.title,
-          points: q.points,
-          earnedPoints:
-            answer?.selectedOption === q.correctOption ? q.points : 0,
-          verdict:
-            answer?.selectedOption === q.correctOption
-              ? "Correct"
-              : answer?.selectedOption == null
-                ? "Unanswered"
-                : "Incorrect",
-          correctOption: q.correctOption,
-          explanation: q.explanation,
-        });
-        continue;
-      }
-      if (!answer?.code?.trim() || !answer.language) {
-        questions.push({
-          questionId: q.id,
-          kind: q.kind,
-          title: q.title,
-          points: q.points,
-          earnedPoints: 0,
-          verdict: "Unanswered",
-          passedTests: 0,
-          totalTests: q.testCases.length,
-        });
-        continue;
-      }
-      const previous = claim.attempt.result?.questions.find(
-        (r) => r.questionId === q.id,
+      const pending = questions.some(
+        (question) => question.earnedPoints === null,
       );
-      if (previous && previous.earnedPoints !== null) {
-        questions.push(previous);
-        continue;
-      }
-      if (claim.exam.codingGrading === "manual") {
-        questions.push({
-          questionId: q.id,
-          kind: q.kind,
-          title: q.title,
-          points: q.points,
-          earnedPoints: null,
-          verdict: "Awaiting manual review",
-        });
-        continue;
-      }
-      let result: Awaited<ReturnType<ExamExecutor["execute"]>>;
-      try {
-        result = await this.executor.execute({
-          language: answer.language,
-          code: answer.code,
-          tests: q.testCases,
-        });
-      } catch {
-        result = {
-          available: false,
-          message: "Execution unavailable",
-          cases: [],
-        };
-      }
-      if (
-        !result.available ||
-        result.cases.length !== q.testCases.length ||
-        q.testCases.some((t) => !result.cases.some((c) => c.id === t.id))
-      ) {
-        questions.push({
-          questionId: q.id,
-          kind: q.kind,
-          title: q.title,
-          points: q.points,
-          earnedPoints: null,
-          verdict: "Pending code evaluation",
-          totalTests: q.testCases.length,
-        });
-        continue;
-      }
-      const passed = q.testCases.filter(
-        (test) => result.cases.find((c) => c.id === test.id)?.passed,
-      ).length;
-      questions.push({
-        questionId: q.id,
-        kind: q.kind,
-        title: q.title,
-        points: q.points,
-        earnedPoints:
-          Math.round(((q.points * passed) / q.testCases.length) * 100) / 100,
-        verdict: passed === q.testCases.length ? "Accepted" : "Tests failed",
-        passedTests: passed,
-        totalTests: q.testCases.length,
-      });
-    }
-    const pending = questions.some((q) => q.earnedPoints === null);
-    const totalPoints = total(claim.questions);
-    const earnedPoints = pending
-      ? null
-      : Math.round(
-          questions.reduce((n, q) => n + (q.earnedPoints || 0), 0) * 100,
-        ) / 100;
-    const percentage =
-      earnedPoints === null
-        ? null
-        : Math.round((earnedPoints / totalPoints) * 10000) / 100;
-    const result: ExamResult = {
-      earnedPoints,
-      totalPoints,
-      percentage,
-      passed:
-        percentage === null ? null : percentage >= claim.exam.passingPercentage,
-      questions,
-    };
-    await this.service.scope(this.internalActor(actor), async (tx) => {
+      const totalPoints = total(keys.questions),
+        earnedPoints = pending
+          ? null
+          : Math.round(
+              questions.reduce(
+                (sum, question) => sum + (question.earnedPoints || 0),
+                0,
+              ) * 100,
+            ) / 100;
+      const percentage =
+        earnedPoints === null
+          ? null
+          : Math.round((earnedPoints / totalPoints) * 10000) / 100;
+      const result: ExamResult = {
+        earnedPoints,
+        totalPoints,
+        percentage,
+        passed:
+          percentage === null ? null : percentage >= exam.passingPercentage,
+        questions,
+      };
       await tx
         .update(s.liveExamAttempts)
         .set({
           status: pending ? "submitted" : "graded",
           result,
-          version: sql`${s.liveExamAttempts.version}+1`,
+          version: attempt.version + 1,
           gradingToken: null,
+          gradingStartedAt: null,
           updatedAt: new Date(),
         })
-        .where(
-          and(
-            eq(s.liveExamAttempts.id, id),
-            eq(s.liveExamAttempts.gradingToken, claim.token),
-          ),
-        );
+        .where(eq(s.liveExamAttempts.id, id));
     });
   }
-  private async gradeBatch(actor: Actor, id: string, force = false) {
+  private async gradeBatch(actor: Actor, id: string) {
     const attempts = await this.service.scope(actor, (tx) =>
       tx
         .select({ id: s.liveExamAttempts.id })
@@ -1484,16 +1258,13 @@ export class ExamService {
           and(
             eq(s.liveExamAttempts.examId, id),
             inArray(s.liveExamAttempts.status, ["submitted", "grading"]),
-            sql`(${s.liveExamAttempts.result} is null OR EXISTS(select 1 from live_exams e where e.id=${s.liveExamAttempts.examId} and e.coding_grading='automatic'))`,
-            force
-              ? sql`(${s.liveExamAttempts.status}<>'grading' OR ${s.liveExamAttempts.gradingStartedAt}<now()-interval '5 minutes')`
-              : sql`(${s.liveExamAttempts.gradingStartedAt} is null OR (${s.liveExamAttempts.status}='grading' AND ${s.liveExamAttempts.gradingStartedAt}<now()-interval '5 minutes') OR (${s.liveExamAttempts.status}<>'grading' AND ${s.liveExamAttempts.gradingStartedAt}<now()-interval '2 minutes'))`,
+            sql`(${s.liveExamAttempts.result} is null OR ${s.liveExamAttempts.status}='grading')`,
           ),
         )
         .orderBy(s.liveExamAttempts.updatedAt)
         .limit(3),
     );
-    for (const attempt of attempts) await this.grade(actor, attempt.id, force);
+    for (const attempt of attempts) await this.grade(actor, attempt.id);
   }
   async results(actor: Actor, id: string): Promise<ExamResults> {
     this.admin(actor);
@@ -1618,11 +1389,7 @@ export class ExamService {
       const reference = await this.row(tx, id);
       this.active(await this.organization(tx, reference.organizationId, true));
       const exam = await this.row(tx, id, true);
-      if (
-        exam.status !== "published" ||
-        exam.resultsReleasedAt ||
-        exam.codingGrading !== "manual"
-      )
+      if (exam.status !== "published" || exam.resultsReleasedAt)
         throw new ConflictException(
           "Manual grading is available for unreleased, published manual exams only.",
         );
@@ -1710,29 +1477,6 @@ export class ExamService {
     });
     return this.adminAttempt(actor, id, attemptId);
   }
-  async regrade(
-    actor: Actor,
-    id: string,
-    revision: number,
-  ): Promise<AdminExam> {
-    this.admin(actor);
-    await this.service.scope(actor, async (tx) => {
-      const row = await this.row(tx, id);
-      this.revision(row, revision);
-      this.active(await this.organization(tx, row.organizationId));
-      if (
-        row.codingGrading !== "automatic" ||
-        row.status !== "published" ||
-        row.resultsReleasedAt
-      )
-        throw new ConflictException(
-          "Only unreleased published exams can be regraded.",
-        );
-    });
-    await this.finalizeExpired(actor, id);
-    await this.gradeBatch(actor, id, true);
-    return this.detail(actor, id);
-  }
   async release(
     actor: Actor,
     id: string,
@@ -1762,7 +1506,7 @@ export class ExamService {
         );
       if (pending.value)
         throw new ConflictException(
-          "Some attempts are awaiting evaluation. Review results and retry pending evaluations before releasing.",
+          "Some submissions still need review. Grade the remaining submissions before releasing results.",
         );
       if (row.resultsReleasedAt) return this.adminView(tx, row);
       const [updated] = await tx

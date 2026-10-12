@@ -42,7 +42,7 @@ export function examDraftFrom(exam: ExamDraft | AdminExam): ExamDraft {
     endsAt: exam.endsAt,
     durationMinutes: exam.durationMinutes,
     passingPercentage: exam.passingPercentage,
-    codingGrading: exam.codingGrading,
+    codingGrading: "manual",
     monitoring: exam.monitoring,
     questions: exam.questions,
   });
@@ -65,10 +65,7 @@ export function newExamQuestion(
         kind,
         languages: ["Python"],
         starterCode: { Python: "" },
-        testCases: [
-          { id: crypto.randomUUID(), input: "", output: "", hidden: false },
-          { id: crypto.randomUUID(), input: "", output: "", hidden: true },
-        ],
+        testCases: [],
       };
 }
 export function localDateTime(value: string) {
@@ -159,16 +156,8 @@ export function validateExamDraft(draft: ExamDraft): string[] {
         issues.push(
           prefix + "starter code must be under 30,000 characters per language.",
         );
-      if (
-        q.testCases.length < 2 ||
-        q.testCases.length > 10 ||
-        !q.testCases.some((test) => test.hidden) ||
-        !q.testCases.some((test) => !test.hidden)
-      )
-        issues.push(
-          prefix +
-            "add 2–10 test cases, including a public example and a hidden test.",
-        );
+      if (q.testCases.length > 10)
+        issues.push(prefix + "keep at most 10 saved reference examples.");
       if (
         q.testCases.some(
           (test) => test.input.length > 10000 || test.output.length > 10000,

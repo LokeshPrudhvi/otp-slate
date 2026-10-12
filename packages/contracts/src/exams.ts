@@ -204,18 +204,6 @@ export interface ExamAttemptView {
   eventCount: number;
   result: ExamResult | null;
 }
-export interface ExamRunResult {
-  questionId: string;
-  status: "completed" | "unavailable";
-  message: string;
-  cases: {
-    id: string;
-    passed: boolean;
-    stdout: string;
-    stderr: string;
-    verdict: string;
-  }[];
-}
 export interface ExamResultsRow {
   memberId: string;
   name: string;

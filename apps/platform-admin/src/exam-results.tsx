@@ -38,7 +38,7 @@ export function ExamResultsPanel({
 }: {
   exam: AdminExam;
   busy: boolean;
-  onAction: (kind: "release-results" | "regrade", revision: number) => void;
+  onAction: (kind: "release-results", revision: number) => void;
 }) {
   const results = useData<ExamResults>(
     `exam-results:${exam.id}`,
@@ -64,8 +64,11 @@ export function ExamResultsPanel({
     : null;
   const currentExam = results.data?.exam || exam;
   useEffect(() => {
-    if (currentExam.status !== "published" || currentExam.resultsReleasedAt) return;
-    const timer = window.setInterval(() => { if (document.visibilityState === "visible") void results.refetch(); }, 15_000);
+    if (currentExam.status !== "published" || currentExam.resultsReleasedAt)
+      return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void results.refetch();
+    }, 15_000);
     return () => window.clearInterval(timer);
   }, [currentExam.status, currentExam.resultsReleasedAt, results.refetch]);
   const ended =
@@ -128,16 +131,6 @@ export function ExamResultsPanel({
           >
             {results.isFetching ? "Refreshing…" : "Refresh results"}
           </button>
-          {exam.codingGrading === "automatic" && pending.length > 0 && (
-            <button
-              type="button"
-              className="btn"
-              disabled={busy || !ended}
-              onClick={() => onAction("regrade", currentExam.revision)}
-            >
-              Retry pending grading
-            </button>
-          )}
           <button
             className="btn primary"
             disabled={
@@ -577,7 +570,7 @@ function AttemptContent({
       </div>
       {editable && (
         <p className="exam-info">
-          Review the submitted source, prompt and test cases. Award marks for
+          Review the submitted source and the question prompt. Award marks for
           each coding question. Multiple-choice scores are already calculated
           and remain unchanged.
         </p>
@@ -630,28 +623,30 @@ function AttemptContent({
                 <pre className="exam-source">
                   {answer?.code || "No source code submitted."}
                 </pre>
-                <details>
-                  <summary>
-                    Grading test cases ({question.testCases.length})
-                  </summary>
-                  {question.testCases.map((test, i) => (
-                    <div className="exam-test" key={test.id}>
-                      <strong>
-                        Test {i + 1} · {test.hidden ? "Hidden" : "Public"}
-                      </strong>
-                      <div className="form-grid">
-                        <div>
-                          <small>Input</small>
-                          <pre>{test.input || "(empty)"}</pre>
-                        </div>
-                        <div>
-                          <small>Expected output</small>
-                          <pre>{test.output || "(empty)"}</pre>
+                {question.testCases.length > 0 && (
+                  <details>
+                    <summary>
+                      Saved reference examples ({question.testCases.length})
+                    </summary>
+                    {question.testCases.map((test, i) => (
+                      <div className="exam-test" key={test.id}>
+                        <strong>
+                          Test {i + 1} · {test.hidden ? "Hidden" : "Public"}
+                        </strong>
+                        <div className="form-grid">
+                          <div>
+                            <small>Input</small>
+                            <pre>{test.input || "(empty)"}</pre>
+                          </div>
+                          <div>
+                            <small>Expected output</small>
+                            <pre>{test.output || "(empty)"}</pre>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </details>
+                    ))}
+                  </details>
+                )}
                 {editable && score ? (
                   <div className="exam-manual-score">
                     <Field

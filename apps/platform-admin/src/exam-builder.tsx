@@ -19,13 +19,11 @@ export function ExamBuilder({
   value,
   onChange,
   audience,
-  codingExecutionConfigured,
   disabled = false,
 }: {
   value: ExamDraft;
   onChange: (draft: ExamDraft) => void;
   audience: ExamAudienceOptions | undefined;
-  codingExecutionConfigured: boolean;
   disabled?: boolean;
 }) {
   const [search, setSearch] = useState("");
@@ -398,33 +396,10 @@ export function ExamBuilder({
         </p>
       </section>
       <section className="exam-form-card">
-        <Field label="Coding grading">
-          <AdminSelect
-            aria-label="Coding grading"
-            value={value.codingGrading}
-            onChange={(codingGrading) =>
-              patch({
-                codingGrading: codingGrading as ExamDraft["codingGrading"],
-              })
-            }
-            options={[
-              {
-                value: "manual",
-                label: "Manual · admin reviews and awards marks",
-              },
-              {
-                value: "automatic",
-                label: "Automatic · OneCompiler API",
-                disabled: !codingExecutionConfigured,
-              },
-            ]}
-          />
-        </Field>
-        <p className="muted">
-          Multiple-choice answers are always scored automatically.{" "}
-          {codingExecutionConfigured
-            ? "Automatic coding grading runs saved test cases through OneCompiler."
-            : "Manual coding exams are available now. Configure the OneCompiler API to enable automatic coding grading."}
+        <p className="exam-info">
+          Multiple-choice answers are scored automatically. Students submit
+          coding answers as text; an administrator reviews each answer and
+          awards marks.
         </p>
         <header className="exam-question-header">
           <div>
@@ -656,11 +631,10 @@ export function ExamBuilder({
                 ) : (
                   <>
                     <p className="exam-info">
-                      Coding questions run programs against standard
-                      input/output. Manual grading is available without an API
-                      key; admins review the submitted source and award marks.
-                      Hidden tests are used for grading and are never shown to
-                      students.
+                      Describe the problem and what a complete answer should
+                      include. Students enter their code in a text box and
+                      submit it for your review. Add examples or expected output
+                      to the prompt when helpful.
                     </p>
                     <fieldset className="exam-language-list">
                       <legend>Allowed languages</legend>
@@ -737,120 +711,6 @@ export function ExamBuilder({
                         </Field>
                       </>
                     )}
-                    <div className="exam-test-list">
-                      <h3>Test cases</h3>
-                      <p className="muted">
-                        Include at least one public example and one hidden test.
-                        Whitespace and output matching follow the code execution
-                        service’s grading rules.
-                      </p>
-                      {q.testCases.map((test, testIndex) => (
-                        <section className="exam-test" key={test.id}>
-                          <div className="exam-audience-tools">
-                            <strong>Test {testIndex + 1}</strong>
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={test.hidden}
-                                onChange={(event) =>
-                                  editQuestion(q.id, {
-                                    ...q,
-                                    testCases: q.testCases.map((item) =>
-                                      item.id === test.id
-                                        ? {
-                                            ...item,
-                                            hidden: event.target.checked,
-                                          }
-                                        : item,
-                                    ),
-                                  })
-                                }
-                              />{" "}
-                              Hidden from students
-                            </label>
-                            <button
-                              type="button"
-                              className="link exam-danger"
-                              disabled={q.testCases.length <= 2}
-                              onClick={() =>
-                                editQuestion(q.id, {
-                                  ...q,
-                                  testCases: q.testCases.filter(
-                                    (item) => item.id !== test.id,
-                                  ),
-                                })
-                              }
-                            >
-                              Remove test
-                            </button>
-                          </div>
-                          <div className="form-grid">
-                            <Field label="Standard input">
-                              <textarea
-                                className="exam-code"
-                                rows={4}
-                                maxLength={10000}
-                                spellCheck={false}
-                                value={test.input}
-                                onChange={(event) =>
-                                  editQuestion(q.id, {
-                                    ...q,
-                                    testCases: q.testCases.map((item) =>
-                                      item.id === test.id
-                                        ? { ...item, input: event.target.value }
-                                        : item,
-                                    ),
-                                  })
-                                }
-                              />
-                            </Field>
-                            <Field label="Expected output">
-                              <textarea
-                                className="exam-code"
-                                rows={4}
-                                maxLength={10000}
-                                spellCheck={false}
-                                value={test.output}
-                                onChange={(event) =>
-                                  editQuestion(q.id, {
-                                    ...q,
-                                    testCases: q.testCases.map((item) =>
-                                      item.id === test.id
-                                        ? {
-                                            ...item,
-                                            output: event.target.value,
-                                          }
-                                        : item,
-                                    ),
-                                  })
-                                }
-                              />
-                            </Field>
-                          </div>
-                        </section>
-                      ))}
-                      <button
-                        type="button"
-                        className="btn"
-                        disabled={q.testCases.length >= 10}
-                        onClick={() =>
-                          editQuestion(q.id, {
-                            ...q,
-                            testCases: [
-                              ...q.testCases,
-                              {
-                                id: crypto.randomUUID(),
-                                input: "",
-                                output: "",
-                                hidden: true,
-                              },
-                            ],
-                          })
-                        }
-                      >
-                        + Add test case
-                      </button>
-                    </div>
                   </>
                 )}
               </div>
