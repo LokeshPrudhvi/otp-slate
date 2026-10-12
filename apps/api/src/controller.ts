@@ -554,9 +554,6 @@ export class ApiController {
       input.revision,
     );
   }
-  @Get("student/exams") async exams(@Req() req: Request) {
-    return this.service.exams(await this.service.actor(req, "student"));
-  }
   @Get("student/practice") async practice(@Req() req: Request) {
     return this.service.practice(await this.service.actor(req, "student"));
   }

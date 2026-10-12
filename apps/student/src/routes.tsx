@@ -5,7 +5,7 @@ import type {
   Course,
   Job,
   Lesson,
-  LiveExam,
+  StudentExamSummary,
   Ranking,
   PracticeAssessment,
 } from "@slate/contracts";
@@ -26,15 +26,16 @@ import {
 import { StudentLogin, StudentOnboarding, StudentResetPassword } from "./auth";
 import { StudentRegistration } from "./registration";
 import { ResumePage } from "./resume";
-import {
-  AssessmentPlayer,
-  LiveExamList,
-  PracticeCatalogue,
-} from "./assessments";
+import { AssessmentPlayer, PracticeCatalogue } from "./assessments";
 import { CodingLibrary } from "./coding";
 import { CompilerPage } from "./compiler";
 import { SelfAssessment } from "./self-assessment";
 import { StudentLessonActivity, lessonPresentation } from "./lessons";
+import {
+  LiveExamsPage,
+  LiveExamDetailPage,
+  LiveExamAttemptPage,
+} from "./live-exams";
 import { AnnouncementsPage } from "./announcements";
 import {
   AccessRoute,
@@ -150,13 +151,25 @@ function ToolkitShortcuts() {
 }
 function LiveExamShortcut() {
   const me = useMe();
-  const exams = useData<LiveExam[]>("exams", "student/exams"),
+  const exams = useData<StudentExamSummary[]>("exams", "student/exams"),
     live = exams.data?.find((exam) => exam.state === "live");
+  if (exams.isPending || exams.isError)
+    return (
+      <section className="live-dash">
+        <div>
+          <h2>Live exams</h2>
+          <Status pending={exams.isPending} error={exams.error} />
+        </div>
+        <Link className="a-btn" to="/live-exams">
+          View exams →
+        </Link>
+      </section>
+    );
   if (live)
     return (
       <section className="live-dash" aria-label="Live exams">
         <div>
-          <span className="hub-eyebrow">LIVE EXAMS · SAMPLE</span>
+          <span className="hub-eyebrow">LIVE EXAMS</span>
           <h2>{live.title}</h2>
           <p>
             {live.durationMinutes} minutes · {live.questionCount} questions ·
@@ -931,56 +944,6 @@ function Toolkit() {
 function Practice() {
   return <PracticeCatalogue />;
 }
-function LiveExams() {
-  const me = useMe();
-  const data = useData<LiveExam[]>("exams", "student/exams");
-  if (data.data?.length)
-    return (
-      <div className="a-page">
-        <Heading title="Live Exams" />
-        <LiveExamList exams={data.data} />
-      </div>
-    );
-  return (
-    <div className="a-page">
-      <Heading title="Live Exams" />
-      <Status pending={data.isPending} error={data.error} />
-      {data.data && (
-        <>
-          <section className="exam-empty">
-            <div className="exam-empty-art" aria-hidden="true">
-              <Artwork name="exam" />
-            </div>
-            <p className="hub-eyebrow">YOU’RE ALL CAUGHT UP</p>
-            <h2>No live exams available</h2>
-            <p>
-              When your institute releases a new exam, you’ll find it here with
-              the schedule and instructions.
-            </p>
-            {hasAccess(me.data, "practice") && (
-              <>
-                <Link className="a-btn pri" to="/practice">
-                  Keep learning with practice <span aria-hidden="true">→</span>
-                </Link>
-                <small>
-                  Build confidence while you wait for your next assessment.
-                </small>
-              </>
-            )}
-          </section>
-          {hasAccess(me.data, "practice") && (
-            <div className="empty-followup">
-              <b>A little practice goes a long way.</b>
-              <span>
-                Explore your assigned practice activities at your own pace.
-              </span>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
 function Jobs() {
   const data = useData<Job[]>("jobs", "student/jobs"),
     me = useMe(),
@@ -1267,7 +1230,23 @@ export function StudentRoutes() {
             path="live-exams"
             element={
               <AccessRoute feature="live-exams">
-                <LiveExams />
+                <LiveExamsPage />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="live-exams/:id"
+            element={
+              <AccessRoute feature="live-exams">
+                <LiveExamDetailPage />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="live-exams/:id/attempt/:attemptId"
+            element={
+              <AccessRoute feature="live-exams">
+                <LiveExamAttemptPage />
               </AccessRoute>
             }
           />

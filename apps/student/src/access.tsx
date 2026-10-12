@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link, Outlet, useParams, useSearchParams } from "react-router-dom";
+import { Link, Outlet, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { FeatureKey, Identity } from "@slate/contracts";
 import { api, useMe } from "@slate/ui";
@@ -27,6 +27,7 @@ const pathFeatures: Record<string, FeatureKey> = {
   courses: "courses",
   practice: "practice",
   exams: "live-exams",
+  "exam-attempts": "live-exams",
   jobs: "jobs",
   rankings: "rankings",
   announcements: "announcements",
@@ -48,7 +49,7 @@ function resourceAccessKey(
         : [...(identity?.access?.courseIds ?? [])].sort(),
     ];
   }
-  if (feature === "practice" || feature === "live-exams") {
+  if (feature === "practice") {
     return [
       allowed,
       hasAccess(identity, "practice"),
@@ -101,18 +102,14 @@ export function AccessRoute({
   children?: ReactNode;
 }) {
   const me = useMe(),
-    { id, track } = useParams(),
-    [params] = useSearchParams();
+    { id, track } = useParams();
   const allowed =
     hasAccess(me.data, feature) &&
     (!coding || hasCodingAccess(me.data)) &&
     (feature !== "courses" ||
       !id ||
       Boolean(me.data?.access?.courseIds.includes(id))) &&
-    (feature !== "toolkit" || !track || hasToolkitTrack(me.data, track)) &&
-    (feature !== "practice" ||
-      !params.has("exam") ||
-      hasAccess(me.data, "live-exams"));
+    (feature !== "toolkit" || !track || hasToolkitTrack(me.data, track));
   if (!allowed) return <AccessUnavailable />;
   return children ?? <Outlet />;
 }

@@ -30,6 +30,7 @@ import { scoped, type Database, type Transaction } from "./database.js";
 import { createUpload, r2Configured, type PhoneSender } from "./providers.js";
 import * as s from "./schema.js";
 import { AccessService, practiceModule, resolvePolicies } from "./access.js";
+import { ExamService } from "./exams.js";
 import { AnnouncementService } from "./announcements.js";
 import { lockOrganizationBranches } from "./branches.js";
 import {
@@ -312,15 +313,7 @@ export class SlateService {
     );
   }
   exams(actor: Actor) {
-    this.feature(actor, "live-exams");
-    const allowed = new Set(
-      actor.features.includes("practice")
-        ? this.practice(actor).map((item) => item.id)
-        : [],
-    );
-    return actor.demo
-      ? demoExams().filter((exam) => allowed.has(exam.assessmentId))
-      : [];
+    return new ExamService(this).studentList(actor);
   }
   announcements(actor: Actor) {
     return new AnnouncementService(this).student(actor);

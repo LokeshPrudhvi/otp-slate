@@ -1,0 +1,863 @@
+import { useState } from "react";
+import {
+  examLanguages,
+  type ExamAudienceOptions,
+  type ExamDraft,
+  type ExamLanguage,
+  type ExamQuestion,
+} from "@slate/contracts";
+import { Field, RichTextEditor } from "@slate/ui";
+import { AdminSelect } from "./select";
+import {
+  examLimits,
+  isoDateTime,
+  localDateTime,
+  newExamQuestion,
+} from "./exam-utils";
+
+export function ExamBuilder({
+  value,
+  onChange,
+  audience,
+  codingExecutionConfigured,
+  disabled = false,
+}: {
+  value: ExamDraft;
+  onChange: (draft: ExamDraft) => void;
+  audience: ExamAudienceOptions | undefined;
+  codingExecutionConfigured: boolean;
+  disabled?: boolean;
+}) {
+  const [search, setSearch] = useState("");
+  const [openQuestion, setOpenQuestion] = useState<string | null>(
+    value.questions[0]?.id || null,
+  );
+  const [starterLanguage, setStarterLanguage] =
+    useState<ExamLanguage>("Python");
+  const patch = (data: Partial<ExamDraft>) => onChange({ ...value, ...data });
+  const editQuestion = (id: string, question: ExamQuestion) =>
+    patch({
+      questions: value.questions.map((item) =>
+        item.id === id ? question : item,
+      ),
+    });
+  const toggle = (items: string[], id: string) =>
+    items.includes(id) ? items.filter((item) => item !== id) : [...items, id];
+  const students = (audience?.students || []).filter((student) =>
+    `${student.name} ${student.email} ${student.studentId || ""} ${student.branchName || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
+  const branches = (audience?.branches || []).filter((branch) =>
+    `${branch.name} ${branch.code}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
+  const visibleStudents = students.slice(0, 100);
+  const add = (kind: "mcq" | "coding") => {
+    const question = newExamQuestion(kind);
+    patch({ questions: [...value.questions, question] });
+    setOpenQuestion(question.id);
+  };
+  function move(index: number, delta: number) {
+    const questions = [...value.questions];
+    [questions[index], questions[index + delta]] = [
+      questions[index + delta],
+      questions[index],
+    ];
+    patch({ questions });
+  }
+  return (
+    <div className="exam-builder">
+      <section className="exam-form-card">
+        <header>
+          <span className="eyebrow">01 / EXAM DETAILS</span>
+          <h2>What are students taking?</h2>
+        </header>
+        <Field label="Exam title">
+          <input
+            required
+            maxLength={150}
+            value={value.title}
+            onChange={(event) => patch({ title: event.target.value })}
+            placeholder="Campus placement assessment"
+          />
+        </Field>
+        <Field label="Short description">
+          <textarea
+            maxLength={2000}
+            rows={3}
+            value={value.description}
+            onChange={(event) => patch({ description: event.target.value })}
+            placeholder="Help students understand what this exam covers."
+          />
+        </Field>
+        <Field label="Instructions">
+          <RichTextEditor
+            disabled={disabled}
+            format="markdown"
+            label="Exam instructions"
+            value={value.instructions}
+            onChange={(instructions) => patch({ instructions })}
+            maxLength={10000}
+          />
+        </Field>
+        <div className="form-grid">
+          <Field label="Opens at">
+            <input
+              required
+              type="datetime-local"
+              value={localDateTime(value.startsAt)}
+              onChange={(event) =>
+                patch({ startsAt: isoDateTime(event.target.value) })
+              }
+            />
+          </Field>
+          <Field label="Closes at">
+            <input
+              required
+              type="datetime-local"
+              value={localDateTime(value.endsAt)}
+              onChange={(event) =>
+                patch({ endsAt: isoDateTime(event.target.value) })
+              }
+            />
+          </Field>
+          <Field label="Time per student (minutes)">
+            <input
+              required
+              type="number"
+              min={1}
+              max={480}
+              value={value.durationMinutes}
+              onChange={(event) =>
+                patch({ durationMinutes: Number(event.target.value) })
+              }
+            />
+          </Field>
+          <Field label="Passing score (%)">
+            <input
+              required
+              type="number"
+              min={0}
+              max={100}
+              value={value.passingPercentage}
+              onChange={(event) =>
+                patch({ passingPercentage: Number(event.target.value) })
+              }
+            />
+          </Field>
+        </div>
+        <p className="muted">
+          Times use {Intl.DateTimeFormat().resolvedOptions().timeZone}. Each
+          attempt ends at its time limit or the exam closing time, whichever
+          comes first.
+        </p>
+      </section>
+      <section className="exam-form-card">
+        <header>
+          <span className="eyebrow">02 / AUDIENCE</span>
+          <h2>Who should receive this exam?</h2>
+        </header>
+        <Field label="Assign to">
+          <AdminSelect
+            aria-label="Exam audience"
+            value={value.audience.mode}
+            onChange={(mode) => {
+              patch({
+                audience: {
+                  mode: mode as ExamDraft["audience"]["mode"],
+                  branchCodes: [],
+                  studentIds: [],
+                },
+              });
+              setSearch("");
+            }}
+            options={[
+              { value: "organization", label: "Entire organization" },
+              { value: "branches", label: "Selected branches" },
+              { value: "students", label: "Selected students" },
+            ]}
+          />
+        </Field>
+        {value.audience.mode === "organization" ? (
+          <p className="exam-info">
+            All eligible active students in{" "}
+            {audience?.organizationName || "this organization"} will receive
+            this exam.
+          </p>
+        ) : (
+          <>
+            <input
+              type="search"
+              aria-label="Search exam audience"
+              placeholder={
+                value.audience.mode === "branches"
+                  ? "Search branch name or code"
+                  : "Search student name, email, ID or branch"
+              }
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+            <div className="exam-audience-tools">
+              <span>
+                {value.audience.mode === "branches"
+                  ? value.audience.branchCodes.length
+                  : value.audience.studentIds.length}{" "}
+                selected
+              </span>
+              <button
+                type="button"
+                className="link"
+                onClick={() =>
+                  patch({
+                    audience: {
+                      ...value.audience,
+                      ...(value.audience.mode === "branches"
+                        ? {
+                            branchCodes: [
+                              ...new Set([
+                                ...value.audience.branchCodes,
+                                ...branches.map((branch) => branch.code),
+                              ]),
+                            ],
+                          }
+                        : {
+                            studentIds: [
+                              ...new Set([
+                                ...value.audience.studentIds,
+                                ...visibleStudents.map((student) => student.id),
+                              ]),
+                            ],
+                          }),
+                    },
+                  })
+                }
+              >
+                Select visible
+              </button>
+              <button
+                type="button"
+                className="link"
+                onClick={() =>
+                  patch({
+                    audience: {
+                      ...value.audience,
+                      branchCodes: [],
+                      studentIds: [],
+                    },
+                  })
+                }
+              >
+                Clear selection
+              </button>
+            </div>
+            <div className="exam-audience-list">
+              {value.audience.mode === "branches"
+                ? branches.map((branch) => (
+                    <label key={branch.code}>
+                      <input
+                        type="checkbox"
+                        checked={value.audience.branchCodes.includes(
+                          branch.code,
+                        )}
+                        onChange={() =>
+                          patch({
+                            audience: {
+                              ...value.audience,
+                              branchCodes: toggle(
+                                value.audience.branchCodes,
+                                branch.code,
+                              ),
+                            },
+                          })
+                        }
+                      />
+                      <span>
+                        <strong>{branch.name}</strong>
+                        <small>
+                          {branch.code} · {branch.studentCount} students
+                        </small>
+                      </span>
+                    </label>
+                  ))
+                : visibleStudents.map((student) => (
+                    <label key={student.id}>
+                      <input
+                        type="checkbox"
+                        checked={value.audience.studentIds.includes(student.id)}
+                        onChange={() =>
+                          patch({
+                            audience: {
+                              ...value.audience,
+                              studentIds: toggle(
+                                value.audience.studentIds,
+                                student.id,
+                              ),
+                            },
+                          })
+                        }
+                      />
+                      <span>
+                        <strong>{student.name}</strong>
+                        <small>
+                          {student.email} ·{" "}
+                          {student.studentId || "No student ID"} ·{" "}
+                          {student.branchCode || "No branch"}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+            </div>
+            {(value.audience.mode === "branches"
+              ? !branches.length
+              : !students.length) && (
+              <p className="muted">
+                No matching {value.audience.mode}. Branches and students must be
+                created under this organization first.
+              </p>
+            )}
+            {value.audience.mode === "students" && students.length > 100 && (
+              <p className="muted">
+                Showing the first 100 matches. Refine your search to find more
+                students.
+              </p>
+            )}
+          </>
+        )}
+        <p className="muted">
+          The eligible roster is fixed when you publish. Later branch changes or
+          new students do not change a published exam’s audience.
+        </p>
+      </section>
+      <section className="exam-form-card">
+        <header>
+          <span className="eyebrow">03 / BROWSER MONITORING</span>
+          <h2>Exam environment</h2>
+        </header>
+        <label className="exam-check">
+          <input
+            type="checkbox"
+            checked={value.monitoring.enabled}
+            onChange={(event) =>
+              patch({
+                monitoring: {
+                  enabled: event.target.checked,
+                  requireFullscreen:
+                    event.target.checked && value.monitoring.requireFullscreen,
+                  recordClipboard:
+                    event.target.checked && value.monitoring.recordClipboard,
+                },
+              })
+            }
+          />
+          <span>
+            <strong>Monitor browser events</strong>
+            <small>
+              Record tab switches, focus changes and connection changes during
+              the attempt.
+            </small>
+          </span>
+        </label>
+        <label className="exam-check">
+          <input
+            type="checkbox"
+            disabled={!value.monitoring.enabled}
+            checked={value.monitoring.requireFullscreen}
+            onChange={(event) =>
+              patch({
+                monitoring: {
+                  ...value.monitoring,
+                  requireFullscreen: event.target.checked,
+                },
+              })
+            }
+          />
+          <span>Require full-screen mode</span>
+        </label>
+        <label className="exam-check">
+          <input
+            type="checkbox"
+            disabled={!value.monitoring.enabled}
+            checked={value.monitoring.recordClipboard}
+            onChange={(event) =>
+              patch({
+                monitoring: {
+                  ...value.monitoring,
+                  recordClipboard: event.target.checked,
+                },
+              })
+            }
+          />
+          <span>Record copy, paste and cut events</span>
+        </label>
+        <p className="muted">
+          Monitoring records events for review. It does not capture the screen,
+          webcam or clipboard contents, and an event alone is not evidence of
+          misconduct.
+        </p>
+      </section>
+      <section className="exam-form-card">
+        <Field label="Coding grading">
+          <AdminSelect
+            aria-label="Coding grading"
+            value={value.codingGrading}
+            onChange={(codingGrading) =>
+              patch({
+                codingGrading: codingGrading as ExamDraft["codingGrading"],
+              })
+            }
+            options={[
+              {
+                value: "manual",
+                label: "Manual · admin reviews and awards marks",
+              },
+              {
+                value: "automatic",
+                label: "Automatic · OneCompiler API",
+                disabled: !codingExecutionConfigured,
+              },
+            ]}
+          />
+        </Field>
+        <p className="muted">
+          Multiple-choice answers are always scored automatically.{" "}
+          {codingExecutionConfigured
+            ? "Automatic coding grading runs saved test cases through OneCompiler."
+            : "Manual coding exams are available now. Configure the OneCompiler API to enable automatic coding grading."}
+        </p>
+        <header className="exam-question-header">
+          <div>
+            <span className="eyebrow">04 / QUESTIONS</span>
+            <h2>
+              {value.questions.length} questions ·{" "}
+              {value.questions.reduce((sum, q) => sum + q.points, 0)} points
+            </h2>
+          </div>
+          <div className="actions">
+            <button
+              type="button"
+              className="btn"
+              disabled={value.questions.length >= examLimits.questions}
+              onClick={() => add("mcq")}
+            >
+              + Multiple choice
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={
+                value.questions.length >= examLimits.questions ||
+                value.questions.filter((q) => q.kind === "coding").length >=
+                  examLimits.coding
+              }
+              onClick={() => add("coding")}
+            >
+              + Coding
+            </button>
+          </div>
+        </header>
+        {!value.questions.length && (
+          <p className="exam-info">
+            Add your first question. Combine multiple-choice and coding
+            questions in one exam.
+          </p>
+        )}
+        {value.questions.map((q, index) => (
+          <article className="exam-question" key={q.id}>
+            <header>
+              <button
+                type="button"
+                className="exam-question-toggle"
+                aria-expanded={openQuestion === q.id}
+                onClick={() =>
+                  setOpenQuestion(openQuestion === q.id ? null : q.id)
+                }
+              >
+                <span className="exam-question-number">{index + 1}</span>
+                <span>
+                  <strong>
+                    {q.title ||
+                      `Untitled ${q.kind === "mcq" ? "multiple-choice" : "coding"} question`}
+                  </strong>
+                  <small>
+                    {q.kind === "mcq" ? "Multiple choice" : "Coding"} ·{" "}
+                    {q.points} points
+                  </small>
+                </span>
+                <span aria-hidden="true">
+                  {openQuestion === q.id ? "−" : "+"}
+                </span>
+              </button>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn"
+                  aria-label={`Move question ${index + 1} up`}
+                  disabled={index === 0}
+                  onClick={() => move(index, -1)}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  aria-label={`Move question ${index + 1} down`}
+                  disabled={index === value.questions.length - 1}
+                  onClick={() => move(index, 1)}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="link exam-danger"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Remove question ${index + 1}? This removes its draft content.`,
+                      )
+                    )
+                      patch({
+                        questions: value.questions.filter(
+                          (item) => item.id !== q.id,
+                        ),
+                      });
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            </header>
+            {openQuestion === q.id && (
+              <div className="exam-question-body">
+                <div className="form-grid">
+                  <Field label="Question title">
+                    <input
+                      required
+                      maxLength={200}
+                      value={q.title}
+                      onChange={(event) =>
+                        editQuestion(q.id, { ...q, title: event.target.value })
+                      }
+                    />
+                  </Field>
+                  <Field label="Points">
+                    <input
+                      required
+                      type="number"
+                      min={1}
+                      max={1000}
+                      value={q.points}
+                      onChange={(event) =>
+                        editQuestion(q.id, {
+                          ...q,
+                          points: Number(event.target.value),
+                        })
+                      }
+                    />
+                  </Field>
+                </div>
+                <Field label="Question prompt">
+                  <RichTextEditor
+                    disabled={disabled}
+                    format="markdown"
+                    label={`Question ${index + 1} prompt`}
+                    value={q.prompt}
+                    maxLength={20000}
+                    onChange={(prompt) => editQuestion(q.id, { ...q, prompt })}
+                  />
+                </Field>
+                {q.kind === "mcq" ? (
+                  <>
+                    <div className="exam-options">
+                      <p className="muted">
+                        Select the radio button beside the correct answer.
+                      </p>
+                      {q.options.map((option, optionIndex) => (
+                        <div className="exam-option" key={optionIndex}>
+                          <input
+                            type="radio"
+                            aria-label={`Option ${optionIndex + 1} is correct`}
+                            name={`answer-${q.id}`}
+                            checked={q.correctOption === optionIndex}
+                            onChange={() =>
+                              editQuestion(q.id, {
+                                ...q,
+                                correctOption: optionIndex,
+                              })
+                            }
+                          />
+                          <input
+                            aria-label={`Option ${optionIndex + 1}`}
+                            required
+                            maxLength={2000}
+                            value={option}
+                            onChange={(event) =>
+                              editQuestion(q.id, {
+                                ...q,
+                                options: q.options.map((item, i) =>
+                                  i === optionIndex ? event.target.value : item,
+                                ),
+                              })
+                            }
+                          />
+                          <button
+                            type="button"
+                            className="link"
+                            aria-label={`Remove option ${optionIndex + 1}`}
+                            disabled={q.options.length <= 2}
+                            onClick={() =>
+                              editQuestion(q.id, {
+                                ...q,
+                                options: q.options.filter(
+                                  (_, i) => i !== optionIndex,
+                                ),
+                                correctOption:
+                                  q.correctOption === optionIndex
+                                    ? 0
+                                    : q.correctOption > optionIndex
+                                      ? q.correctOption - 1
+                                      : q.correctOption,
+                              })
+                            }
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn"
+                        disabled={q.options.length >= 8}
+                        onClick={() =>
+                          editQuestion(q.id, {
+                            ...q,
+                            options: [...q.options, ""],
+                          })
+                        }
+                      >
+                        + Add option
+                      </button>
+                    </div>
+                    <Field label="Answer explanation (shown with released results)">
+                      <textarea
+                        rows={3}
+                        maxLength={5000}
+                        value={q.explanation}
+                        onChange={(event) =>
+                          editQuestion(q.id, {
+                            ...q,
+                            explanation: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                  </>
+                ) : (
+                  <>
+                    <p className="exam-info">
+                      Coding questions run programs against standard
+                      input/output. Manual grading is available without an API
+                      key; admins review the submitted source and award marks.
+                      Hidden tests are used for grading and are never shown to
+                      students.
+                    </p>
+                    <fieldset className="exam-language-list">
+                      <legend>Allowed languages</legend>
+                      {examLanguages.map((language) => (
+                        <label key={language}>
+                          <input
+                            type="checkbox"
+                            checked={q.languages.includes(language)}
+                            onChange={() => {
+                              const languages = toggle(
+                                q.languages,
+                                language,
+                              ) as ExamLanguage[];
+                              editQuestion(q.id, {
+                                ...q,
+                                languages,
+                                starterCode: Object.fromEntries(
+                                  Object.entries(q.starterCode).filter(
+                                    ([key]) =>
+                                      languages.includes(key as ExamLanguage),
+                                  ),
+                                ),
+                              });
+                            }}
+                          />
+                          {language}
+                        </label>
+                      ))}
+                    </fieldset>
+                    {q.languages.length > 0 && (
+                      <>
+                        <Field label="Starter code language">
+                          <AdminSelect
+                            aria-label="Starter code language"
+                            value={
+                              q.languages.includes(starterLanguage)
+                                ? starterLanguage
+                                : q.languages[0]
+                            }
+                            onChange={(language) =>
+                              setStarterLanguage(language as ExamLanguage)
+                            }
+                            options={q.languages.map((language) => ({
+                              value: language,
+                              label: language,
+                            }))}
+                          />
+                        </Field>
+                        <Field label="Starter code (optional)">
+                          <textarea
+                            className="exam-code"
+                            rows={8}
+                            spellCheck={false}
+                            maxLength={30000}
+                            value={
+                              q.starterCode[
+                                q.languages.includes(starterLanguage)
+                                  ? starterLanguage
+                                  : q.languages[0]
+                              ] || ""
+                            }
+                            onChange={(event) =>
+                              editQuestion(q.id, {
+                                ...q,
+                                starterCode: {
+                                  ...q.starterCode,
+                                  [q.languages.includes(starterLanguage)
+                                    ? starterLanguage
+                                    : q.languages[0]]: event.target.value,
+                                },
+                              })
+                            }
+                          />
+                        </Field>
+                      </>
+                    )}
+                    <div className="exam-test-list">
+                      <h3>Test cases</h3>
+                      <p className="muted">
+                        Include at least one public example and one hidden test.
+                        Whitespace and output matching follow the code execution
+                        service’s grading rules.
+                      </p>
+                      {q.testCases.map((test, testIndex) => (
+                        <section className="exam-test" key={test.id}>
+                          <div className="exam-audience-tools">
+                            <strong>Test {testIndex + 1}</strong>
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={test.hidden}
+                                onChange={(event) =>
+                                  editQuestion(q.id, {
+                                    ...q,
+                                    testCases: q.testCases.map((item) =>
+                                      item.id === test.id
+                                        ? {
+                                            ...item,
+                                            hidden: event.target.checked,
+                                          }
+                                        : item,
+                                    ),
+                                  })
+                                }
+                              />{" "}
+                              Hidden from students
+                            </label>
+                            <button
+                              type="button"
+                              className="link exam-danger"
+                              disabled={q.testCases.length <= 2}
+                              onClick={() =>
+                                editQuestion(q.id, {
+                                  ...q,
+                                  testCases: q.testCases.filter(
+                                    (item) => item.id !== test.id,
+                                  ),
+                                })
+                              }
+                            >
+                              Remove test
+                            </button>
+                          </div>
+                          <div className="form-grid">
+                            <Field label="Standard input">
+                              <textarea
+                                className="exam-code"
+                                rows={4}
+                                maxLength={10000}
+                                spellCheck={false}
+                                value={test.input}
+                                onChange={(event) =>
+                                  editQuestion(q.id, {
+                                    ...q,
+                                    testCases: q.testCases.map((item) =>
+                                      item.id === test.id
+                                        ? { ...item, input: event.target.value }
+                                        : item,
+                                    ),
+                                  })
+                                }
+                              />
+                            </Field>
+                            <Field label="Expected output">
+                              <textarea
+                                className="exam-code"
+                                rows={4}
+                                maxLength={10000}
+                                spellCheck={false}
+                                value={test.output}
+                                onChange={(event) =>
+                                  editQuestion(q.id, {
+                                    ...q,
+                                    testCases: q.testCases.map((item) =>
+                                      item.id === test.id
+                                        ? {
+                                            ...item,
+                                            output: event.target.value,
+                                          }
+                                        : item,
+                                    ),
+                                  })
+                                }
+                              />
+                            </Field>
+                          </div>
+                        </section>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn"
+                        disabled={q.testCases.length >= 10}
+                        onClick={() =>
+                          editQuestion(q.id, {
+                            ...q,
+                            testCases: [
+                              ...q.testCases,
+                              {
+                                id: crypto.randomUUID(),
+                                input: "",
+                                output: "",
+                                hidden: true,
+                              },
+                            ],
+                          })
+                        }
+                      >
+                        + Add test case
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </article>
+        ))}
+      </section>
+    </div>
+  );
+}

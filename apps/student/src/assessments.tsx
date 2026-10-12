@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
-import type { LiveExam, PracticeAssessment } from "@slate/contracts";
+import { Link, useParams } from "react-router-dom";
+import type { PracticeAssessment } from "@slate/contracts";
 import { useMe } from "@slate/ui";
 import { Banner, Heading, NoResults, Status } from "./design";
 import { CodingWorkspace } from "./coding";
@@ -171,99 +171,10 @@ export function PracticeCatalogue() {
     </div>
   );
 }
-export function LiveExamList({ exams }: { exams: LiveExam[] }) {
-  const [filter, setFilter] = useState("all");
-  return (
-    <>
-      <p className="hub-note">
-        Sample exam schedule for this local preview. Timers and browser-event
-        counts are simulated locally; these are not official exams.
-      </p>
-      <div className="a-filters">
-        {["all", "live", "upcoming", "completed"].map((state) => (
-          <button
-            key={state}
-            className={`a-pill${state === filter ? " on" : ""}`}
-            aria-pressed={state === filter}
-            onClick={() => setFilter(state)}
-          >
-            {state[0].toUpperCase() + state.slice(1)}
-          </button>
-        ))}
-      </div>
-      <div className="hub-grid">
-        {exams
-          .filter((exam) => filter === "all" || exam.state === filter)
-          .map((exam) => (
-            <article className="hub-card live-exam-card" key={exam.id}>
-              <div className="hub-card-top">
-                <span
-                  className={exam.state === "live" ? "live-status" : "a-tag"}
-                >
-                  {exam.state === "live"
-                    ? "Live now"
-                    : exam.state === "upcoming"
-                      ? "Upcoming"
-                      : "Completed"}
-                </span>
-                <span className="a-tag">Sample</span>
-              </div>
-              <h2>{exam.title}</h2>
-              <dl className="live-exam-facts">
-                <div>
-                  <dt>Duration</dt>
-                  <dd>{exam.durationMinutes} minutes</dd>
-                </div>
-                <div>
-                  <dt>Questions</dt>
-                  <dd>{exam.questionCount}</dd>
-                </div>
-                <div>
-                  <dt>Starts</dt>
-                  <dd>
-                    {new Date(exam.startsAt).toLocaleString("en-IN", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Format</dt>
-                  <dd>Timed · Browser events preview</dd>
-                </div>
-              </dl>
-              {exam.score !== undefined && (
-                <div className="live-result">
-                  Sample result: <b>{exam.score}%</b>
-                </div>
-              )}
-              <div className="hub-actions">
-                {exam.state === "upcoming" ? (
-                  <span className="hub-note">
-                    Your next exam opens tomorrow.
-                  </span>
-                ) : (
-                  <Link
-                    className="a-btn pri"
-                    to={`/practice/${exam.assessmentId}${exam.state === "live" ? `?exam=${exam.id}` : ""}`}
-                  >
-                    {exam.state === "live"
-                      ? "View instructions →"
-                      : "Review practice →"}
-                  </Link>
-                )}
-              </div>
-            </article>
-          ))}
-      </div>
-    </>
-  );
-}
 export function AssessmentPlayer() {
   const me = useMe();
   const { id } = useParams(),
-    data = useData<PracticeAssessment[]>("practice", "student/practice"),
-    [params] = useSearchParams();
+    data = useData<PracticeAssessment[]>("practice", "student/practice");
   if (data.isPending || data.error)
     return (
       <div className="a-page">
@@ -277,9 +188,7 @@ export function AssessmentPlayer() {
     <div className="a-page">
       {assessment?.kind !== "coding" && (
         <div className="a-crumbs">
-          <Link to={params.has("exam") ? "/live-exams" : "/practice"}>
-            {params.has("exam") ? "Live Exams" : "Practice"}
-          </Link>
+          <Link to="/practice">Practice</Link>
           <span>›</span>
           <span>{assessment?.title || "Activity"}</span>
         </div>
@@ -292,11 +201,7 @@ export function AssessmentPlayer() {
           items={(data.data || []).filter((item) => item.kind === "coding")}
         />
       ) : assessment ? (
-        <Player
-          key={`${assessment.id}:${params.get("exam")}`}
-          assessment={assessment}
-          live={params.has("exam")}
-        />
+        <Player key={assessment.id} assessment={assessment} />
       ) : (
         !data.isPending && (
           <NoResults title="Activity not available">
@@ -307,13 +212,7 @@ export function AssessmentPlayer() {
     </div>
   );
 }
-function Player({
-  assessment,
-  live,
-}: {
-  assessment: PracticeAssessment;
-  live: boolean;
-}) {
+function Player({ assessment }: { assessment: PracticeAssessment }) {
   const me = useMe();
   const resultId = useRef(crypto.randomUUID());
   const recorded = useRef(false);
@@ -323,7 +222,6 @@ function Player({
     [index, setIndex] = useState(0),
     [answers, setAnswers] = useState<Record<string, number>>({}),
     [remaining, setRemaining] = useState(assessment.durationMinutes * 60),
-    [events, setEvents] = useState(0),
     [typed, setTyped] = useState(""),
     [notes, setNotes] = useState(""),
     [repository, setRepository] = useState(""),
@@ -341,12 +239,6 @@ function Player({
   useEffect(() => {
     if (started && remaining === 0) setFinished(true);
   }, [started, remaining]);
-  useEffect(() => {
-    if (!live || !started || finished) return;
-    const blur = () => setEvents((value) => value + 1);
-    window.addEventListener("blur", blur);
-    return () => window.removeEventListener("blur", blur);
-  }, [live, started, finished]);
   const correct = questions.filter(
     (question) => answers[question.id] === question.answer,
   ).length;
@@ -361,8 +253,7 @@ function Player({
     : 0;
   const minutes = Math.max(1, assessment.durationMinutes * 60 - remaining) / 60;
   useEffect(() => {
-    if (!finished || live || !questions.length || !me.data || recorded.current)
-      return;
+    if (!finished || !questions.length || !me.data || recorded.current) return;
     recorded.current = true;
     setHistorySaved(
       savePracticeResult(me.data.id, {
@@ -372,13 +263,11 @@ function Player({
         completedAt: new Date().toISOString(),
       }),
     );
-  }, [finished, live, questions.length, correct, assessment.title, me.data]);
+  }, [finished, questions.length, correct, assessment.title, me.data]);
   return (
     <>
       <Heading title={assessment.title}>
-        <span className="a-tag">
-          {live ? "Sample live exam" : "Sample practice"}
-        </span>
+        <span className="a-tag">Sample practice</span>
         {started && !finished && (
           <span className="a-tag" role="timer">
             {Math.floor(remaining / 60)}:
@@ -391,12 +280,6 @@ function Player({
         Coding results are reference samples; no code is compiled. No official
         grades or project submissions are created.
       </p>
-      {live && started && (
-        <p className="demo-monitor" role="status">
-          Browser-event preview: {events} window focus changes · This counter is
-          informational and does not determine misconduct.
-        </p>
-      )}
       {!started ? (
         <section className="hub-card demo-instructions">
           <h2>Before you begin</h2>
@@ -433,7 +316,7 @@ function Player({
           </p>
           <div className="hub-actions">
             <button className="a-btn pri" onClick={() => setStarted(true)}>
-              Start {live ? "sample exam" : "practice"}
+              Start practice
             </button>
             <Link className="a-btn" to="/practice">
               Back to practice
@@ -481,11 +364,9 @@ function Player({
               </details>
             ))}
             <div className="hub-actions">
-              {!live && (
-                <Link className="a-btn" to="/">
-                  View my progress →
-                </Link>
-              )}
+              <Link className="a-btn" to="/">
+                View my progress →
+              </Link>
               <Link className="a-btn pri" to="/practice">
                 Explore more practice →
               </Link>

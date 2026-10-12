@@ -1,5 +1,6 @@
 export * from "./access.js";
 export * from "./lesson-media.js";
+export * from "./exams.js";
 import type { EffectiveAccess } from "./access.js";
 export type Portal = "student" | "platform" | "organization";
 export type Role = "student" | "platform_admin" | "organization_viewer";

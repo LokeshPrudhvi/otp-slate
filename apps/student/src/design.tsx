@@ -213,6 +213,9 @@ export function StudentShell() {
     query = useQueryClient(),
     navigate = useNavigate(),
     location = useLocation();
+  const examAttempt = /^\/live-exams\/[^/]+\/attempt\/[^/]+\/?$/.test(
+    location.pathname,
+  );
   const courseId = location.pathname.match(/^\/courses\/([^/]+)/)?.[1];
   const courses = useData<Course[]>(
     "courses",
@@ -271,7 +274,12 @@ export function StudentShell() {
     setTray(null);
     (previous === "account" ? account : help).current?.focus();
   };
+  const mayNavigate = () =>
+    window.dispatchEvent(
+      new Event("student-before-navigation", { cancelable: true }),
+    );
   const go = (path: string) => {
+    if (!mayNavigate()) return;
     setTray(null);
     setOtto(false);
     navigate(path);
@@ -368,7 +376,9 @@ export function StudentShell() {
               <p className="account-email">{identity.email}</p>
               <button
                 className="a-btn account-logout"
-                onClick={() => logout.mutate()}
+                onClick={() => {
+                  if (mayNavigate()) logout.mutate();
+                }}
                 disabled={logout.isPending}
               >
                 {logout.isPending ? "Logging out…" : "Log out"}
@@ -407,16 +417,18 @@ export function StudentShell() {
             <>
               <h2>Help</h2>
               <ul className="tray-l">
-                <li>
-                  <button
-                    onClick={() => {
-                      setTray(null);
-                      setOtto(true);
-                    }}
-                  >
-                    Ask Otto<small>Find your way around OTP Slate</small>
-                  </button>
-                </li>
+                {!examAttempt && (
+                  <li>
+                    <button
+                      onClick={() => {
+                        setTray(null);
+                        setOtto(true);
+                      }}
+                    >
+                      Ask Otto<small>Find your way around OTP Slate</small>
+                    </button>
+                  </li>
+                )}
                 <li>
                   <button onClick={() => go("/help")}>
                     Search the help centre<small>Guides for students</small>
@@ -441,15 +453,17 @@ export function StudentShell() {
           )}
         </aside>
       )}
-      <button
-        className="pet"
-        aria-label="Chat with Otto, your assistant"
-        aria-expanded={otto}
-        onClick={() => setOtto(!otto)}
-      >
-        <Artwork name="otto" />
-      </button>
-      {otto && (
+      {!examAttempt && (
+        <button
+          className="pet"
+          aria-label="Chat with Otto, your assistant"
+          aria-expanded={otto}
+          onClick={() => setOtto(!otto)}
+        >
+          <Artwork name="otto" />
+        </button>
+      )}
+      {otto && !examAttempt && (
         <section
           className="pet-chat open"
           role="dialog"

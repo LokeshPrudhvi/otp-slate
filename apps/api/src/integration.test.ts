@@ -193,7 +193,16 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         assert.equal(b.status, 201);
         orgA = a.body.id;
         orgB = b.body.id;
-        assert.equal((await platform.request(`/api/v1/platform/organizations/${orgA}/branches`, "POST", { name: "Computer Science", code: "CSE" })).status, 201);
+        assert.equal(
+          (
+            await platform.request(
+              `/api/v1/platform/organizations/${orgA}/branches`,
+              "POST",
+              { name: "Computer Science", code: "CSE" },
+            )
+          ).status,
+          201,
+        );
         const blockedLegacy = await platform.request(
           "/api/v1/platform/members",
           "POST",
@@ -1100,10 +1109,10 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         );
         assert.ok(practice.body.every((activity: any) => activity.sample));
         const exams = await demoStudent.request("/api/v1/student/exams");
-        assert.deepEqual(
-          exams.body.map((exam: any) => exam.state),
-          ["live", "upcoming", "completed"],
-        );
+        // The live-exam portal only exposes persisted, published exams now;
+        // sample practice fixtures cannot silently create official schedules.
+        assert.equal(exams.status, 200);
+        assert.deepEqual(exams.body, []);
         assert.equal(
           (await demoStudent.request("/api/v1/student/announcements")).body
             .length,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   useMutation,
   useQueryClient,
@@ -29,7 +29,7 @@ import {
   ResetPassword,
   useData,
 } from "@slate/ui";
-import { DemoAssessments } from "./assessments";
+import { Exams, ExamEditor } from "./exams";
 import { Announcements } from "./announcements";
 import { AddStudent, Registrations } from "./registrations";
 import { LearningAccess } from "./access";
@@ -62,12 +62,7 @@ const navigation = [
   { to: "/members", label: "People", icon: "users" },
   { to: "/access", label: "Access", icon: "toolkit" },
   { to: "/courses", label: "Courses", icon: "book" },
-  {
-    to: "/assessments",
-    label: "Assessments & exams",
-    icon: "toolkit",
-    demoOnly: true,
-  },
+  { to: "/exams", label: "Live exams", icon: "exam" },
   { to: "/jobs", label: "Jobs", icon: "jobs" },
   { to: "/announcements", label: "Announcements", icon: "resume" },
   { to: "/integrations", label: "Services", icon: "toolkit" },
@@ -1101,7 +1096,10 @@ export function PlatformRoutes() {
           <Route path="access" element={<LearningAccess />} />
           <Route path="courses" element={<Courses />} />
           <Route path="courses/:id" element={<CourseEditor />} />
-          <Route path="assessments" element={<DemoAssessments />} />
+          <Route path="exams" element={<Exams />} />
+          <Route path="exams/new" element={<ExamEditor />} />
+          <Route path="exams/:id" element={<ExamEditor />} />
+          <Route path="assessments" element={<Navigate to="/exams" replace />} />
           <Route path="jobs" element={<Jobs />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="integrations" element={<Integrations />} />

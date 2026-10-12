@@ -307,6 +307,19 @@ export class BranchService {
             eq(s.announcements.branchCode, code),
           ),
         );
+      if (code !== input.code) {
+        // Unpublished audience selections follow the canonical branch catalog.
+        // Published exams deliberately retain their original audience snapshot
+        // and immutable member roster. Publishing holds the same organization
+        // branch lock, so it cannot freeze a half-renamed draft.
+        await tx.execute(sql`update live_exams
+          set audience=jsonb_set(audience,'{branchCodes}',(
+            select jsonb_agg(case when item.code=${code} then ${input.code} else item.code end order by item.ordinality)
+            from jsonb_array_elements_text(audience->'branchCodes') with ordinality as item(code,ordinality)
+          )), revision=revision+1, updated_at=now()
+          where org_id=${organizationId} and status='draft'
+          and jsonb_exists(audience->'branchCodes',${code})`);
+      }
       await tx
         .update(s.organizations)
         .set({

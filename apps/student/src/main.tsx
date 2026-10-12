@@ -5,6 +5,7 @@ import { StudentRoutes } from "./routes";
 import "./reference.css";
 import "@slate/ui/select.css";
 import "./student.css";
+import "./live-exams.css";
 import "@slate/ui/lesson-content.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

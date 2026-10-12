@@ -18,6 +18,108 @@ import type {
   PortalDisplay,
   Resume,
 } from "@slate/contracts";
+import type {
+  ExamAnswer,
+  ExamAudienceSelection,
+  ExamMonitoring,
+  ExamQuestion,
+  ExamResult,
+  StudentExamQuestion,
+} from "@slate/contracts";
+
+export const liveExams = pgTable("live_exams", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("client_id").notNull().unique(),
+  organizationId: uuid("org_id").notNull(),
+  createdBy: uuid("created_by").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  instructions: text("instructions").notNull(),
+  passingPercentage: integer("passing_percentage").notNull(),
+  monitoring: jsonb("monitoring").$type<ExamMonitoring>().notNull(),
+  status: text("status").notNull().default("draft"),
+  startsAt: timestamp("opens_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("closes_at", { withTimezone: true }).notNull(),
+  codingGrading: text("coding_grading").notNull().default("manual"),
+  durationMinutes: integer("duration_minutes").notNull(),
+  audience: jsonb("audience").$type<ExamAudienceSelection>().notNull(),
+  publicQuestions: jsonb("public_questions")
+    .$type<StudentExamQuestion[]>()
+    .notNull()
+    .default([]),
+  revision: integer("revision").notNull().default(1),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  resultsReleasedAt: timestamp("results_released_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+export const liveExamQuestions = pgTable("live_exam_questions", {
+  examId: uuid("exam_id").primaryKey(),
+  organizationId: uuid("org_id").notNull(),
+  questions: jsonb("questions").$type<ExamQuestion[]>().notNull(),
+});
+export const liveExamRoster = pgTable(
+  "live_exam_roster",
+  {
+    examId: uuid("exam_id").notNull(),
+    organizationId: uuid("org_id").notNull(),
+    memberId: uuid("member_id").notNull(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    studentId: text("student_id"),
+    branchCode: text("branch_code"),
+    branchName: text("branch_name"),
+  },
+  (table) => [
+    uniqueIndex("live_exam_roster_identity").on(table.examId, table.memberId),
+  ],
+);
+export const liveExamAttempts = pgTable(
+  "live_exam_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    examId: uuid("exam_id").notNull(),
+    organizationId: uuid("org_id").notNull(),
+    memberId: uuid("member_id").notNull(),
+    status: text("status").notNull().default("in_progress"),
+    answers: jsonb("answers").$type<ExamAnswer[]>().notNull().default([]),
+    result: jsonb("result").$type<ExamResult | null>(),
+    version: integer("version").notNull().default(0),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    deadlineAt: timestamp("deadline_at", { withTimezone: true }).notNull(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    gradingToken: uuid("grading_token"),
+    gradingStartedAt: timestamp("grading_started_at", { withTimezone: true }),
+    codeRuns: integer("code_runs").notNull().default(0),
+    lastRunAt: timestamp("last_run_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("live_exam_attempt_identity").on(table.examId, table.memberId),
+  ],
+);
+export const liveExamEvents = pgTable("live_exam_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  attemptId: uuid("attempt_id").notNull(),
+  organizationId: uuid("org_id").notNull(),
+  memberId: uuid("member_id").notNull(),
+  clientId: uuid("client_id").notNull(),
+  kind: text("kind").notNull(),
+  clientOccurredAt: timestamp("client_occurred_at", {
+    withTimezone: true,
+  }).notNull(),
+  occurredAt: timestamp("occurred_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 const dates = () => ({
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -278,14 +380,21 @@ export const jobs = pgTable("jobs", {
 export const announcements = pgTable("announcements", {
   id: uuid("id").primaryKey().defaultRandom(),
   clientId: uuid("client_id").notNull().unique(),
-  organizationId: uuid("org_id").notNull().references(() => organizations.id),
+  organizationId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id),
   branchCode: text("branch_code"),
   branchName: text("branch_name"),
   title: text("title").notNull(),
   body: text("body").notNull(),
   format: text("format").$type<"plain" | "markdown">().notNull(),
-  status: text("status").$type<"published" | "archived">().default("published").notNull(),
-  createdBy: uuid("created_by").notNull().references(() => members.id),
+  status: text("status")
+    .$type<"published" | "archived">()
+    .default("published")
+    .notNull(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => members.id),
   authorName: text("author_name").notNull(),
   ...dates(),
 });
