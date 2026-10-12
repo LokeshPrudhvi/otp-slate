@@ -1,0 +1,37 @@
+# Runtime only: the existing Neon database stays in place.
+# No migrations, seeds, persistent disks or paid background workers run here.
+previews:
+  generation: off
+services:
+  - type: web
+    name: otp-slate-api
+    runtime: node
+    region: ohio
+    plan: free
+    numInstances: 1
+    autoDeployTrigger: off
+    buildCommand: npm ci --include=dev && npm run build:packages && npm run build -w @slate/api
+    startCommand: node apps/api/dist/main.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      # Use a pooled Neon URL for the restricted runtime login, not neondb_owner.
+      - key: DATABASE_URL
+        sync: false
+      # Preserve the existing secret: it also encrypts pending email payloads.
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      # Same private value in Cloudflare: authenticates the portal API proxy.
+      - key: PORTAL_PROXY_SECRET
+        sync: false
+      - key: BETTER_AUTH_URL
+        sync: false
+      - key: TRUSTED_ORIGINS
+        sync: false
+      - key: STUDENT_PORTAL_URL
+        sync: false
+      # Optional: set RESEND_API_KEY and verified EMAIL_FROM in Render's dashboard.
+      # Leave MIGRATION_DATABASE_URL off the web service.

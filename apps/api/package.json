@@ -12,7 +12,7 @@
     "bootstrap": "node --import tsx src/cli.ts bootstrap",
     "seed:dev": "node --import tsx src/cli.ts seed-development",
     "seed:demo": "node --import tsx src/cli.ts seed-demo",
-    "test": "node --test dist/integration.test.js"
+    "test": "node --test dist/*.test.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",
@@ -28,7 +28,7 @@
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jose": "^6.1.0",
-    "pg": "^8.16.3",
+    "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
     "resend": "^6.1.0",
     "rxjs": "^7.8.2",

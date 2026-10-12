@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authClient, useData, useMe } from "@slate/ui";
+import { authClient, useMe } from "@slate/ui";
 import type { Course } from "@slate/contracts";
 import { referenceArt } from "./reference-art";
+import {
+  hasAccess,
+  hasToolkitTrack,
+  useStudentData as useData,
+} from "./access";
 
 export function Artwork({ name }: { name: keyof typeof referenceArt }) {
   // Artwork is generated only from the static local reference, never API content.
@@ -175,14 +180,26 @@ export const tracks = [
 ] as const;
 const navigation = [
   { to: "/", label: "Dashboard", icon: "dashboard" },
-  { to: "/courses", label: "Courses", icon: "courses" },
-  { to: "/toolkit", label: "Toolkit", icon: "toolkit" },
-  { to: "/compiler", label: "Compiler", icon: "compiler" },
-  { to: "/practice", label: "Practice", icon: "practice" },
-  { to: "/live-exams", label: "Live Exams", icon: "exams" },
+  { to: "/courses", label: "Courses", icon: "courses", feature: "courses" },
+  { to: "/toolkit", label: "Toolkit", icon: "toolkit", feature: "toolkit" },
+  { to: "/compiler", label: "Compiler", icon: "compiler", feature: "compiler" },
+  { to: "/practice", label: "Practice", icon: "practice", feature: "practice" },
+  {
+    to: "/live-exams",
+    label: "Live Exams",
+    icon: "exams",
+    feature: "live-exams",
+  },
   { to: "/jobs", label: "Jobs", icon: "jobs", feature: "jobs" },
   { to: "/resume", label: "Resume", icon: "resume", feature: "resume" },
-  { to: "/inbox", label: "Inbox", icon: "inbox" },
+  { to: "/inbox", label: "Inbox", icon: "inbox", feature: "inbox" },
+  {
+    to: "/announcements",
+    label: "Announcements",
+    icon: "ann",
+    feature: "announcements",
+    unlessFeature: "inbox",
+  },
 ];
 
 export function StudentShell() {
@@ -190,16 +207,28 @@ export function StudentShell() {
     query = useQueryClient(),
     navigate = useNavigate(),
     location = useLocation();
-  const courses = useData<Course[]>("courses", "student/courses");
   const courseId = location.pathname.match(/^\/courses\/([^/]+)/)?.[1];
+  const courses = useData<Course[]>(
+    "courses",
+    "student/courses",
+    Boolean(courseId),
+  );
   const currentCourse = courses.data?.find((course) => course.id === courseId);
   const selectedNav =
-    currentCourse && currentCourse.track !== "foundation"
+    currentCourse && hasToolkitTrack(me.data, currentCourse.track)
       ? "/toolkit"
       : location.pathname === "/"
         ? "/"
         : `/${location.pathname.split("/")[1]}`;
   const identity = me.data!;
+  const lastAccessRevision = useRef(identity.access?.revision);
+  useEffect(() => {
+    const revision = identity.access?.revision;
+    if (lastAccessRevision.current !== revision) {
+      lastAccessRevision.current = revision;
+      void query.invalidateQueries({ queryKey: ["student"] });
+    }
+  }, [identity.access?.revision, query]);
   const initials = identity.name
     .split(" ")
     .map((part) => part[0])
@@ -246,7 +275,10 @@ export function StudentShell() {
       <a className="student-skip" href="#student-content">
         Skip to content
       </a>
-      <nav className="a-rail" aria-label="OTP Slate navigation">
+      <nav
+        className="a-rail"
+        aria-label={`${identity.access?.display.portalTitle || "OTP Slate"} navigation`}
+      >
         <Link to="/" className="a-logo" aria-label="OTP Slate dashboard">
           <Artwork name="logo" />
         </Link>
@@ -262,7 +294,10 @@ export function StudentShell() {
         </button>
         {navigation
           .filter(
-            (item) => !item.feature || identity.features.includes(item.feature),
+            (item) =>
+              (!item.feature || identity.features.includes(item.feature)) &&
+              (!item.unlessFeature ||
+                !identity.features.includes(item.unlessFeature)),
           )
           .map((item) => (
             <Link
@@ -335,11 +370,18 @@ export function StudentShell() {
               <Status error={logout.error} />
               <ul className="tray-l">
                 <li>
-                  <button onClick={() => go("/courses")}>
-                    My courses
-                    <small>Learning assigned by your placement team</small>
+                  <button onClick={() => go("/")}>
+                    Dashboard<small>Your assigned learning and updates</small>
                   </button>
                 </li>
+                {hasAccess(identity, "courses") && (
+                  <li>
+                    <button onClick={() => go("/courses")}>
+                      My courses
+                      <small>Learning assigned by your organization</small>
+                    </button>
+                  </li>
+                )}
                 {identity.features.includes("resume") && (
                   <li>
                     <button onClick={() => go("/resume")}>
@@ -374,12 +416,14 @@ export function StudentShell() {
                     Search the help centre<small>Guides for students</small>
                   </button>
                 </li>
-                <li>
-                  <button onClick={() => go("/help#exams")}>
-                    Exam and proctoring rules
-                    <small>What is checked during a test</small>
-                  </button>
-                </li>
+                {hasAccess(identity, "live-exams") && (
+                  <li>
+                    <button onClick={() => go("/help#exams")}>
+                      Exam and proctoring rules
+                      <small>What is checked during a test</small>
+                    </button>
+                  </li>
+                )}
                 <li>
                   <button onClick={() => go("/help#access")}>
                     Learning access
@@ -422,22 +466,29 @@ export function StudentShell() {
           </div>
           <div className="otto-guidance">
             <p>Hi {identity.name.split(" ")[0]}! Where would you like to go?</p>
-            <p>
-              Your placement team manages your courses and assessment access.
-            </p>
+            <p>Your organization manages your courses and assessment access.</p>
           </div>
           <div className="otto-shortcuts">
             {[
-              ["/courses", "Continue learning"],
-              ["/toolkit", "Placement preparation"],
-              ["/practice", "Find practice"],
-              ["/live-exams", "Check live exams"],
+              ["/courses", "Continue learning", "courses"],
+              [
+                "/toolkit",
+                identity.access?.display.toolkitTitle ||
+                  "Your learning toolkit",
+                "toolkit",
+              ],
+              ["/practice", "Find practice", "practice"],
+              ["/live-exams", "Check live exams", "live-exams"],
               ["/help", "Get help"],
-            ].map(([path, label]) => (
-              <button key={path} className="a-btn" onClick={() => go(path)}>
-                {label} →
-              </button>
-            ))}
+            ]
+              .filter(
+                ([, , feature]) => !feature || hasAccess(identity, feature),
+              )
+              .map(([path, label]) => (
+                <button key={path} className="a-btn" onClick={() => go(path)}>
+                  {label} →
+                </button>
+              ))}
           </div>
         </section>
       )}

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import type { PracticeAssessment } from "@slate/contracts";
-import { useData, useMe } from "@slate/ui";
+import { api, useMe } from "@slate/ui";
+import { useStudentData as useData } from "./access";
 import { Heading, NoResults, Status } from "./design";
 import { generateTestCasesForProblem, type TestCase } from "./test-cases";
 import { executeViaOneCompiler, type ExecutionVerdict } from "./code-runner";
@@ -514,6 +515,36 @@ export function CodingWorkspace({
   assessment: PracticeAssessment;
   items: PracticeAssessment[];
 }) {
+  const me = useMe();
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  async function verifyExecutionAccess() {
+    try {
+      await api("student/compiler");
+      const assigned = await api<PracticeAssessment[]>("student/practice");
+      if (
+        !assigned.some(
+          (item) => item.id === assessment.id && item.kind === "coding",
+        )
+      ) {
+        throw new Error(
+          "This coding activity is no longer assigned to your account.",
+        );
+      }
+      if (!active.current)
+        throw new Error(
+          "Your learning access has changed. Open your dashboard to continue.",
+        );
+    } catch (error) {
+      void me.refetch();
+      throw error;
+    }
+  }
   const problem = assessment.problem!;
   const testSuite = useMemo(
     () =>
@@ -620,7 +651,9 @@ export function CodingWorkspace({
     }
 
     try {
+      await verifyExecutionAccess();
       const res = await executeViaOneCompiler(language, source, casesToRun);
+      if (!active.current) return;
       setVerdict(res);
       setSelectedTestIdx(0);
     } catch (err: any) {
@@ -642,7 +675,9 @@ export function CodingWorkspace({
     setConsoleTab("Result");
 
     try {
+      await verifyExecutionAccess();
       const res = await executeViaOneCompiler(language, source, testSuite);
+      if (!active.current) return;
       setVerdict(res);
       setSelectedTestIdx(0);
 

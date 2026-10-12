@@ -7,7 +7,10 @@
     "packages/*"
   ],
   "overrides": {
-    "shell-quote": "1.11.0"
+    "shell-quote": "1.11.0",
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
   },
   "description": "OTP Slate React portals and Node API, with standalone UI references",
   "scripts": {
@@ -16,6 +19,8 @@
     "build:packages": "npm run build -w @slate/contracts",
     "sync:student-design": "node scripts/sync-student-design.mjs",
     "build:app": "npm run build:packages && npm run build -w @slate/api && npm run build -w @slate/student && npm run build -w @slate/platform-admin && npm run build -w @slate/organization-admin",
+    "build:cloudflare": "node scripts/cloudflare-build.mjs all",
+    "test:deployment": "node --test deployment/cloudflare/proxy.test.mjs",
     "dev": "npm run build:packages && concurrently --kill-others-on-fail -n api,student,platform,organization \"npm run dev -w @slate/api\" \"npm run dev -w @slate/student\" \"npm run dev -w @slate/platform-admin\" \"npm run dev -w @slate/organization-admin\"",
     "db:migrate": "npm run migrate -w @slate/api",
     "db:bootstrap": "npm run bootstrap -w @slate/api --",
@@ -25,9 +30,11 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "exceljs": "4.4.0",
     "jsdom": "23.0.1",
     "prettier": "^3.6.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "wrangler": "4.149.0"
   },
   "dependencies": {
     "@neon/config": "^1.8.4",

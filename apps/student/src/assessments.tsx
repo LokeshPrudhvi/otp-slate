@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import type { LiveExam, PracticeAssessment } from "@slate/contracts";
-import { useData, useMe } from "@slate/ui";
+import { useMe } from "@slate/ui";
 import { Banner, Heading, NoResults, Status } from "./design";
 import { CodingWorkspace } from "./coding";
+import {
+  AccessUnavailable,
+  hasCodingAccess,
+  useStudentData as useData,
+} from "./access";
 import { savePracticeResult } from "./practice-history";
 
 const labels = {
@@ -43,27 +48,30 @@ export function PracticeCatalogue() {
       <Banner
         eyebrow="A LITTLE BETTER, EVERY DAY"
         title="Your practice starts here."
-        description="All your practice tests, coding challenges and skill exercises in one place. Choose a topic and give it a try."
+        description="Your assigned practice activities in one place. Choose a topic and give it a try."
         glyph="⌘"
       />
       <p className="hub-note">
         {data.data?.length
-          ? "Sample activities for the local preview. Try a quiz, type a passage, solve a coding problem or submit a project link."
+          ? "Sample learning activities selected by your organization. Practice results stay in this browser and are not official exam results."
           : "Practise as often as you like with activities assigned by your placement team."}
       </p>
       <div className="a-filters">
-        {[["all", "All practice"], ...Object.entries(labels)].map(
-          ([id, label]) => (
-            <button
-              key={id}
-              className={`a-pill${filter === id ? " on" : ""}`}
-              aria-pressed={filter === id}
-              onClick={() => setFilter(id)}
-            >
-              {label}
-            </button>
+        {[
+          ["all", "All practice"],
+          ...Object.entries(labels).filter(([category]) =>
+            data.data?.some((item) => item.category === category),
           ),
-        )}
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            className={`a-pill${filter === id ? " on" : ""}`}
+            aria-pressed={filter === id}
+            onClick={() => setFilter(id)}
+          >
+            {label}
+          </button>
+        ))}
         <input
           className="a-search practice-search"
           type="search"
@@ -252,10 +260,19 @@ export function LiveExamList({ exams }: { exams: LiveExam[] }) {
   );
 }
 export function AssessmentPlayer() {
+  const me = useMe();
   const { id } = useParams(),
     data = useData<PracticeAssessment[]>("practice", "student/practice"),
     [params] = useSearchParams();
+  if (data.isPending || data.error)
+    return (
+      <div className="a-page">
+        <Status pending={data.isPending} error={data.error} />
+      </div>
+    );
   const assessment = data.data?.find((item) => item.id === id);
+  if (assessment?.kind === "coding" && !hasCodingAccess(me.data))
+    return <AccessUnavailable />;
   return (
     <div className="a-page">
       {assessment?.kind !== "coding" && (

@@ -5,17 +5,19 @@ import { api, authClient, useMe } from "@slate/ui";
 import type { Identity } from "@slate/contracts";
 import { Artwork, Status } from "./design";
 
-function AuthFrame({
+export function AuthFrame({
   title,
   description,
   children,
+  className = "",
 }: {
   title: string;
   description: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="a-login open student-auth">
+    <div className={`a-login open student-auth ${className}`}>
       <div className="lg-art">
         <Artwork name="logo" />
         <div>
@@ -77,8 +79,10 @@ export function StudentLogin() {
         setStep("mfa");
         return;
       }
-      await api<Identity>("me?portal=student");
+      const identity = await api<Identity>("me?portal=student");
+      await query.cancelQueries();
       query.clear();
+      query.setQueryData(["me", "student"], identity);
       navigate("/", { replace: true });
     },
   });
@@ -172,9 +176,10 @@ export function StudentLogin() {
         {step === "reset" ? "Back to sign in" : "Forgot password?"}
       </button>
       <p className="auth-help">
-        Use the account issued by your organization.
-        <br />
-        Need access? Contact your placement team.
+        New to OTP Slate?{" "}
+        <Link className="auth-link" to="/register">
+          Create an account
+        </Link>
       </p>
     </AuthFrame>
   );

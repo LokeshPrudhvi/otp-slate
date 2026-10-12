@@ -10,7 +10,7 @@ import type {
   Ranking,
   PracticeAssessment,
 } from "@slate/contracts";
-import { api, Protected, useData, useMe } from "@slate/ui";
+import { api, Protected, useMe } from "@slate/ui";
 import {
   Artwork,
   Banner,
@@ -25,6 +25,7 @@ import {
   tracks,
 } from "./design";
 import { StudentLogin, StudentOnboarding, StudentResetPassword } from "./auth";
+import { StudentRegistration } from "./registration";
 import { ResumePage } from "./resume";
 import {
   AssessmentPlayer,
@@ -34,6 +35,12 @@ import {
 import { CodingLibrary } from "./coding";
 import { CompilerPage } from "./compiler";
 import { SelfAssessment } from "./self-assessment";
+import {
+  AccessRoute,
+  hasAccess,
+  hasToolkitTrack,
+  useStudentData as useData,
+} from "./access";
 
 type LearningCourse = Course & {
   lessons: Lesson[];
@@ -64,7 +71,9 @@ function CourseCard({ course, index }: { course: Course; index: number }) {
           </div>
           <div className="a-ccode">
             {tracks.find((track) => track.id === course.track)?.name ||
-              "Programming & technologies"}
+              (course.track === "foundation"
+                ? "Foundation courses"
+                : "Learning courses")}
           </div>
           <div className="a-cterm">Assigned version {course.version}</div>
         </div>
@@ -116,11 +125,18 @@ function CourseRow({ course }: { course: Course }) {
   );
 }
 function ToolkitShortcuts() {
+  const me = useMe();
+  const available = tracks.filter((track) =>
+    hasToolkitTrack(me.data, track.id),
+  );
+  if (!available.length) return null;
   return (
     <section aria-label="Explore learning paths">
-      <p className="hub-eyebrow">YOUR PLACEMENT TOOLKIT</p>
+      <p className="hub-eyebrow">
+        {me.data?.access?.display.toolkitTitle || "Your Placement Toolkit"}
+      </p>
       <div className="hub-shortcuts">
-        {tracks.map((track) => (
+        {available.map((track) => (
           <Link key={track.id} to={`/toolkit/${track.id}`}>
             <span>{track.glyph}</span>
             <b>{track.name}</b>
@@ -132,6 +148,7 @@ function ToolkitShortcuts() {
   );
 }
 function LiveExamShortcut() {
+  const me = useMe();
   const exams = useData<LiveExam[]>("exams", "student/exams"),
     live = exams.data?.find((exam) => exam.state === "live");
   if (live)
@@ -157,15 +174,16 @@ function LiveExamShortcut() {
         <h2>No live exams right now</h2>
         <p>Your next exam will appear here when your institute releases it.</p>
       </div>
-      <Link className="a-btn" to="/practice">
-        Explore practice →
-      </Link>
+      {hasAccess(me.data, "practice") && (
+        <Link className="a-btn" to="/practice">
+          Explore practice →
+        </Link>
+      )}
     </section>
   );
 }
 function Rankings() {
   const me = useMe(),
-    people = useData<Ranking[]>("rankings", "student/rankings"),
     [search, setSearch] = useState(""),
     [page, setPage] = useState(0);
   const visibilityKey = `slate:rankings-visibility:${me.data?.id}`;
@@ -176,6 +194,7 @@ function Rankings() {
       return true;
     }
   });
+  const people = useData<Ranking[]>("rankings", "student/rankings", visible);
   function toggleVisibility() {
     const next = !visible;
     setVisible(next);
@@ -316,60 +335,85 @@ function Dashboard() {
   const me = useMe(),
     courses = useData<Course[]>("courses", "student/courses"),
     [options, setOptions] = useState(false);
-  const rankings = me.data?.features.includes("rankings");
+  const allowed = (feature: string) => hasAccess(me.data, feature);
+  const insights = allowed("rankings") || allowed("self-assessment");
+  const display = me.data?.access?.display;
   return (
     <div className="a-page">
-      <div className={`a-dash${rankings ? "" : " dashboard-wide"}`}>
+      <div className={`a-dash${insights ? "" : " dashboard-wide"}`}>
         <div>
-          <Heading title="Dashboard">
+          <Heading title={display?.portalTitle || "Dashboard"}>
             {me.data?.demo && <span className="a-tag">Sample data</span>}
-            <Link className="a-btn" to="/courses">
-              All courses
-            </Link>
-            <button
-              className="a-btn"
-              aria-label="Dashboard options"
-              aria-expanded={options}
-              onClick={() => setOptions(!options)}
-            >
-              ⋮
-            </button>
+            {allowed("courses") && (
+              <Link className="a-btn" to="/courses">
+                All courses
+              </Link>
+            )}
+            {(allowed("toolkit") || allowed("live-exams")) && (
+              <button
+                className="a-btn"
+                aria-label="Dashboard options"
+                aria-expanded={options}
+                onClick={() => setOptions(!options)}
+              >
+                ⋮
+              </button>
+            )}
           </Heading>
+          {display?.welcomeText && (
+            <p className="hub-note">{display.welcomeText}</p>
+          )}
           {options && (
             <div className="dashboard-options">
-              <Link className="a-btn" to="/toolkit">
-                Placement toolkit →
-              </Link>
-              <Link className="a-btn" to="/live-exams">
-                Live exams →
-              </Link>
+              {allowed("toolkit") && (
+                <Link className="a-btn" to="/toolkit">
+                  {display?.toolkitTitle || "Placement toolkit"} →
+                </Link>
+              )}
+              {allowed("live-exams") && (
+                <Link className="a-btn" to="/live-exams">
+                  Live exams →
+                </Link>
+              )}
             </div>
           )}
-          <ToolkitShortcuts />
-          <LiveExamShortcut />
-          <h2 style={{ fontSize: 20, fontWeight: 400, margin: "24px 0 16px" }}>
-            Continue learning
-          </h2>
-          <Status pending={courses.isPending} error={courses.error} />
-          {courses.data?.length ? (
-            <div className="a-cards">
-              {courses.data.map((course, index) => (
-                <CourseCard key={course.id} course={course} index={index} />
-              ))}
-            </div>
-          ) : (
-            !courses.isPending &&
-            !courses.error && (
-              <NoResults title="Your courses will appear here">
-                Your placement team will assign courses to your account.
-              </NoResults>
-            )
+          {allowed("toolkit") && <ToolkitShortcuts />}
+          {allowed("live-exams") && <LiveExamShortcut />}
+          {allowed("courses") && (
+            <>
+              <h2
+                style={{ fontSize: 20, fontWeight: 400, margin: "24px 0 16px" }}
+              >
+                Continue learning
+              </h2>
+              <Status pending={courses.isPending} error={courses.error} />
+              {courses.data?.length ? (
+                <div className="a-cards">
+                  {courses.data.map((course, index) => (
+                    <CourseCard key={course.id} course={course} index={index} />
+                  ))}
+                </div>
+              ) : (
+                !courses.isPending &&
+                !courses.error && (
+                  <NoResults title="Your courses will appear here">
+                    Your organization will assign courses to your account.
+                  </NoResults>
+                )
+              )}
+            </>
+          )}
+          {!me.data?.features.length && (
+            <NoResults title="Your workspace is ready">
+              Your organization will assign the learning and tools available to
+              you.
+            </NoResults>
           )}
         </div>
-        {rankings && (
+        {insights && (
           <div className="dashboard-insights">
-            <SelfAssessment />
-            <Rankings key={me.data?.id} />
+            {allowed("self-assessment") && <SelfAssessment />}
+            {allowed("rankings") && <Rankings key={me.data?.id} />}
           </div>
         )}
       </div>
@@ -377,12 +421,12 @@ function Dashboard() {
   );
 }
 function Courses() {
-  const data = useData<Course[]>("courses", "student/courses"),
+  const me = useMe(),
+    data = useData<Course[]>("courses", "student/courses"),
     practice = useData<PracticeAssessment[]>("practice", "student/practice"),
     [search, setSearch] = useState(""),
     [category, setCategory] = useState("tracks");
-  const assigned =
-      data.data?.filter((course) => course.track === "foundation") || [],
+  const assigned = data.data || [],
     items = assigned.filter((course) =>
       `${course.title} ${course.description}`
         .toLowerCase()
@@ -404,18 +448,20 @@ function Courses() {
       </Heading>
       <div className="a-filters">
         {[
-          ["tracks", "Programming & technologies"],
+          ["tracks", "All courses"],
           ["pyq", "Company PYQs"],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            className={`a-pill${category === id ? " on" : ""}`}
-            aria-pressed={category === id}
-            onClick={() => setCategory(id)}
-          >
-            {label}
-          </button>
-        ))}
+        ]
+          .filter(([id]) => id !== "pyq" || hasAccess(me.data, "practice"))
+          .map(([id, label]) => (
+            <button
+              key={id}
+              className={`a-pill${category === id ? " on" : ""}`}
+              aria-pressed={category === id}
+              onClick={() => setCategory(id)}
+            >
+              {label}
+            </button>
+          ))}
         <input
           className="a-search"
           type="search"
@@ -435,7 +481,7 @@ function Courses() {
                 ? papers.length
                   ? "Sample company-style practice sets. These are illustrative questions, not actual previous-year company papers."
                   : "Previous-year papers shared by your placement team."
-                : "Build your foundation in programming, web technologies and databases."}
+                : "Explore the courses and learning paths assigned to you."}
             </p>
             {category === "pyq" && papers.length ? (
               <div className="a-cgrid">
@@ -484,8 +530,8 @@ function Courses() {
                 {category === "pyq"
                   ? "Your placement team will publish and assign papers when they are available."
                   : search
-                    ? "Try a language or a topic, or clear your search."
-                    : "Your assigned programming courses will appear here."}
+                    ? "Try a course name or topic, or clear your search."
+                    : "Your assigned courses will appear here."}
               </NoResults>
             )}
           </section>
@@ -518,7 +564,9 @@ function CoursePage() {
     next = course.lessons.find(
       (lesson) => !course.completedLessonIds.includes(lesson.id),
     );
-  const track = tracks.find((item) => item.id === course.track),
+  const track = tracks.find(
+      (item) => item.id === course.track && hasToolkitTrack(me.data, item.id),
+    ),
     nextIndex = next ? course.lessons.indexOf(next) : 0;
   return (
     <div className="a-page learn-page">
@@ -765,35 +813,46 @@ function LessonPage() {
 }
 function Toolkit() {
   const { track } = useParams(),
+    me = useMe(),
     data = useData<Course[]>("courses", "student/courses"),
-    selected = tracks.find((item) => item.id === track);
+    available = tracks.filter((item) => hasToolkitTrack(me.data, item.id)),
+    selected = available.find((item) => item.id === track),
+    toolkitTitle =
+      me.data?.access?.display.toolkitTitle || "Your Placement Toolkit";
   if (track && !selected) return <Unavailable />;
   const courses = data.data?.filter((course) => course.track === track) || [];
   return (
     <div className="a-page">
       {selected && (
         <div className="a-crumbs">
-          <Link to="/toolkit">Your Placement Toolkit</Link>
+          <Link to="/toolkit">{toolkitTitle}</Link>
           <span>›</span>
           <span>{selected.name}</span>
         </div>
       )}
-      <Heading title={selected?.name || "Your Placement Toolkit"}>
+      <Heading title={selected?.name || toolkitTitle}>
         <span className="a-tag">
-          {selected ? `${courses.length} learning paths` : "5 ways to prepare"}
+          {selected
+            ? `${courses.length} learning paths`
+            : `${available.length} learning tracks`}
         </span>
       </Heading>
       <Banner
         title={selected?.intro || "Get ready for your next opportunity."}
         description={
           selected?.description ||
-          "Everything you need for placement preparation, from your first practice test to full stack development."
+          "Explore the learning tracks selected for you by your organization."
         }
         glyph={selected?.glyph || "⌘"}
       />
+      {!available.length && (
+        <NoResults title="Your toolkit is ready">
+          Your organization will choose the learning tracks available to you.
+        </NoResults>
+      )}
       {!selected ? (
         <div className="hub-grid" style={{ marginTop: 24 }}>
-          {tracks.map((item) => (
+          {available.map((item) => (
             <article className="hub-card" key={item.id}>
               <div className="hub-card-top">
                 <span className="rail-glyph" aria-hidden="true">
@@ -818,7 +877,15 @@ function Toolkit() {
       ) : (
         <>
           <p className="hub-note">{selected.note}</p>
-          <Status pending={data.isPending} error={data.error} />
+          {hasAccess(me.data, "courses") && (
+            <Status pending={data.isPending} error={data.error} />
+          )}
+          {!hasAccess(me.data, "courses") && (
+            <NoResults title="No courses assigned to this track">
+              Your organization controls the courses available in your learning
+              tracks.
+            </NoResults>
+          )}
           {data.data &&
             (courses.length ? (
               <div className="hub-grid">
@@ -872,6 +939,7 @@ function Practice() {
   return <PracticeCatalogue />;
 }
 function LiveExams() {
+  const me = useMe();
   const data = useData<LiveExam[]>("exams", "student/exams");
   if (data.data?.length)
     return (
@@ -896,20 +964,25 @@ function LiveExams() {
               When your institute releases a new exam, you’ll find it here with
               the schedule and instructions.
             </p>
-            <Link className="a-btn pri" to="/practice">
-              Keep learning with practice <span aria-hidden="true">→</span>
-            </Link>
-            <small>
-              Build confidence while you wait for your next assessment.
-            </small>
+            {hasAccess(me.data, "practice") && (
+              <>
+                <Link className="a-btn pri" to="/practice">
+                  Keep learning with practice <span aria-hidden="true">→</span>
+                </Link>
+                <small>
+                  Build confidence while you wait for your next assessment.
+                </small>
+              </>
+            )}
           </section>
-          <div className="empty-followup">
-            <b>A little practice goes a long way.</b>
-            <span>
-              Explore aptitude tests, coding challenges and hands-on exercises
-              at your own pace.
-            </span>
-          </div>
+          {hasAccess(me.data, "practice") && (
+            <div className="empty-followup">
+              <b>A little practice goes a long way.</b>
+              <span>
+                Explore your assigned practice activities at your own pace.
+              </span>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -999,19 +1072,31 @@ function Jobs() {
     </div>
   );
 }
-function Inbox() {
+function Inbox({ announcementsOnly = false }: { announcementsOnly?: boolean }) {
+  const me = useMe();
   const data = useData<Announcement[]>(
     "announcements",
     "student/announcements",
   );
+  const title = announcementsOnly ? "Announcements" : "Inbox";
+  if (!hasAccess(me.data, "announcements"))
+    return (
+      <div className="a-page">
+        <Heading title={title} />
+        <NoResults title="No updates available">
+          Announcements are not enabled for your account. Contact your
+          organization for support.
+        </NoResults>
+      </div>
+    );
   return (
     <div className="a-page">
-      <Heading title="Inbox" />
+      <Heading title={title} />
       <Status pending={data.isPending} error={data.error} />
       {data.data?.length ? (
         <>
           <p className="hub-note">
-            Announcements · Sample messages for the local preview
+            Organization announcements · Sample notices
           </p>
           <div className="hub-grid">
             {data.data.map((message) => (
@@ -1031,9 +1116,8 @@ function Inbox() {
         </>
       ) : (
         data.data && (
-          <NoResults title="No messages yet">
-            Announcements from your placement team will appear here when
-            messaging is available.
+          <NoResults title="No announcements yet">
+            Announcements shared with your account will appear here.
           </NoResults>
         )
       )}
@@ -1041,6 +1125,7 @@ function Inbox() {
   );
 }
 function Help() {
+  const me = useMe();
   return (
     <div className="a-page">
       <Heading title="Help" />
@@ -1056,29 +1141,35 @@ function Help() {
           organization if a course is missing. Organization viewers track
           progress; Platform Admin manages access.
         </p>
-        <Link className="a-btn" to="/courses">
-          Open my courses →
-        </Link>
+        {hasAccess(me.data, "courses") && (
+          <Link className="a-btn" to="/courses">
+            Open my courses →
+          </Link>
+        )}
       </section>
-      <section className="help-section">
-        <h2>Your progress and resume</h2>
-        <p>
-          Open a course module, read the lesson and mark it complete. Your
-          resume updates as you type and saves to your account; check the save
-          status before leaving.
-        </p>
-      </section>
-      <section className="help-section" id="exams">
-        <h2>Live exams and browser monitoring</h2>
-        <p>
-          Released exams will display their schedule and instructions. Read the
-          monitoring notice before starting an exam. Browser events support
-          review; a tab change alone does not establish cheating.
-        </p>
-        <Link className="a-btn" to="/live-exams">
-          Check live exams →
-        </Link>
-      </section>
+      {hasAccess(me.data, "resume") && (
+        <section className="help-section">
+          <h2>Your progress and resume</h2>
+          <p>
+            Open a course module, read the lesson and mark it complete. Your
+            resume updates as you type and saves to your account; check the save
+            status before leaving.
+          </p>
+        </section>
+      )}
+      {hasAccess(me.data, "live-exams") && (
+        <section className="help-section" id="exams">
+          <h2>Live exams and browser monitoring</h2>
+          <p>
+            Released exams will display their schedule and instructions. Read
+            the monitoring notice before starting an exam. Browser events
+            support review; a tab change alone does not establish cheating.
+          </p>
+          <Link className="a-btn" to="/live-exams">
+            Check live exams →
+          </Link>
+        </section>
+      )}
     </div>
   );
 }
@@ -1103,27 +1194,124 @@ export function StudentRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<StudentLogin />} />
+      <Route path="/register" element={<StudentRegistration />} />
       <Route path="/reset-password" element={<StudentResetPassword />} />
       <Route element={<Protected />}>
         <Route path="/onboarding" element={<StudentOnboarding />} />
         <Route element={<StudentShell />}>
           <Route index element={<Dashboard />} />
-          <Route path="courses" element={<Courses />} />
-          <Route path="courses/:id" element={<CoursePage />} />
+          <Route
+            path="courses"
+            element={
+              <AccessRoute feature="courses">
+                <Courses />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="courses/:id"
+            element={
+              <AccessRoute feature="courses">
+                <CoursePage />
+              </AccessRoute>
+            }
+          />
           <Route
             path="courses/:id/lessons/:lessonId"
-            element={<LessonPage />}
+            element={
+              <AccessRoute feature="courses">
+                <LessonPage />
+              </AccessRoute>
+            }
           />
-          <Route path="toolkit" element={<Toolkit />} />
-          <Route path="toolkit/:track" element={<Toolkit />} />
-          <Route path="compiler" element={<CompilerPage />} />
-          <Route path="practice" element={<Practice />} />
-          <Route path="practice/coding" element={<CodingLibrary />} />
-          <Route path="practice/:id" element={<AssessmentPlayer />} />
-          <Route path="live-exams" element={<LiveExams />} />
-          <Route path="jobs" element={<Jobs />} />
-          <Route path="resume" element={<ResumePage />} />
-          <Route path="inbox" element={<Inbox />} />
+          <Route
+            path="toolkit"
+            element={
+              <AccessRoute feature="toolkit">
+                <Toolkit />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="toolkit/:track"
+            element={
+              <AccessRoute feature="toolkit">
+                <Toolkit />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="compiler"
+            element={
+              <AccessRoute feature="compiler">
+                <CompilerPage />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="practice"
+            element={
+              <AccessRoute feature="practice">
+                <Practice />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="practice/coding"
+            element={
+              <AccessRoute feature="practice" coding>
+                <CodingLibrary />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="practice/:id"
+            element={
+              <AccessRoute feature="practice">
+                <AssessmentPlayer />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="live-exams"
+            element={
+              <AccessRoute feature="live-exams">
+                <LiveExams />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="jobs"
+            element={
+              <AccessRoute feature="jobs">
+                <Jobs />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="resume"
+            element={
+              <AccessRoute feature="resume">
+                <ResumePage />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="inbox"
+            element={
+              <AccessRoute feature="inbox">
+                <Inbox />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="announcements"
+            element={
+              <AccessRoute feature="announcements">
+                <Inbox announcementsOnly />
+              </AccessRoute>
+            }
+          />
           <Route path="help" element={<Help />} />
           <Route path="*" element={<Unavailable />} />
         </Route>

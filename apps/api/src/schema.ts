@@ -9,7 +9,13 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { Lesson, Resume } from "@slate/contracts";
+import { relations } from "drizzle-orm";
+import type {
+  AccessPolicy,
+  Lesson,
+  PortalDisplay,
+  Resume,
+} from "@slate/contracts";
 
 const dates = () => ({
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -99,13 +105,57 @@ export const rateLimit = pgTable("auth_rate_limit", {
   count: integer("count").notNull(),
   lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
-export const organizations = pgTable("slate_organizations", {
+
+// Better Auth's native joins fetch the session and its current user together.
+// These relations only describe existing foreign keys; no SQL migration is needed.
+export const userRelations = relations(user, ({ many }) => ({
+  sessions: many(session),
+  accounts: many(account),
+  twoFactors: many(twoFactor),
+}));
+export const sessionRelations = relations(session, ({ one }) => ({
+  user: one(user, { fields: [session.userId], references: [user.id] }),
+}));
+export const accountRelations = relations(account, ({ one }) => ({
+  user: one(user, { fields: [account.userId], references: [user.id] }),
+}));
+export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
+  user: one(user, { fields: [twoFactor.userId], references: [user.id] }),
+}));
+export const organizations = pgTable("organizations", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   status: text("status").default("active").notNull(),
+  accessRevision: integer("access_revision").default(0).notNull(),
+  portalDisplay: jsonb("portal_display").$type<PortalDisplay | null>(),
   ...dates(),
 });
-export const members = pgTable("slate_members", {
+export const accessPolicies = pgTable(
+  "access_policies",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    scope: text("scope").notNull(),
+    targetKey: text("target_key").notNull(),
+    branchName: text("branch_name"),
+    policy: jsonb("policy").$type<AccessPolicy>().notNull(),
+    courseVersions: jsonb("course_versions")
+      .$type<Record<string, string>>()
+      .default({})
+      .notNull(),
+    ...dates(),
+  },
+  (table) => [
+    uniqueIndex("access_policy_target").on(
+      table.organizationId,
+      table.scope,
+      table.targetKey,
+    ),
+  ],
+);
+export const members = pgTable("members", {
   id: uuid("id").primaryKey().defaultRandom(),
   authUserId: text("auth_user_id")
     .notNull()
@@ -117,12 +167,16 @@ export const members = pgTable("slate_members", {
   passwordSetupComplete: boolean("password_setup_complete")
     .default(false)
     .notNull(),
+  studentId: text("student_id"),
+  cohort: text("cohort"),
+  branchName: text("branch_name"),
+  branchCode: text("branch_code"),
   phone: text("phone"),
   phoneVerifiedAt: timestamp("phone_verified_at", { withTimezone: true }),
   features: jsonb("features").$type<string[]>().default([]).notNull(),
   ...dates(),
 });
-export const courses = pgTable("slate_courses", {
+export const courses = pgTable("courses", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   description: text("description").notNull(),
@@ -131,7 +185,7 @@ export const courses = pgTable("slate_courses", {
   ...dates(),
 });
 export const versions = pgTable(
-  "slate_course_versions",
+  "course_versions",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     courseId: uuid("course_id")
@@ -150,7 +204,7 @@ export const versions = pgTable(
   ],
 );
 export const grants = pgTable(
-  "slate_grants",
+  "course_enrollments",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     organizationId: uuid("org_id").notNull(),
@@ -167,7 +221,7 @@ export const grants = pgTable(
   ],
 );
 export const progress = pgTable(
-  "slate_progress",
+  "lesson_progress",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     organizationId: uuid("org_id").notNull(),
@@ -186,7 +240,7 @@ export const progress = pgTable(
     ),
   ],
 );
-export const jobs = pgTable("slate_jobs", {
+export const jobs = pgTable("jobs", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("org_id")
     .notNull()
@@ -199,7 +253,7 @@ export const jobs = pgTable("slate_jobs", {
     .defaultNow()
     .notNull(),
 });
-export const resumes = pgTable("slate_resumes", {
+export const resumes = pgTable("resumes", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("org_id").notNull(),
   memberId: uuid("member_id").notNull().unique(),
@@ -209,7 +263,7 @@ export const resumes = pgTable("slate_resumes", {
     .defaultNow()
     .notNull(),
 });
-export const phoneChallenges = pgTable("slate_phone_challenges", {
+export const phoneChallenges = pgTable("phone_challenges", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("org_id").notNull(),
   memberId: uuid("member_id").notNull(),
@@ -222,7 +276,7 @@ export const phoneChallenges = pgTable("slate_phone_challenges", {
     .defaultNow()
     .notNull(),
 });
-export const outbox = pgTable("slate_outbox", {
+export const outbox = pgTable("outbox", {
   id: uuid("id").primaryKey().defaultRandom(),
   type: text("type").notNull(),
   encryptedPayload: text("encrypted_payload").notNull(),
@@ -236,7 +290,7 @@ export const outbox = pgTable("slate_outbox", {
     .defaultNow()
     .notNull(),
 });
-export const audit = pgTable("slate_audit", {
+export const audit = pgTable("audit_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   actorId: uuid("actor_id"),
   organizationId: uuid("org_id"),
@@ -246,7 +300,7 @@ export const audit = pgTable("slate_audit", {
     .defaultNow()
     .notNull(),
 });
-export const messages = pgTable("slate_messages", {
+export const messages = pgTable("messages", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("org_id").notNull(),
   senderId: uuid("sender_id").notNull(),
@@ -261,7 +315,7 @@ export const messages = pgTable("slate_messages", {
   replyToId: uuid("reply_to_id"),
   sentAt: timestamp("sent_at", { withTimezone: true }).defaultNow().notNull(),
 });
-export const deliveries = pgTable("slate_message_deliveries", {
+export const deliveries = pgTable("message_deliveries", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("org_id").notNull(),
   messageId: uuid("message_id").notNull(),

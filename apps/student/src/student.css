@@ -1354,6 +1354,98 @@ button:disabled {
   font-size: 13px;
   margin: 8px 0 0;
 }
+.student-registration {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+.student-registration .lg-form {
+  padding: 36px clamp(24px, 4vw, 64px);
+}
+.registration-fields {
+  border: 0;
+  padding: 0;
+  margin: 0 0 20px;
+  min-width: 0;
+}
+.registration-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+.registration-field {
+  min-width: 0;
+}
+.registration-college {
+  grid-column: 1 / -1;
+}
+.student-registration .lg-form select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #c7cdd1;
+  border-radius: 6px;
+  padding: 12px;
+  background: white;
+  color: #2d3b45;
+  font: inherit;
+  font-size: 16px;
+}
+.registration-hint {
+  margin: 6px 0 0;
+  color: #59697a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.registration-error {
+  margin: 6px 0 0;
+  color: #aa341d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.student-registration .lg-form [aria-invalid="true"] {
+  border-color: #aa341d;
+}
+.student-registration :is(input, select, button, a):focus-visible,
+.registration-success:focus-visible {
+  outline: 3px solid #1f5fae;
+  outline-offset: 3px;
+}
+.student-registration :is(button, select):disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.registration-success {
+  padding: 20px;
+  background: #f5f7fa;
+  border: 1px solid #dde4ed;
+  border-radius: 8px;
+  color: #4b5b73;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.registration-success p:last-child {
+  margin-bottom: 0;
+}
+.registration-pending {
+  display: inline-block;
+  border-radius: 20px;
+  background: #fff1bd;
+  color: #664b00;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+@media (max-width: 900px) {
+  .student-registration {
+    grid-template-columns: 1fr;
+  }
+  .student-registration .lg-art {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .registration-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .resume-save-note {
   font-size: 13px;
   color: #617084;
@@ -1446,6 +1538,5 @@ button:disabled {
 @keyframes compiler-spin {
   to { transform: rotate(360deg); }
 }
-
 
 

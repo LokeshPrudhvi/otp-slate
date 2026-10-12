@@ -1,0 +1,393 @@
+.registrations-page > .admin-content {
+  display: grid;
+  gap: 22px;
+}
+.people-role-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 22px;
+}
+.registrations-page > .admin-content > .panel {
+  margin-bottom: 0;
+}
+.registration-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.registration-flow > div {
+  position: relative;
+  padding: 16px 22px 16px 68px;
+}
+.registration-flow > div + div {
+  border-left: 1px solid var(--line);
+}
+.registration-flow span {
+  position: absolute;
+  left: 22px;
+  top: 17px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: #edf3fa;
+  border-radius: 50%;
+  color: var(--blue);
+  font-weight: 800;
+  font-size: 11px;
+}
+.registration-flow strong,
+.registration-flow small {
+  display: block;
+}
+.registration-flow strong {
+  color: var(--navy);
+  margin-bottom: 7px;
+}
+.registration-flow small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.registration-history-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.registrations-page .registration-history-filters .registration-filters {
+  flex: 0 1 340px;
+  width: 340px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 0;
+}
+.registration-history-filters .registration-status-filters {
+  margin: 0;
+}
+.registration-history-filters .registration-filters .field > span {
+  font-size: 12px;
+}
+.registration-history-tools {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px;
+  max-width: 100%;
+  min-width: 0;
+}
+.registration-history-tools .btn {
+  flex-shrink: 0;
+}
+.platform-admin .registration-history-tools .admin-header-select {
+  width: 280px;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+.registration-import-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.registration-student-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.student-details-editor {
+  min-width: 340px;
+  max-width: 640px;
+  margin-top: 16px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+.student-details-editor > strong {
+  display: block;
+  color: var(--navy);
+}
+.registration-import-controls input[type="file"] {
+  padding: 10px;
+  max-width: 100%;
+}
+.registration-queue-actions,
+.registration-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 12px 0;
+}
+.registration-preview-head p {
+  margin: 6px 0 0;
+}
+.registration-help {
+  color: var(--muted);
+  font-size: 12px;
+  max-width: 900px;
+  margin: 12px 0 20px;
+}
+.registration-table {
+  min-width: 1040px;
+}
+.registration-table .registration-selection-heading {
+  width: 35px;
+}
+.registration-table td {
+  vertical-align: top;
+}
+.registration-table td strong {
+  display: block;
+  margin-bottom: 5px;
+}
+.registration-table td small {
+  margin-top: 5px;
+}
+.registration-table td > a {
+  font-size: 12px;
+  display: inline-block;
+  max-width: 230px;
+  overflow-wrap: anywhere;
+}
+.registration-table input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--navy);
+}
+.registration-status {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.registration-status.pending {
+  color: #805519;
+  background: #fff3d4;
+}
+.registration-status.approved {
+  color: #24604a;
+  background: #e4f3eb;
+}
+.registration-status.rejected {
+  color: #984447;
+  background: #fbecec;
+}
+.registration-row-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.registration-text-button {
+  border: 0;
+  padding: 0 3px;
+  color: #8d4952;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: transparent;
+  font-size: 12px;
+}
+.registration-reject {
+  min-width: 230px;
+}
+.registration-reject textarea {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  margin: 8px 0;
+}
+.registration-reason {
+  max-width: 240px;
+  overflow-wrap: anywhere;
+}
+.registration-result {
+  background: #eff6f2;
+  border: 1px solid #cde2d6;
+  color: #295643;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  line-height: 1.7;
+}
+.registration-result p {
+  margin: 4px 0;
+}
+.registration-issues {
+  background: #fff6ed;
+  border: 1px solid #ebd7c1;
+  border-radius: 8px;
+  color: #86501f;
+  padding: 16px;
+  margin-bottom: 16px;
+  max-height: 220px;
+  overflow: auto;
+}
+.registration-issues ul,
+.registration-result ul {
+  padding-left: 20px;
+  margin-bottom: 0;
+  line-height: 1.8;
+}
+.registration-error {
+  color: #a34148 !important;
+}
+.registration-caption {
+  text-align: left;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 12px 0;
+}
+@media (max-width: 1100px) {
+  .registration-flow > div {
+    padding: 16px;
+  }
+  .registration-flow span {
+    position: static;
+    margin-bottom: 14px;
+  }
+}
+@media (max-width: 760px) {
+  .registration-filters,
+  .registration-import-controls {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .registration-flow {
+    grid-template-columns: 1fr;
+  }
+  .registration-flow > div {
+    padding: 16px 20px 16px 65px;
+  }
+  .registration-flow span {
+    position: absolute;
+    top: 17px;
+    left: 20px;
+  }
+  .registration-flow > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .registrations-page .panel-head {
+    align-items: start;
+    flex-wrap: wrap;
+  }
+  .registration-history-tools {
+    width: 100%;
+  }
+}
+
+/* Keep review controls visible and separate from the student creation form. */
+.registration-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -2px 0 24px;
+  padding: 5px;
+  width: fit-content;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f4f7fb;
+}
+.registration-status-filters button {
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.registration-status-filters button:hover {
+  color: var(--navy);
+  background: #e9eff6;
+}
+.registration-status-filters button.is-active {
+  background: var(--navy);
+  color: #fff;
+  box-shadow: 0 2px 4px #112b4914;
+}
+.registration-status-filters button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+.registration-clear-button {
+  border: 0;
+  padding: 5px 0;
+  color: var(--blue);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.registration-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 18px;
+  margin: 12px 0;
+  border: 1px solid #c6d5e8;
+  border-radius: 10px;
+  background: #edf3fa;
+}
+.registration-selection-bar strong {
+  display: block;
+  color: var(--navy);
+  font-size: 14px;
+}
+.registration-selection-bar small {
+  display: block;
+  color: var(--muted);
+  margin-top: 5px;
+  font-size: 12px;
+}
+.registration-table tr.is-selected td {
+  background: #f0f5fc;
+}
+.registration-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 0 0;
+  font-size: 12px;
+}
+.registration-pagination .actions {
+  align-items: center;
+}
+.registration-pagination .btn {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .registration-status-filters {
+    width: 100%;
+  }
+  .registration-status-filters button {
+    flex: 1 1 calc(50% - 6px);
+    padding: 10px 8px;
+  }
+  .registration-selection-bar .actions {
+    width: 100%;
+  }
+  .registration-selection-bar .btn.primary {
+    flex: 1;
+  }
+}

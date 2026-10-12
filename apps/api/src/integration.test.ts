@@ -8,6 +8,7 @@ import { connectDatabase, migrateDatabase, scoped } from "./database.js";
 import { SlateService } from "./service.js";
 import * as schema from "./schema.js";
 import { seedDevelopment } from "./dev-seed.js";
+import { decryptPayload } from "./providers.js";
 import { seedDemo } from "./demo-seed.js";
 
 // RFC 6238 authenticator, independent of the authentication library under test.
@@ -42,6 +43,7 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
     databaseUrl: "pglite://memory",
     migrationUrl: undefined,
     secret: "test-only-random-secret-32-characters-long",
+    portalProxySecret: "integration-only-proxy-secret-at-least-32-characters",
     authUrl: "http://localhost:3000",
     origins: [
       "http://localhost:5173",
@@ -51,6 +53,8 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
     port: 0,
   };
   const auth = createAuth(connection.db, config, connection.local);
+  const previousStudentPortal = process.env.STUDENT_PORTAL_URL;
+  process.env.STUDENT_PORTAL_URL = config.origins[0];
   const delivered: { phone: string; code: string }[] = [];
   const sender = {
     configured: true,
@@ -94,7 +98,8 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         headers: {
           Origin: this.origin,
           "Content-Type": "application/json",
-          "X-Forwarded-For": this.ip,
+          "x-slate-proxy-key": config.portalProxySecret,
+          "x-slate-client-ip": this.ip,
           ...(this.cookies.size
             ? {
                 Cookie: [...this.cookies.entries()]
@@ -188,7 +193,7 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         assert.equal(b.status, 201);
         orgA = a.body.id;
         orgB = b.body.id;
-        const learner = await platform.request(
+        const blockedLegacy = await platform.request(
           "/api/v1/platform/members",
           "POST",
           {
@@ -198,9 +203,42 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
             role: "student",
           },
         );
-        assert.equal(learner.status, 201, JSON.stringify(learner.body));
-        memberId = learner.body.id;
-        studentPassword = learner.body.temporaryPassword;
+        assert.equal(blockedLegacy.status, 400);
+        const learner = await anonymous.request(
+          "/api/v1/registration/requests",
+          "POST",
+          {
+            organizationId: orgA,
+            studentId: "ST001",
+            name: "Learner A",
+            email: "learner@example.test",
+            phone: "+919876543210",
+            branchName: "Computer Science",
+            branchCode: "CSE",
+          },
+        );
+        assert.equal(learner.status, 201);
+        const approval = await platform.request(
+          "/api/v1/platform/registrations/approve",
+          "POST",
+          { ids: [learner.body.id] },
+        );
+        assert.equal(approval.body.results[0].status, "approved");
+        const [studentRecord] = await connection.db
+          .select()
+          .from(schema.members)
+          .where(eq(schema.members.studentId, "ST001"));
+        memberId = studentRecord.id;
+        const [mail] = await connection.db
+          .select()
+          .from(schema.outbox)
+          .where(eq(schema.outbox.type, "welcome_student"));
+        const payload = decryptPayload(
+          config.secret,
+          mail.encryptedPayload,
+          "welcome_student",
+        );
+        studentPassword = payload.temporaryPassword;
         await student.login("learner@example.test", studentPassword);
         for (const [organizationId, email, browser] of [
           [orgA, "viewer@example.test", viewer],
@@ -696,7 +734,10 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
           },
         );
         assert.equal(reset.status, 200, JSON.stringify(reset.body));
-        const mails = await connection.db.select().from(schema.outbox);
+        const mails = await connection.db
+          .select()
+          .from(schema.outbox)
+          .where(eq(schema.outbox.type, "password_reset"));
         assert.equal(mails.length, 1);
         assert.equal(mails[0].status, "pending");
         assert.ok(!mails[0].encryptedPayload.includes("learner@example.test"));
@@ -707,8 +748,13 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         );
         const resetToken = new URL(payload.url).pathname.split("/").at(-1)!;
         const link = new URL(payload.url);
+        assert.equal(link.origin, config.origins[0]);
         const redirect = await fetch(base + link.pathname + link.search, {
           redirect: "manual",
+          headers: {
+            "x-slate-proxy-key": config.portalProxySecret,
+            "x-slate-client-ip": anonymous.ip,
+          },
         });
         assert.equal(redirect.status, 302);
         assert.ok(redirect.headers.get("location")?.includes(resetToken));
@@ -1127,7 +1173,7 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         async function inventory() {
           return scoped(connection.db, { platform: true }, (tx) =>
             tx.execute(
-              sql`SELECT (SELECT COUNT(*) FROM slate_members) AS members, (SELECT COUNT(*) FROM slate_courses) AS courses, (SELECT COUNT(*) FROM slate_course_versions) AS versions, (SELECT COUNT(*) FROM slate_grants) AS grants, (SELECT COUNT(*) FROM slate_progress) AS progress, (SELECT COUNT(*) FROM slate_jobs) AS jobs, (SELECT COUNT(*) FROM slate_resumes) AS resumes`,
+              sql`SELECT (SELECT COUNT(*) FROM members) AS members, (SELECT COUNT(*) FROM courses) AS courses, (SELECT COUNT(*) FROM course_versions) AS versions, (SELECT COUNT(*) FROM course_enrollments) AS grants, (SELECT COUNT(*) FROM lesson_progress) AS progress, (SELECT COUNT(*) FROM jobs) AS jobs, (SELECT COUNT(*) FROM resumes) AS resumes`,
             ),
           );
         }
@@ -1275,5 +1321,8 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
   } finally {
     await app.close();
     await connection.close();
+    if (previousStudentPortal === undefined)
+      delete process.env.STUDENT_PORTAL_URL;
+    else process.env.STUDENT_PORTAL_URL = previousStudentPortal;
   }
 });

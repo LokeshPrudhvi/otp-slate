@@ -1,0 +1,92 @@
+.admin-dashboard .page-head h1 { font-size: clamp(26px, 2.6vw, 32px); font-weight: 700; letter-spacing: -.035em; }
+.admin-dashboard .page-head > .btn { flex-shrink: 0; min-height: 42px; }
+.admin-dashboard .page-head > .btn > span { font-size: 21px; line-height: 1; font-weight: 400; }
+.admin-dashboard-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 25px; padding-bottom: 25px; }
+.admin-dashboard-actions > a { display: inline-flex; align-items: center; gap: 9px; min-height: 34px; font-size: 13px; font-weight: 700; text-decoration: none; }
+.admin-dashboard-actions > a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.admin-dashboard-actions svg { width: 17px; height: 17px; }
+.admin-dashboard-actions-note { margin-left: auto; color: var(--muted); font-size: 12px; }
+.admin-dashboard-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }
+.admin-dashboard-metric { display: block; padding: 20px; border: 1px solid var(--line); border-radius: 10px; background: white; text-decoration: none; transition: border-color .15s, box-shadow .15s; }
+.admin-dashboard-metric:hover { border-color: #9badc3; box-shadow: 0 3px 12px #10274708; }
+.admin-dashboard-metric-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.admin-dashboard-metric-label svg { width: 18px; height: 18px; color: #6883a2; flex-shrink: 0; }
+.admin-dashboard-metric strong { display: block; min-height: 45px; color: var(--navy); font-size: 34px; font-weight: 700; letter-spacing: -.04em; margin: 13px 0 8px; font-variant-numeric: tabular-nums; }
+.admin-dashboard-metric-foot { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--muted); }
+.admin-dashboard-metric-foot > span:last-child { color: #42648d; font-size: 14px; }
+.admin-dashboard-placeholder { display: inline-block; width: 65px; height: 32px; background: #ecf0f6; border-radius: 5px; }
+.admin-dashboard-columns { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(290px, 1fr); gap: 22px; align-items: start; }
+.admin-dashboard-panel { background: white; border: 1px solid var(--line); border-radius: 10px; min-width: 0; overflow: hidden; }
+.admin-dashboard-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px; border-bottom: 1px solid #e9edf2; }
+.admin-dashboard-panel-head h2 { font-size: 17px; margin: 0; letter-spacing: -.02em; }
+.admin-dashboard-panel-head p { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.admin-dashboard-text-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; min-height: 30px; }
+.admin-dashboard-text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.admin-dashboard-org-counts { display: flex; gap: 18px; padding: 14px 22px; border-bottom: 1px solid #edf0f5; background: #fafbfd; color: var(--muted); font-size: 11px; }
+.admin-dashboard-org-counts > span { display: inline-flex; align-items: center; gap: 7px; }
+.admin-dashboard-org-counts i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #34845b; }
+.admin-dashboard-org-list { list-style: none; padding: 0; margin: 0; }
+.admin-dashboard-org-list li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 19px 22px; }
+.admin-dashboard-org-list li + li { border-top: 1px solid #edf0f5; }
+.admin-dashboard-org-avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: #eef3fa; color: #476485; font-size: 12px; font-weight: 700; }
+.admin-dashboard-org-info { min-width: 0; }
+.admin-dashboard-org-info > a { display: block; color: var(--navy); font-size: 13px; font-weight: 700; line-height: 1.45; text-decoration: none; overflow-wrap: anywhere; }
+.admin-dashboard-org-info > a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.admin-dashboard-org-info > span { display: block; color: var(--muted); font-size: 11px; margin-top: 4px; }
+.admin-dashboard-org-links { grid-column: 2 / -1; display: flex; gap: 20px; margin: -3px 0 0; }
+.admin-dashboard-org-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 26px; font-size: 12px; font-weight: 700; text-decoration: none; }
+.admin-dashboard-org-links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.admin-dashboard-panel-foot { padding: 14px 22px; border-top: 1px solid #e9edf2; color: var(--muted); font-size: 11px; }
+.admin-dashboard-side { display: grid; gap: 18px; }
+.admin-dashboard-workspaces { padding: 3px 20px; }
+.admin-dashboard-workspaces > a { display: grid; grid-template-columns: 36px minmax(0, 1fr) 14px; gap: 12px; align-items: start; padding: 20px 0; color: var(--navy); text-decoration: none; }
+.admin-dashboard-workspaces > a + a { border-top: 1px solid #edf0f5; }
+.admin-dashboard-workspaces > a:hover strong { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+.admin-dashboard-workspace-icon { display: grid; place-items: center; height: 36px; width: 36px; border-radius: 8px; background: #f0f4f9; color: #42648d; }
+.admin-dashboard-workspace-icon svg { width: 19px; height: 19px; }
+.admin-dashboard-workspaces strong { display: block; padding-top: 2px; font-size: 13px; }
+.admin-dashboard-workspaces small { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.admin-dashboard-link-arrow { margin-top: 5px; color: #7187a2; }
+.admin-dashboard-service { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 13px; padding: 21px; background: #eaf0f8; border: 1px solid #dce5f0; border-radius: 10px; }
+.admin-dashboard-service .admin-dashboard-workspace-icon { background: #dce6f3; }
+.admin-dashboard-service h2 { font-size: 14px; margin: 2px 0 6px; }
+.admin-dashboard-service p { font-size: 12px; color: #52657d; line-height: 1.55; margin: 0 0 8px; }
+.admin-dashboard-empty { padding: 38px 25px; text-align: center; }
+.admin-dashboard-empty-icon { display: grid; place-items: center; background: #edf2fa; color: #557295; width: 48px; height: 48px; border-radius: 12px; margin: 0 auto 16px; }
+.admin-dashboard-empty-icon svg { width: 24px; height: 24px; }
+.admin-dashboard-empty h3 { color: var(--navy); font-size: 17px; margin-bottom: 9px; }
+.admin-dashboard-empty p { color: var(--muted); font-size: 13px; max-width: 320px; margin: 0 auto 20px; }
+.admin-dashboard-placeholder-list { padding: 35px 22px; color: var(--muted); }
+.admin-dashboard-load-error { padding: 20px 22px; }
+.admin-dashboard-load-error .form-error { margin-top: 0; }
+@media (min-width: 1350px) {
+  .admin-dashboard-org-list li { grid-template-columns: 36px minmax(0, 1fr) auto auto; }
+  .admin-dashboard-org-links { grid-column: auto; margin: 0 0 0 10px; gap: 14px; }
+}
+@media (max-width: 1150px) {
+  .admin-dashboard-actions-note { margin-left: 0; flex-basis: 100%; }
+  .admin-dashboard-metrics { gap: 12px; }
+  .admin-dashboard-metric { padding: 17px; }
+  .admin-dashboard-columns { grid-template-columns: minmax(0, 1.6fr) minmax(270px, 1fr); gap: 16px; }
+}
+@media (max-width: 940px) {
+  .admin-dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-dashboard-columns { grid-template-columns: minmax(0, 1fr); }
+  .admin-dashboard-side { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
+}
+@media (max-width: 620px) {
+  .admin-dashboard .page-head { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .admin-dashboard-actions { gap: 7px 20px; padding-bottom: 18px; }
+  .admin-dashboard-actions-note { line-height: 1.6; }
+  .admin-dashboard-metrics { gap: 10px; margin-bottom: 18px; }
+  .admin-dashboard-metric { padding: 15px; }
+  .admin-dashboard-metric-label { align-items: flex-start; gap: 6px; line-height: 1.4; min-height: 34px; }
+  .admin-dashboard-metric strong { font-size: 30px; margin-top: 6px; }
+  .admin-dashboard-metric-foot { line-height: 1.45; }
+  .admin-dashboard-metric-foot > span:last-child { display: none; }
+  .admin-dashboard-side { grid-template-columns: minmax(0, 1fr); }
+  .admin-dashboard-panel-head { padding: 18px; align-items: flex-start; }
+  .admin-dashboard-panel-head p { max-width: 230px; }
+  .admin-dashboard-org-list li { padding: 17px; gap: 10px; }
+  .admin-dashboard-org-counts { padding: 13px 18px; }
+}

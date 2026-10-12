@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ScoreTrend, useMe } from "@slate/ui";
+import { hasAccess } from "./access";
 import { readPracticeHistory } from "./practice-history";
 
 const sampleHistory = [
@@ -88,9 +89,11 @@ export function SelfAssessment() {
           <p>Complete a practice quiz to see your scores over time.</p>
         </div>
       )}
-      <Link className="self-assessment-link" to="/practice">
-        Take a self-assessment <span aria-hidden="true">→</span>
-      </Link>
+      {hasAccess(me.data, "practice") && (
+        <Link className="self-assessment-link" to="/practice">
+          Take a self-assessment <span aria-hidden="true">→</span>
+        </Link>
+      )}
     </section>
   );
 }

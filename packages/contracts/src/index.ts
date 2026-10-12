@@ -1,3 +1,5 @@
+export * from "./access.js";
+import type { EffectiveAccess } from "./access.js";
 export type Portal = "student" | "platform" | "organization";
 export type Role = "student" | "platform_admin" | "organization_viewer";
 export type OnboardingStep = "password" | "phone" | "mfa" | null;
@@ -10,6 +12,7 @@ export interface Identity {
   organizationName: string | null;
   onboardingStep: OnboardingStep;
   features: string[];
+  access?: EffectiveAccess;
   demo?: boolean;
 }
 export interface Organization {
@@ -27,7 +30,12 @@ export interface Member {
   organizationId: string;
   passwordSetupComplete: boolean;
   phoneVerifiedAt: string | null;
+  phone?: string | null;
   features: string[];
+  studentId?: string | null;
+  cohort?: string | null;
+  branchName?: string | null;
+  branchCode?: string | null;
 }
 export interface Lesson {
   id: string;

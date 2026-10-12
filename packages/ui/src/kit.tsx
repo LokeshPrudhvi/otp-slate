@@ -48,16 +48,24 @@ export async function api<T>(
   path: string,
   method = "GET",
   body?: unknown,
+  signal?: AbortSignal,
 ): Promise<T> {
+  if (method === "GET" && signal) {
+    // Let same-turn observer cleanup cancel a read before opening its connection.
+    await Promise.resolve();
+    signal.throwIfAborted();
+  }
   let response: Response;
   try {
     response = await fetch(`/api/v1/${path}`, {
       method,
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
+      signal,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) throw error;
     throw new ApiError(
       0,
       "We could not connect. Check your connection and retry.",
@@ -76,20 +84,29 @@ export async function api<T>(
 export function usePortal() {
   return useContext(Context);
 }
-export function useMe() {
+export function useMe({ poll = false }: { poll?: boolean } = {}) {
   const portal = usePortal();
+  const client = useQueryClient();
   return useQuery({
     queryKey: ["me", portal],
-    queryFn: () => api<Identity>(`me?portal=${portal}`),
+    queryFn: ({ signal }) =>
+      api<Identity>(
+        `me?portal=${portal}${portal === "student" && client.getQueryData(["me", portal]) ? "&passive=1" : ""}`,
+        "GET",
+        undefined,
+        signal,
+      ),
     retry: false,
-    staleTime: 0,
+    staleTime: 5_000,
+    refetchOnWindowFocus: "always",
+    refetchInterval: poll && portal === "student" ? 20_000 : false,
   });
 }
 export function useData<T>(key: string, path: string, enabled = true) {
   const portal = usePortal();
   return useQuery({
     queryKey: [portal, key],
-    queryFn: () => api<T>(path),
+    queryFn: ({ signal }) => api<T>(path, "GET", undefined, signal),
     enabled,
   });
 }
@@ -318,7 +335,8 @@ export function Metric({
   );
 }
 export function Protected() {
-  const me = useMe(),
+  // One persistent route guard owns polling; consumers share its identity query.
+  const me = useMe({ poll: true }),
     location = useLocation();
   if (me.isPending)
     return (
@@ -494,8 +512,10 @@ export function Login() {
         setStep("mfa");
         return;
       }
-      await api<Identity>(`me?portal=${portal}`);
+      const identity = await api<Identity>(`me?portal=${portal}`);
+      await query.cancelQueries();
       query.clear();
+      query.setQueryData(["me", portal], identity);
       navigate("/", { replace: true });
     },
   });

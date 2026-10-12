@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -35,6 +36,7 @@ const courseInput = z
       "dsa",
       "fullstack",
       "competitive",
+      "general",
     ]),
   })
   .strict();
@@ -66,7 +68,7 @@ export class ApiController {
     this.mailbox = new MailboxService(service.db);
   }
   @Get("mailbox/contacts") async contacts(@Req() req: Request) {
-    return this.mailbox.contacts(await this.service.actor(req));
+    return this.mailbox.contacts(await this.service.mailboxActor(req));
   }
   @Get("mailbox") async mailboxList(
     @Req() req: Request,
@@ -82,14 +84,14 @@ export class ApiController {
       })
       .strict()
       .parse(query);
-    return this.mailbox.list(await this.service.actor(req), input);
+    return this.mailbox.list(await this.service.mailboxActor(req), input);
   }
   @Get("mailbox/:id") async mailboxDetail(
     @Req() req: Request,
     @Param("id") message: string,
   ) {
     return this.mailbox.detail(
-      await this.service.actor(req),
+      await this.service.mailboxActor(req),
       id.parse(message),
     );
   }
@@ -112,7 +114,7 @@ export class ApiController {
         "Choose recipients or select all students.",
       )
       .parse(body);
-    return this.mailbox.send(await this.service.actor(req), input);
+    return this.mailbox.send(await this.service.mailboxActor(req), input);
   }
   @Patch("mailbox/:id") async mailboxUpdate(
     @Req() req: Request,
@@ -132,7 +134,7 @@ export class ApiController {
       )
       .parse(body);
     return this.mailbox.update(
-      await this.service.actor(req),
+      await this.service.mailboxActor(req),
       id.parse(message),
       input,
     );
@@ -225,6 +227,15 @@ export class ApiController {
         .parse(body).name,
     );
   }
+  @Patch("platform/organizations/:id") async updateOrganizationStatus(
+    @Req() req: Request,
+    @Param("id") organization: string,
+    @Body() body: unknown,
+  ) {
+    const actor = await this.service.actor(req, "platform_admin");
+    const input = z.object({ status: z.enum(["active", "archived"]) }).strict().parse(body);
+    return this.service.updateOrganizationStatus(actor, id.parse(organization), input.status);
+  }
   @Get("platform/organizations/:id/members") async members(
     @Req() req: Request,
     @Param("id") organization: string,
@@ -238,6 +249,7 @@ export class ApiController {
     @Req() req: Request,
     @Body() body: unknown,
   ) {
+    const actor = await this.service.actor(req, "platform_admin");
     const input = z
       .object({
         organizationId: id,
@@ -246,14 +258,11 @@ export class ApiController {
           .email()
           .max(200)
           .transform((v) => v.toLowerCase()),
-        role: z.enum(["student", "organization_viewer"]),
+        role: z.literal("organization_viewer"),
       })
       .strict()
       .parse(body);
-    return this.service.createMember(
-      await this.service.actor(req, "platform_admin"),
-      input,
-    );
+    return this.service.createMember(actor, input);
   }
   @Patch("platform/members/:id") async updateMember(
     @Req() req: Request,
@@ -298,6 +307,29 @@ export class ApiController {
       await this.service.actor(req, "platform_admin"),
       id.parse(course),
     );
+  }
+  @Patch("platform/courses/:id") async updateCourseStatus(
+    @Req() req: Request,
+    @Param("id") course: string,
+    @Body() body: unknown,
+  ) {
+    const actor = await this.service.actor(req, "platform_admin");
+    const input = z
+      .object({ status: z.enum(["archived", "published"]) })
+      .strict()
+      .parse(body);
+    return this.service.updateCourseStatus(actor, id.parse(course), input.status);
+  }
+  @Delete("platform/courses/:id") async deleteCourse(
+    @Req() req: Request,
+    @Param("id") course: string,
+    @Body() body: unknown,
+  ) {
+    const actor = await this.service.actor(req, "platform_admin");
+    z.object({})
+      .strict()
+      .parse(body || {});
+    return this.service.deleteDraftCourse(actor, id.parse(course));
   }
   @Post("platform/courses/:id/publish") async publish(
     @Req() req: Request,
@@ -348,29 +380,31 @@ export class ApiController {
     @Req() req: Request,
     @Body() body: unknown,
   ) {
+    const jobFields = {
+      title: text(150),
+      company: text(150),
+      description: text(3000),
+      url: z
+        .url()
+        .max(2000)
+        .refine(
+          (value) =>
+            new URL(value).protocol === "https:" &&
+            !new URL(value).username &&
+            !new URL(value).password,
+          "Use an HTTPS application link.",
+        ),
+    };
     const input = z
-      .object({
-        organizationId: id,
-        title: text(150),
-        company: text(150),
-        description: text(3000),
-        url: z
-          .url()
-          .max(2000)
-          .refine(
-            (value) =>
-              new URL(value).protocol === "https:" &&
-              !new URL(value).username &&
-              !new URL(value).password,
-            "Use an HTTPS application link.",
-          ),
-      })
-      .strict()
+      .union([
+        z.object({ organizationId: id, ...jobFields }).strict(),
+        z.object({ audience: z.literal("all"), ...jobFields }).strict(),
+      ])
       .parse(body);
-    return this.service.createJob(
-      await this.service.actor(req, "platform_admin"),
-      input,
-    );
+    const actor = await this.service.actor(req, "platform_admin");
+    return "audience" in input
+      ? this.service.createJobForAll(actor, input)
+      : this.service.createJob(actor, input);
   }
   @Post("platform/uploads") async upload(
     @Req() req: Request,
@@ -392,16 +426,13 @@ export class ApiController {
     );
   }
   @Get("student/courses") async studentCourses(@Req() req: Request) {
-    return this.service.catalog(await this.service.actor(req, "student"));
+    return this.service.studentCatalog(req);
   }
   @Get("student/courses/:id") async studentCourse(
     @Req() req: Request,
     @Param("id") course: string,
   ) {
-    return this.service.course(
-      await this.service.actor(req, "student"),
-      id.parse(course),
-    );
+    return this.service.studentCourse(req, id.parse(course));
   }
   @Post("student/courses/:id/lessons/:lesson/complete") async complete(
     @Req() req: Request,
@@ -456,10 +487,19 @@ export class ApiController {
     );
   }
   @Post("student/submissions") async submissions(@Req() req: Request) {
-    await this.service.actor(req, "student");
+    const actor = await this.service.actor(req, "student");
+    this.service.feature(actor, "compiler");
+    this.service.feature(actor, "practice");
+    if (!actor.access?.practiceModuleIds.includes("competitive-coding"))
+      this.service.feature({ ...actor, features: [] }, "competitive-coding");
     throw new ServiceUnavailableException(
       "Code execution will be enabled after the provider trial.",
     );
+  }
+  @Get("student/compiler") async compiler(@Req() req: Request) {
+    const actor = await this.service.actor(req, "student");
+    this.service.feature(actor, "compiler");
+    return { enabled: true };
   }
   @Get("organization/analytics") async analytics(@Req() req: Request) {
     return this.service.analytics(

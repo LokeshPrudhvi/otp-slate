@@ -11,8 +11,11 @@ import express, { type Request, type Response } from "express";
 import helmet from "helmet";
 import { toNodeHandler } from "better-auth/node";
 import { ZodError } from "zod";
+import { RegistrationController } from "./registration-controller.js";
 import { ApiController } from "./controller.js";
+import { AccessController } from "./access-controller.js";
 import { SlateService } from "./service.js";
+import { portalProxyIngress } from "./portal-proxy.js";
 
 @Catch()
 class Errors implements ExceptionFilter {
@@ -25,11 +28,9 @@ class Errors implements ExceptionFilter {
         .json(typeof body === "string" ? { message: body } : body);
     }
     if (error instanceof ZodError)
-      return res
-        .status(400)
-        .json({
-          message: error.issues[0]?.message || "Check the form fields.",
-        });
+      return res.status(400).json({
+        message: error.issues[0]?.message || "Check the form fields.",
+      });
     const record = error as {
       code?: string;
       cause?: { code?: string };
@@ -44,11 +45,9 @@ class Errors implements ExceptionFilter {
       record.statusCode >= 400 &&
       record.statusCode < 500
     )
-      return res
-        .status(record.statusCode)
-        .json({
-          message: "The request could not be completed. Check the details.",
-        });
+      return res.status(record.statusCode).json({
+        message: "The request could not be completed. Check the details.",
+      });
     console.error(
       "API request failed.",
       error instanceof Error ? error.constructor.name : "UnknownError",
@@ -60,7 +59,7 @@ class Errors implements ExceptionFilter {
 }
 export async function createApplication(service: SlateService) {
   @Module({
-    controllers: [ApiController],
+    controllers: [ApiController, RegistrationController, AccessController],
     providers: [{ provide: SlateService, useValue: service }],
   })
   class ApplicationModule {}
@@ -73,6 +72,7 @@ export async function createApplication(service: SlateService) {
     res.setHeader("Cache-Control", "no-store");
     next();
   });
+  app.use("/api", portalProxyIngress(service.config.portalProxySecret));
   const allowedAuth = new Set([
     "/sign-in/email",
     "/sign-out",
@@ -99,16 +99,18 @@ export async function createApplication(service: SlateService) {
         try {
           await service.actor(req, undefined, req.path !== "/token");
         } catch {
-          return res
-            .status(403)
-            .json({
-              message: "Sign in and complete account setup before continuing.",
-            });
+          return res.status(403).json({
+            message: "Sign in and complete account setup before continuing.",
+          });
         }
       }
       next();
     },
     toNodeHandler(service.auth),
+  );
+  app.use(
+    "/api/v1/platform/registrations/import",
+    express.json({ limit: "2mb" }),
   );
   app.use(express.json({ limit: "128kb" }));
   app.use("/api/v1", (req: Request, res: Response, next: () => void) => {

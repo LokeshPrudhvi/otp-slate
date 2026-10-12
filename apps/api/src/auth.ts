@@ -7,7 +7,13 @@ import type { Database } from "./database.js";
 import * as schema from "./schema.js";
 import { encryptPayload } from "./providers.js";
 import { randomUUID } from "node:crypto";
+import { and, eq } from "drizzle-orm";
 import { developmentLogin } from "./development-login.js";
+import { portalClientIpHeader, portalPasswordResetUrl } from "./portal-proxy.js";
+import {
+  authRateLimitMaxWindowSeconds,
+  createAuthRateLimitStorage,
+} from "./auth-rate-limit.js";
 
 export function createAuth(
   db: Database,
@@ -40,14 +46,28 @@ export function createAuth(
       maxPasswordLength: 128,
       revokeSessionsOnPasswordReset: true,
       resetPasswordTokenExpiresIn: 3600,
-      async sendResetPassword({ user, url }) {
-        await db.insert(schema.outbox).values({
-          type: "password_reset",
-          encryptedPayload: encryptPayload(config.secret, {
-            email: user.email,
-            url,
-          }),
-          expiresAt: new Date(Date.now() + 3600_000),
+      async sendResetPassword({ user, url, token }) {
+        await db.transaction(async (tx) => {
+          // Serialize the enqueue with an admin email correction. Better Auth
+          // may have looked up the previous email before that edit committed.
+          const [current] = await tx.select({ email: schema.user.email })
+            .from(schema.user).where(eq(schema.user.id, user.id)).for("update");
+          if (!current || current.email.toLowerCase() !== user.email.toLowerCase()) {
+            await tx.delete(schema.verification).where(and(
+              eq(schema.verification.value, user.id),
+              eq(schema.verification.identifier, `reset-password:${token}`),
+            ));
+            return;
+          }
+          await tx.insert(schema.outbox).values({
+            type: "password_reset",
+            encryptedPayload: encryptPayload(config.secret, {
+              userId: user.id,
+              email: current.email,
+              url: portalPasswordResetUrl(url, config),
+            }),
+            expiresAt: new Date(Date.now() + 3600_000),
+          });
         });
       },
     },
@@ -59,13 +79,17 @@ export function createAuth(
     },
     advanced: {
       useSecureCookies: config.production,
+      // The ingress verifies the portal address, or supplies the direct socket
+      // address in development. Never trust an arbitrary X-Forwarded-For chain.
+      ipAddress: { ipAddressHeaders: [portalClientIpHeader] },
       crossSubDomainCookies: { enabled: false },
-      database: { generateId: () => randomUUID() },
+      database: { generateId: () => randomUUID(), joins: true },
     },
     rateLimit: {
       enabled: true,
       storage: "database",
-      window: 60,
+      customStorage: createAuthRateLimitStorage(db),
+      window: authRateLimitMaxWindowSeconds,
       max: 60,
       customRules: {
         "/sign-in/email": async (request, currentRule) => {
@@ -92,6 +116,9 @@ export function createAuth(
       admin(),
       twoFactor({ issuer: "OTP Slate" }),
       jwt({
+        // Portals use the session cookie; bearer clients request /token explicitly.
+        // Do not load signing keys and mint an unused JWT on every session read.
+        disableSettingJwtHeader: true,
         jwt: {
           issuer: config.authUrl,
           audience: "otp-slate-api",

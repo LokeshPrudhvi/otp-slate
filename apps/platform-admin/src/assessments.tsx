@@ -5,7 +5,9 @@ import type {
   Organization,
   PracticeAssessment,
 } from "@slate/contracts";
-import { DataState, Empty, Field, PageHead, Panel, useData } from "@slate/ui";
+import { DataState, Empty, Field, Panel, useData } from "@slate/ui";
+import { AdminPage } from "./page";
+import { AdminSelect } from "./select";
 
 export function DemoAssessments() {
   const organizations = useData<Organization[]>(
@@ -43,25 +45,26 @@ export function DemoAssessments() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / 20));
   const currentPage = Math.min(page, totalPages);
   return (
-    <>
-      <PageHead
-        title="Assessments & live exams"
-        description="Sample assessment content and schedules for the local product preview."
-      />
-      <Panel title="Organization preview">
-        <Field label="Organization">
-          <select
-            value={organizationId}
-            onChange={(event) => setOrganizationId(event.target.value)}
-          >
-            {organizations.data?.map((organization) => (
-              <option key={organization.id} value={organization.id}>
-                {organization.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </Panel>
+    <AdminPage
+      title="Assessments & live exams"
+      description="Sample assessment content and schedules for the local product preview."
+      action={
+        <div className="admin-header-tools">
+          <div className="admin-header-select">
+            <Field label="Preview organization">
+              <AdminSelect
+                aria-label="Preview organization"
+                value={organizationId}
+                onChange={setOrganizationId}
+                searchable
+                placeholder="Select an organization"
+                options={(organizations.data || []).map(organization => ({ value: organization.id, label: organization.name }))}
+              />
+            </Field>
+          </div>
+        </div>
+      }
+    >
       <DataState pending={data.isPending} error={data.error}>
         {data.data?.sample ? (
           <>
@@ -192,6 +195,6 @@ export function DemoAssessments() {
           )
         )}
       </DataState>
-    </>
+    </AdminPage>
   );
 }

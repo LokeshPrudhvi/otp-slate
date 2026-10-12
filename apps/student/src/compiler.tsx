@@ -1,7 +1,19 @@
 import { useState } from "react";
+import { useStudentData } from "./access";
+import { Status } from "./design";
 
 export function CompilerPage() {
   const [loading, setLoading] = useState(true);
+  const capability = useStudentData<{ enabled: true }>(
+    "compiler",
+    "student/compiler",
+  );
+  if (!capability.data || capability.error)
+    return (
+      <div className="a-page">
+        <Status pending={capability.isPending} error={capability.error} />
+      </div>
+    );
 
   return (
     <div className="compiler-fullscreen-container">

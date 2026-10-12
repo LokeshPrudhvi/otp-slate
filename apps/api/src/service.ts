@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import type { Request } from "express";
-import { and, count, desc, eq, gt, isNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import {
   createHmac,
   randomBytes,
@@ -18,11 +18,12 @@ import {
 import { createLocalJWKSet, jwtVerify } from "jose";
 import { fromNodeHeaders } from "better-auth/node";
 import type { Course, Identity, Lesson, Role, Resume } from "@slate/contracts";
-import type { Auth } from "./auth.js";
+import { createAuth, type Auth } from "./auth.js";
 import type { Config } from "./config.js";
 import { scoped, type Database, type Transaction } from "./database.js";
 import { createUpload, r2Configured, type PhoneSender } from "./providers.js";
 import * as s from "./schema.js";
+import { AccessService, practiceModule, resolvePolicies } from "./access.js";
 import {
   demoAnnouncements,
   demoExams,
@@ -35,6 +36,7 @@ export type Actor = Identity & {
   authId: string;
   features: string[];
   sessionId: string;
+  courseVersionIds?: Record<string, string>;
 };
 const unexpired = () =>
   or(isNull(s.grants.expiresAt), gt(s.grants.expiresAt, new Date()));
@@ -51,6 +53,16 @@ export class SlateService {
     role?: Role,
     onboarding = false,
   ): Promise<Actor> {
+    return this.authenticate(request, role, onboarding, async (actor) => actor);
+  }
+  // Read the current session, membership and access rules for every request.
+  // Course reads can use this transaction after all authorization checks pass.
+  private async authenticate<T>(
+    request: Request,
+    role: Role | undefined,
+    onboarding: boolean,
+    work: (actor: Actor, tx: Transaction) => Promise<T>,
+  ): Promise<T> {
     let identity: {
       user: {
         id: string;
@@ -99,96 +111,167 @@ export class SlateService {
         query: { disableCookieCache: true, disableRefresh: true },
       });
     if (!identity) throw new UnauthorizedException("Sign in to continue.");
-    const found = await scoped(
-      this.db,
-      { authId: identity.user.id },
-      async (tx) => {
-        const [member] = await tx
-          .select()
-          .from(s.members)
-          .where(eq(s.members.authUserId, identity!.user.id));
-        return member;
-      },
-    );
-    if (!found || found.status !== "active")
-      throw new ForbiddenException(
-        "This account is not active. Contact Platform Admin.",
-      );
-    const memberRole = found.role as Role;
-    if (role && memberRole !== role)
-      throw new ForbiddenException(
-        "This portal is not available to your account.",
-      );
-    const idleLimit =
-      memberRole === "platform_admin" ? 15 * 60_000 : 30 * 60_000;
-    if (
-      identity.session.createdAt.getTime() < Date.now() - 8 * 3600_000 ||
-      identity.session.updatedAt.getTime() < Date.now() - idleLimit
-    ) {
-      await this.db
-        .delete(s.session)
-        .where(eq(s.session.id, identity.session.id));
-      throw new UnauthorizedException(
-        "Your session has expired. Sign in again.",
-      );
-    }
-    let organizationName: string | null = null;
-    if (found.organizationId) {
-      const org = await scoped(
+    let expired = false;
+    let result: T;
+    try {
+      result = await scoped(
         this.db,
-        { organizationId: found.organizationId },
-        async (tx) =>
-          (
-            await tx
-              .select()
-              .from(s.organizations)
-              .where(eq(s.organizations.id, found.organizationId!))
-          )[0],
+        { authId: identity.user.id },
+        async (tx) => {
+          const [found] = await tx
+            .select()
+            .from(s.members)
+            .where(eq(s.members.authUserId, identity!.user.id));
+          if (!found || found.status !== "active")
+            throw new ForbiddenException(
+              "This account is not active. Contact Platform Admin.",
+            );
+          if (role && found.role !== role)
+            throw new ForbiddenException(
+              found.role === "organization_viewer"
+                ? "This is an organization viewer account. Sign in through the Organization Admin portal. Student access requires an approved student account."
+                : found.role === "student"
+                  ? "This is a student account. Sign in through the Student portal."
+                  : found.role === "platform_admin"
+                    ? "This is a Platform Admin account. Sign in through the Platform Admin portal."
+                    : "This portal is not available to your account.",
+            );
+          const memberRole = found.role as Role;
+          const idleLimit =
+            memberRole === "platform_admin" ? 15 * 60_000 : 30 * 60_000;
+          if (
+            identity.session.createdAt.getTime() < Date.now() - 8 * 3600_000 ||
+            identity.session.updatedAt.getTime() < Date.now() - idleLimit
+          ) {
+            expired = true;
+            throw new UnauthorizedException(
+              "Your session has expired. Sign in again.",
+            );
+          }
+          const onboardingStep = !found.passwordSetupComplete
+            ? "password"
+            : memberRole === "student" && !found.phoneVerifiedAt
+              ? "phone"
+              : memberRole === "platform_admin" &&
+                  this.config.production &&
+                  !identity.user.twoFactorEnabled
+                ? "mfa"
+                : null;
+          if (onboardingStep && !onboarding)
+            throw new ForbiddenException(
+              "Complete your account setup before continuing.",
+            );
+
+          let organization: typeof s.organizations.$inferSelect | undefined;
+          let resolved: ReturnType<typeof resolvePolicies> | undefined;
+          if (found.organizationId) {
+            // Execute on this same connection in order. Only validated membership
+            // establishes tenant context; drain both results before rollback.
+            const setup = tx
+              .execute(
+                sql`select set_config('slate.org_id', ${found.organizationId}, true)`,
+              )
+              .execute();
+            const snapshot =
+              found.role === "student" &&
+              found.passwordSetupComplete &&
+              found.phoneVerifiedAt
+                ? new AccessService(this).snapshot(tx, found)
+                : tx
+                    .select()
+                    .from(s.organizations)
+                    .where(eq(s.organizations.id, found.organizationId))
+                    .then((organizations) => ({
+                      organization: organizations[0],
+                      records: [],
+                      grants: [],
+                    }));
+            const results = await Promise.allSettled([setup, snapshot]);
+            for (const item of results)
+              if (item.status === "rejected") throw item.reason;
+            const access = (
+              results[1] as PromiseFulfilledResult<Awaited<typeof snapshot>>
+            ).value;
+            organization = access.organization;
+            if (!organization || organization.status !== "active")
+              throw new ForbiddenException("This organization is not active.");
+            if (
+              found.role === "student" &&
+              found.passwordSetupComplete &&
+              found.phoneVerifiedAt
+            )
+              resolved = resolvePolicies(
+                organization,
+                found,
+                access.records,
+                access.grants,
+                this.local &&
+                  !this.config.production &&
+                  demoOrganization(organization.name),
+              );
+          }
+          const organizationName = organization?.name ?? null;
+          const actor: Actor = {
+            id: found.id,
+            authId: identity.user.id,
+            sessionId: identity.session.id,
+            name: identity.user.name,
+            email: identity.user.email,
+            role: memberRole,
+            organizationId: found.organizationId,
+            organizationName,
+            onboardingStep,
+            features: found.features,
+            demo:
+              this.local &&
+              !this.config.production &&
+              (demoOrganization(organizationName) ||
+                identity.user.email === "admin@slate.test"),
+          };
+          if (resolved) {
+            actor.access = resolved.effective;
+            actor.features = resolved.effective.features;
+            actor.courseVersionIds = resolved.versionIds;
+          }
+          return work(actor, tx);
+        },
       );
-      if (!org || org.status !== "active")
-        throw new ForbiddenException("This organization is not active.");
-      organizationName = org.name;
+    } catch (error) {
+      // Release/roll back the scoped connection before deleting an expired
+      // session; otherwise concurrent expiry could exhaust the connection pool.
+      if (expired)
+        await this.db
+          .delete(s.session)
+          .where(eq(s.session.id, identity.session.id));
+      throw error;
     }
-    const onboardingStep = !found.passwordSetupComplete
-      ? "password"
-      : memberRole === "student" && !found.phoneVerifiedAt
-        ? "phone"
-        : memberRole === "platform_admin" &&
-            this.config.production &&
-            !identity.user.twoFactorEnabled
-          ? "mfa"
-          : null;
-    if (onboardingStep && !onboarding)
-      throw new ForbiddenException(
-        "Complete your account setup before continuing.",
-      );
-    await this.db
-      .update(s.session)
-      .set({ updatedAt: new Date() })
-      .where(
-        and(
-          eq(s.session.id, identity.session.id),
-          lt(s.session.updatedAt, new Date(Date.now() - 60_000)),
-        ),
-      );
-    return {
-      id: found.id,
-      authId: identity.user.id,
-      sessionId: identity.session.id,
-      name: identity.user.name,
-      email: identity.user.email,
-      role: memberRole,
-      organizationId: found.organizationId,
-      organizationName,
-      onboardingStep,
-      features: found.features,
-      demo:
-        this.local &&
-        !this.config.production &&
-        (demoOrganization(organizationName) ||
-          identity.user.email === "admin@slate.test"),
-    };
+    const activityCutoff = new Date(Date.now() - 60_000);
+    if (
+      !(request.path?.endsWith("/me") && request.query?.passive === "1") &&
+      identity.session.updatedAt < activityCutoff
+    )
+      await this.db
+        .update(s.session)
+        .set({ updatedAt: new Date() })
+        .where(
+          and(
+            eq(s.session.id, identity.session.id),
+            lt(s.session.updatedAt, activityCutoff),
+          ),
+        );
+    return result;
   }
+  studentCatalog(request: Request) {
+    return this.authenticate(request, "student", false, (actor, tx) =>
+      this.catalog(actor, tx),
+    );
+  }
+  studentCourse(request: Request, id: string) {
+    return this.authenticate(request, "student", false, (actor, tx) =>
+      this.course(actor, id, tx),
+    );
+  }
+
   scope<T>(
     actor: Actor,
     work: (tx: Transaction) => Promise<T>,
@@ -206,17 +289,37 @@ export class SlateService {
     );
   }
   publicIdentity(actor: Actor) {
-    const { authId, sessionId, ...result } = actor;
+    const { authId, sessionId, courseVersionIds, ...result } = actor;
     return result;
   }
   practice(actor: Actor) {
-    return actor.demo ? demoPractice : [];
+    this.feature(actor, "practice");
+    return demoPractice.filter(
+      (item) =>
+        (actor.access?.practiceModuleIds.includes(practiceModule(item)) ??
+          actor.demo) &&
+        (item.kind !== "coding" || actor.features.includes("compiler")),
+    );
   }
   exams(actor: Actor) {
-    return actor.demo ? demoExams() : [];
+    this.feature(actor, "live-exams");
+    const allowed = new Set(
+      actor.features.includes("practice")
+        ? this.practice(actor).map((item) => item.id)
+        : [],
+    );
+    return actor.demo
+      ? demoExams().filter((exam) => allowed.has(exam.assessmentId))
+      : [];
   }
   announcements(actor: Actor) {
+    this.feature(actor, "announcements");
     return actor.demo ? demoAnnouncements() : [];
+  }
+  async mailboxActor(request: Request) {
+    const actor = await this.actor(request);
+    if (actor.role === "student") this.feature(actor, "inbox");
+    return actor;
   }
   async demoPreview(actor: Actor, organizationId: string) {
     const [organization] = await this.scope(actor, (tx) =>
@@ -275,24 +378,19 @@ export class SlateService {
   }
   async summary(actor: Actor) {
     return this.scope(actor, async (tx) => {
-      const [orgs] = await tx.select({ total: count() }).from(s.organizations);
-      const [students] = await tx
-        .select({ total: count() })
-        .from(s.members)
-        .where(eq(s.members.role, "student"));
-      const [viewers] = await tx
-        .select({ total: count() })
-        .from(s.members)
-        .where(eq(s.members.role, "organization_viewer"));
-      const [courses] = await tx
-        .select({ total: count() })
-        .from(s.courses)
-        .where(eq(s.courses.status, "published"));
+      const result = await tx.execute(sql`
+        select
+          (select count(*) from ${s.organizations}) as organizations,
+          (select count(*) from ${s.members} where ${s.members.role} = 'student') as students,
+          (select count(*) from ${s.members} where ${s.members.role} = 'organization_viewer') as viewers,
+          (select count(*) from ${s.courses} where ${s.courses.status} = 'published') as published_courses
+      `);
+      const totals = result.rows[0];
       return {
-        organizations: orgs.total,
-        students: students.total,
-        viewers: viewers.total,
-        publishedCourses: courses.total,
+        organizations: Number(totals.organizations),
+        students: Number(totals.students),
+        viewers: Number(totals.viewers),
+        publishedCourses: Number(totals.published_courses),
       };
     });
   }
@@ -304,6 +402,44 @@ export class SlateService {
         .returning();
       await this.log(tx, actor, "organization.created", org.id, org.id);
       return org;
+    });
+  }
+  async updateOrganizationStatus(
+    actor: Actor,
+    organizationId: string,
+    status: "active" | "archived",
+  ) {
+    if (actor.role !== "platform_admin")
+      throw new ForbiddenException("Only Platform Admin can archive or restore organizations.");
+    return this.scope(actor, async (tx) => {
+      const [organization] = await tx
+        .select()
+        .from(s.organizations)
+        .where(eq(s.organizations.id, organizationId))
+        .for("update");
+      if (!organization) throw new NotFoundException("Organization not found.");
+      if (organization.status === status) return organization;
+      const [updated] = await tx
+        .update(s.organizations)
+        .set({
+          status,
+          accessRevision: sql`${s.organizations.accessRevision} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(s.organizations.id, organizationId))
+        .returning();
+      // Revoke on restore too: a login attempted while archived must not become
+      // a valid session later. Individual member statuses and learning stay intact.
+      await tx.delete(s.session).where(inArray(
+        s.session.userId,
+        tx.select({ id: s.members.authUserId }).from(s.members)
+          .where(eq(s.members.organizationId, organizationId)),
+      ));
+      await this.log(
+        tx, actor, status === "archived" ? "organization.archived" : "organization.restored",
+        organizationId, organizationId,
+      );
+      return updated;
     });
   }
   async listMembers(actor: Actor, organizationId: string) {
@@ -318,7 +454,12 @@ export class SlateService {
           organizationId: s.members.organizationId,
           passwordSetupComplete: s.members.passwordSetupComplete,
           phoneVerifiedAt: s.members.phoneVerifiedAt,
+          phone: s.members.phone,
           features: s.members.features,
+          studentId: s.members.studentId,
+          branchName: s.members.branchName,
+          branchCode: s.members.branchCode,
+          cohort: s.members.cohort,
         })
         .from(s.members)
         .innerJoin(s.user, eq(s.members.authUserId, s.user.id))
@@ -336,6 +477,10 @@ export class SlateService {
       role: "student" | "organization_viewer";
     },
   ) {
+    if (input.role === "student")
+      throw new BadRequestException(
+        "Create a student registration and approve it to send their welcome email.",
+      );
     const org = await this.scope(
       actor,
       async (tx) =>
@@ -426,22 +571,29 @@ export class SlateService {
     newPassword: string,
     headers: Request["headers"],
   ) {
-    const response = await this.auth.api.changePassword({
-      body: { currentPassword, newPassword, revokeOtherSessions: true },
-      headers: fromNodeHeaders(headers),
-      asResponse: true,
-    });
-    if (!response.ok)
-      throw new BadRequestException(
-        "Check your current password and use a password with at least 12 characters.",
-      );
-    await this.scope(actor, (tx) =>
-      tx
+    return this.scope(actor, async (tx) => {
+      // An admin email correction may rotate an unfinished account's password.
+      // Serialize both the credential and setup flag with that member edit.
+      const [member] = await tx.select({ id: s.members.id }).from(s.members)
+        .where(and(eq(s.members.id, actor.id), eq(s.members.authUserId, actor.authId)))
+        .for("update");
+      if (!member) throw new NotFoundException();
+      const auth = createAuth(tx as unknown as Database, this.config, this.local);
+      const response = await auth.api.changePassword({
+        body: { currentPassword, newPassword, revokeOtherSessions: true },
+        headers: fromNodeHeaders(headers),
+        asResponse: true,
+      });
+      if (!response.ok)
+        throw new BadRequestException(
+          "Check your current password and use a password with at least 12 characters.",
+        );
+      await tx
         .update(s.members)
         .set({ passwordSetupComplete: true, updatedAt: new Date() })
-        .where(eq(s.members.id, actor.id)),
-    );
-    return response;
+        .where(eq(s.members.id, actor.id));
+      return response;
+    });
   }
   private challengeHash(
     id: string,
@@ -522,6 +674,10 @@ export class SlateService {
   async verifyPhone(actor: Actor, id: string, code: string) {
     if (actor.onboardingStep !== "phone") throw new ForbiddenException();
     const valid = await this.scope(actor, async (tx) => {
+      // Phone corrections and sends take the member lock before challenges.
+      // Keep that order so an older verification cannot undo an admin edit.
+      await tx.select({ id: s.members.id }).from(s.members)
+        .where(eq(s.members.id, actor.id)).for("update");
       const [challenge] = await tx
         .select()
         .from(s.phoneChallenges)
@@ -572,12 +728,33 @@ export class SlateService {
       throw new BadRequestException("The code is invalid or expired.");
     return { verified: true, requiresSignIn: true };
   }
-  async catalog(actor: Actor) {
+  async catalog(actor: Actor, transaction?: Transaction) {
+    const read = <T>(work: (tx: Transaction) => Promise<T>) =>
+      transaction ? work(transaction) : this.scope(actor, work);
     if (actor.role === "platform_admin")
-      return this.scope(actor, (tx) =>
-        tx.select().from(s.courses).orderBy(s.courses.title),
+      return read((tx) => tx.select().from(s.courses).orderBy(s.courses.title));
+    this.feature(actor, "courses");
+    if (actor.access) {
+      const ids = Object.values(actor.courseVersionIds || {});
+      if (!ids.length) return [];
+      return read((tx) =>
+        tx
+          .select({
+            id: s.courses.id,
+            title: s.versions.title,
+            description: s.versions.description,
+            track: s.courses.track,
+            status: s.courses.status,
+            versionId: s.versions.id,
+            version: s.versions.number,
+          })
+          .from(s.versions)
+          .innerJoin(s.courses, eq(s.versions.courseId, s.courses.id))
+          .where(inArray(s.versions.id, ids))
+          .orderBy(s.versions.title),
       );
-    return this.scope(actor, (tx) =>
+    }
+    return read((tx) =>
       tx
         .select({
           id: s.courses.id,
@@ -605,71 +782,161 @@ export class SlateService {
       return course;
     });
   }
-  async course(
+  async updateCourseStatus(
     actor: Actor,
     id: string,
-  ): Promise<Course & { lessons: Lesson[]; completedLessonIds: string[] }> {
+    status: "archived" | "published",
+  ) {
+    if (actor.role !== "platform_admin") throw new ForbiddenException();
     return this.scope(actor, async (tx) => {
       const [course] = await tx
         .select()
         .from(s.courses)
-        .where(eq(s.courses.id, id));
-      if (!course) throw new NotFoundException();
-      let version: typeof s.versions.$inferSelect | undefined;
-      if (actor.role === "platform_admin")
-        [version] = await tx
-          .select()
-          .from(s.versions)
-          .where(eq(s.versions.courseId, id))
-          .orderBy(desc(s.versions.number))
-          .limit(1);
-      else {
-        const [grant] = await tx
-          .select()
-          .from(s.grants)
-          .where(
-            and(
-              eq(s.grants.memberId, actor.id),
-              eq(s.grants.courseId, id),
-              unexpired(),
-            ),
-          );
-        if (!grant)
-          throw new ForbiddenException(
-            "This course has not been assigned to you.",
-          );
-        [version] = await tx
-          .select()
-          .from(s.versions)
-          .where(eq(s.versions.id, grant.versionId));
-      }
-      const completed =
-        version && actor.role === "student"
-          ? await tx
-              .select()
-              .from(s.progress)
-              .where(
-                and(
-                  eq(s.progress.memberId, actor.id),
-                  eq(s.progress.versionId, version.id),
-                ),
-              )
-          : [];
-      return {
-        ...course,
-        ...(version
-          ? {
-              title: version.title,
-              description: version.description,
-              versionId: version.id,
-              version: version.number,
-              lessons: version.lessons,
-            }
-          : { lessons: [] }),
-        completedLessonIds: completed.map((p) => p.lessonId),
-      };
+        .where(eq(s.courses.id, id))
+        .for("update");
+      if (!course) throw new NotFoundException("Course not found.");
+      if (course.status !== "published" && course.status !== "archived")
+        throw new ConflictException(
+          "Publish this draft before archiving it, or delete the unused draft.",
+        );
+      if (course.status === status) return course;
+      const [updated] = await tx
+        .update(s.courses)
+        .set({ status, updatedAt: new Date() })
+        .where(eq(s.courses.id, id))
+        .returning();
+      await this.log(
+        tx,
+        actor,
+        status === "archived" ? "course.archived" : "course.restored",
+        null,
+        id,
+      );
+      return updated;
     });
   }
+  async deleteDraftCourse(actor: Actor, id: string) {
+    if (actor.role !== "platform_admin") throw new ForbiddenException();
+    return this.scope(actor, async (tx) => {
+      // Publication locks this same row, so a draft cannot be deleted while it
+      // becomes a published course. Published history is never cascade-deleted.
+      const [course] = await tx
+        .select()
+        .from(s.courses)
+        .where(eq(s.courses.id, id))
+        .for("update");
+      if (!course) throw new NotFoundException("Course not found.");
+      if (course.status !== "draft")
+        throw new ConflictException(
+          "Only unused drafts can be deleted. Archive a published course instead.",
+        );
+      const [references] = await tx
+        .select({
+          versions: sql<boolean>`exists(select 1 from ${s.versions} where ${s.versions.courseId} = ${id})`,
+          enrollments: sql<boolean>`exists(select 1 from ${s.grants} where ${s.grants.courseId} = ${id})`,
+          policies: sql<boolean>`exists(select 1 from ${s.accessPolicies}
+            where ${s.accessPolicies.policy}->'courseIds' @> ${JSON.stringify([id])}::jsonb
+            or ${s.accessPolicies.courseVersions} ? ${id})`,
+        })
+        .from(sql`(values (true)) as course_references`);
+      if (references.versions || references.enrollments || references.policies)
+        throw new ConflictException(
+          "This draft has saved course history or access references and cannot be deleted.",
+        );
+      await tx.delete(s.courses).where(eq(s.courses.id, id));
+      await this.log(tx, actor, "course.deleted", null, id);
+      return { id, deleted: true as const };
+    });
+  }
+  async course(
+    actor: Actor,
+    id: string,
+    transaction?: Transaction,
+  ): Promise<Course & { lessons: Lesson[]; completedLessonIds: string[] }> {
+    if (actor.role === "student") {
+      this.feature(actor, "courses");
+      if (actor.access && !actor.access.courseIds.includes(id))
+        throw new ForbiddenException(
+          "This course has not been assigned to you.",
+        );
+    }
+    const isAdmin = actor.role === "platform_admin";
+    const assignedVersion = actor.courseVersionIds?.[id];
+    if (!isAdmin && actor.access && !assignedVersion)
+      throw new ForbiddenException("This course has not been assigned to you.");
+    const read = async (tx: Transaction) => {
+      // The assigned version and its completion IDs share the course read.
+      // Students retain their pinned version even after a new publication.
+      const version = tx
+        .select()
+        .from(s.versions)
+        .where(
+          and(
+            eq(s.versions.courseId, id),
+            isAdmin
+              ? undefined
+              : actor.access
+                ? eq(s.versions.id, assignedVersion!)
+                : inArray(
+                    s.versions.id,
+                    tx
+                      .select({ id: s.grants.versionId })
+                      .from(s.grants)
+                      .where(
+                        and(
+                          eq(s.grants.memberId, actor.id),
+                          eq(s.grants.courseId, id),
+                          unexpired(),
+                        ),
+                      ),
+                  ),
+          ),
+        )
+        .orderBy(desc(s.versions.number))
+        .limit(1)
+        .as("selected_version");
+      const [record] = await tx
+        .select({
+          course: s.courses,
+          version: {
+            id: version.id,
+            title: version.title,
+            description: version.description,
+            number: version.number,
+            lessons: version.lessons,
+          },
+          completedLessonIds:
+            actor.role === "student"
+              ? sql<
+                  string[]
+                >`array(select ${s.progress.lessonId} from ${s.progress} where ${s.progress.memberId} = ${actor.id} and ${s.progress.versionId} = ${version.id})`
+              : sql<string[]>`array[]::text[]`,
+        })
+        .from(s.courses)
+        .leftJoin(version, eq(version.courseId, s.courses.id))
+        .where(eq(s.courses.id, id));
+      if (!record) throw new NotFoundException();
+      if (!isAdmin && !record.version)
+        throw new ForbiddenException(
+          "This course has not been assigned to you.",
+        );
+      return {
+        ...record.course,
+        ...(record.version
+          ? {
+              title: record.version.title,
+              description: record.version.description,
+              versionId: record.version.id,
+              version: record.version.number,
+              lessons: record.version.lessons,
+            }
+          : { lessons: [] }),
+        completedLessonIds: record.completedLessonIds,
+      };
+    };
+    return transaction ? read(transaction) : this.scope(actor, read);
+  }
+
   async publishCourse(
     actor: Actor,
     id: string,
@@ -686,6 +953,10 @@ export class SlateService {
         .where(eq(s.courses.id, id))
         .for("update");
       if (!course) throw new NotFoundException();
+      if (course.status === "archived")
+        throw new ConflictException(
+          "Restore this course before publishing a new version.",
+        );
       const [previous] = await tx
         .select()
         .from(s.versions)
@@ -723,9 +994,32 @@ export class SlateService {
       const [member] = await tx
         .select()
         .from(s.members)
-        .where(eq(s.members.id, memberId));
+        .where(eq(s.members.id, memberId))
+        .for("update");
       if (!member || member.role !== "student" || member.status !== "active")
         throw new BadRequestException("Choose an active student.");
+      const [course] = await tx
+        .select({ status: s.courses.status })
+        .from(s.courses)
+        .where(eq(s.courses.id, courseId))
+        .for("share");
+      if (!course || course.status !== "published")
+        throw new BadRequestException(
+          "Choose a published course. Archived courses cannot receive new assignments.",
+        );
+      const policies = await tx
+        .select()
+        .from(s.accessPolicies)
+        .where(eq(s.accessPolicies.organizationId, member.organizationId!));
+      if (
+        policies.some(
+          (row) =>
+            row.policy.courseIds !== null || row.policy.features !== null,
+        )
+      )
+        throw new BadRequestException(
+          "Manage course enrollment from this organization's Access workspace.",
+        );
       const [version] = await tx
         .select()
         .from(s.versions)
@@ -801,10 +1095,66 @@ export class SlateService {
       url: string;
     },
   ) {
+    if (actor.role !== "platform_admin") throw new ForbiddenException();
     return this.scope(actor, async (tx) => {
+      const [organization] = await tx
+        .select({ status: s.organizations.status })
+        .from(s.organizations)
+        .where(eq(s.organizations.id, input.organizationId))
+        .for("share");
+      if (!organization) throw new NotFoundException("Organization not found.");
+      if (organization.status !== "active")
+        throw new BadRequestException(
+          "Activate the organization before posting a job.",
+        );
       const [job] = await tx.insert(s.jobs).values(input).returning();
       await this.log(tx, actor, "job.published", input.organizationId, job.id);
       return job;
+    });
+  }
+  async createJobForAll(
+    actor: Actor,
+    input: { title: string; company: string; description: string; url: string },
+  ) {
+    if (actor.role !== "platform_admin") throw new ForbiddenException();
+    return this.scope(actor, async (tx) => {
+      // Keep each job within the existing tenant boundary. The shared locks
+      // prevent an organization from being archived partway through publishing.
+      const organizations = await tx
+        .select({ id: s.organizations.id })
+        .from(s.organizations)
+        .where(eq(s.organizations.status, "active"))
+        .orderBy(s.organizations.id)
+        .for("share");
+      if (!organizations.length)
+        throw new BadRequestException(
+          "Create or activate an organization before posting a job.",
+        );
+      const { title, company, description, url } = input;
+      // Bound each insert's parameter count while keeping every batch and its
+      // audit records in the same transaction: publication succeeds as a whole.
+      for (let offset = 0; offset < organizations.length; offset += 1000) {
+        const jobs = await tx
+          .insert(s.jobs)
+          .values(
+            organizations.slice(offset, offset + 1000).map(({ id }) => ({
+              organizationId: id, title, company, description, url,
+            })),
+          )
+          .returning({ id: s.jobs.id, organizationId: s.jobs.organizationId });
+        await tx.insert(s.audit).values(
+          jobs.map((job) => ({
+            actorId: actor.id,
+            action: "job.published",
+            organizationId: job.organizationId,
+            resourceId: job.id,
+          })),
+        );
+      }
+      return {
+        publishedCount: organizations.length,
+        organizationIds: organizations.map(({ id }) => id),
+      };
     });
   }
   async getResume(actor: Actor) {
@@ -887,10 +1237,9 @@ export class SlateService {
           .where(eq(s.organizations.id, actor.organizationId!));
         const roster = await tx
           .select({
-            id: s.members.id,
+            member: s.members,
             name: s.user.name,
             email: s.user.email,
-            status: s.members.status,
           })
           .from(s.members)
           .innerJoin(s.user, eq(s.members.authUserId, s.user.id))
@@ -900,18 +1249,45 @@ export class SlateService {
               eq(s.members.role, "student"),
             ),
           );
-        const assigned = await tx
-          .select({
-            memberId: s.grants.memberId,
-            versionId: s.grants.versionId,
-            lessons: s.versions.lessons,
-          })
+        const grants = await tx
+          .select()
           .from(s.grants)
-          .innerJoin(s.versions, eq(s.grants.versionId, s.versions.id))
-          .where(unexpired());
+          .where(eq(s.grants.organizationId, actor.organizationId!));
+        const policies = await tx
+          .select()
+          .from(s.accessPolicies)
+          .where(eq(s.accessPolicies.organizationId, actor.organizationId!));
+        const assigned = new Map(
+          roster.map(({ member }) => [
+            member.id,
+            resolvePolicies(
+              organization,
+              member,
+              policies,
+              grants,
+              Boolean(actor.demo),
+            ).versionIds,
+          ]),
+        );
+        const versionIds = [
+          ...new Set(
+            [...assigned.values()].flatMap((pins) => Object.values(pins)),
+          ),
+        ];
+        const versions = versionIds.length
+          ? await tx
+              .select({ id: s.versions.id, lessons: s.versions.lessons })
+              .from(s.versions)
+              .where(inArray(s.versions.id, versionIds))
+          : [];
         const completed = await tx.select().from(s.progress);
-        const students = roster.map((member) => {
-          const own = assigned.filter((g) => g.memberId === member.id);
+        const students = roster.map(({ member, name, email }) => {
+          const own = Object.values(assigned.get(member.id) || {}).flatMap(
+            (versionId) => {
+              const version = versions.find((item) => item.id === versionId);
+              return version ? [{ versionId, lessons: version.lessons }] : [];
+            },
+          );
           const totalLessons = own.reduce((n, g) => n + g.lessons.length, 0);
           const completedLessons = own.reduce(
             (n, g) =>
@@ -926,8 +1302,8 @@ export class SlateService {
           );
           return {
             id: member.id,
-            name: member.name,
-            email: member.email,
+            name,
+            email,
             status: member.status,
             assignedCourses: own.length,
             totalLessons,
