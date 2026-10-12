@@ -2,6 +2,16 @@
 
 The root `render.yaml` defines one **Free** Node web service in Ohio, close to the existing Neon database in AWS us-east-2. Cloudflare hosts the portals separately. The Blueprint does not create a database, paid worker or persistent disk. Automatic deploys and previews are disabled so releases are deliberate.
 
+## Live rollout — 12 October 2026
+
+The API is live at [otp-slate-api.onrender.com](https://otp-slate-api.onrender.com), with `/api/health` configured as its health check. The **Slate** workspace (`tea-db6a5ll9fdbs73fdgmh0`) contains service `srv-db6a8jdckfvc73cnigm0`, named `otp-slate-api`, on **Free / Ohio**. Its deployed source is commit `82bff362c2a2726504093ecf29e737c80f0b580f` on `codex/free-cloud-deployment`. Automatic deploys are off.
+
+The existing Neon project `small-shape-18661054` retains its schema and application data. Its organization Free plan was confirmed using the Neon CLI. The new restricted `slate_api_render` login was created and verified; the owner credential is not used by the deployed API. Existing Resend settings were carried over. WhatsApp, R2 and code-execution providers remain unconfigured.
+
+Health and unauthenticated access checks passed for the API and [three deployed portals](deployment-cloudflare.md#live-portals--12-october-2026). Real-account sign-in, email delivery and load testing have **not** been performed. This is an initial free rollout, not a completed capacity or end-to-end acceptance test.
+
+For subsequent releases, push reviewed changes to `codex/free-cloud-deployment`, then manually deploy the chosen commit from the Render service's **Manual Deploy** menu. A push alone does not release the API. Cloudflare Direct Upload releases are separate; use the portal commands in its deployment guide and verify API compatibility before uploading new frontend bundles.
+
 ## Connect the service
 
 1. Push the reviewed deployment changes to the chosen Git branch. In Render, create a Blueprint from this repository and branch using `render.yaml`.

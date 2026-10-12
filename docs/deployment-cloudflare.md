@@ -2,11 +2,23 @@
 
 Each React portal is a separate Pages project. The browser keeps using its existing same-origin `/api` paths; a small Pages Function proxies them to the Render API. Cloudflare receives only the API origin and a dedicated server-to-server proxy secret. No database URL, email key, or Better Auth secret belongs in Cloudflare. No secret belongs in a `VITE_*` variable or browser build.
 
-| Portal | Build command (repository root) | Upload directory | Suggested project |
-| --- | --- | --- | --- |
-| Student | `node scripts/cloudflare-build.mjs student` | `apps/student/dist` | `otp-slate-student` |
-| Platform Admin | `node scripts/cloudflare-build.mjs admin` | `apps/platform-admin/dist` | `otp-slate-admin` |
-| Organization | `node scripts/cloudflare-build.mjs organization` | `apps/organization-admin/dist` | `otp-slate-organization` |
+## Live portals — 12 October 2026
+
+| Portal         | Production URL                                                               | Pages project            |
+| -------------- | ---------------------------------------------------------------------------- | ------------------------ |
+| Student        | [otp-slate-student.pages.dev](https://otp-slate-student.pages.dev)           | `otp-slate-student`      |
+| Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
+| Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
+
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. Real-account sign-in, email delivery and load testing remain outstanding. The [Render rollout record](deployment-render.md#live-rollout--12-october-2026) identifies the deployed backend commit and database setup. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+
+## Build configuration
+
+| Portal         | Build command (repository root)                  | Upload directory               | Suggested project        |
+| -------------- | ------------------------------------------------ | ------------------------------ | ------------------------ |
+| Student        | `node scripts/cloudflare-build.mjs student`      | `apps/student/dist`            | `otp-slate-student`      |
+| Platform Admin | `node scripts/cloudflare-build.mjs admin`        | `apps/platform-admin/dist`     | `otp-slate-admin`        |
+| Organization   | `node scripts/cloudflare-build.mjs organization` | `apps/organization-admin/dist` | `otp-slate-organization` |
 
 Project names must be available in the account; use the actual resulting domains in Render's configuration. Use Node 24 for production/CI builds, matching Render, and set `NODE_VERSION=24` for Pages Git builds. Local builds also support Node 22. Run `npm ci` at the repository root first. Build all portals with `node scripts/cloudflare-build.mjs all`. The script builds shared contracts and each selected portal, then stages `_worker.js` and `_routes.json` into its output. `--skip-build` only stages those files into an already-built output.
 
@@ -18,7 +30,7 @@ For each project's production environment:
 
 1. Under **Settings → Variables and Secrets**, set `API_ORIGIN` to the actual Render origin, for example `https://otp-slate-api.onrender.com`. This is a runtime binding; it is not compiled into the browser. The proxy accepts only a bare HTTPS `*.onrender.com` service URL, without credentials, a port, path, query, or fragment. [Environment bindings](https://developers.cloudflare.com/pages/functions/bindings/#environment-variables)
 2. Add **secret** `PORTAL_PROXY_SECRET` with the same dedicated random value configured on Render (at least 32 printable characters, without spaces). Use the same value for all three portals. Keep it separate from `BETTER_AUTH_SECRET`; never commit it or include it in the build command. The API uses it to authenticate the proxy before trusting Cloudflare's client IP.
-3. Under **Settings → Runtime → Fail open / closed**, select **Fail closed** so exhausted Function quota does not return SPA HTML from API routes. [Invocation routing](https://developers.cloudflare.com/pages/functions/routing/#fail-open--closed)
+3. Under **Settings → Runtime → Fail open / closed**, select **Fail closed** so exhausted Function quota does not return SPA HTML from API routes. The Pages API requires `fail_open` to match in production and preview, so set it to `false` for both; preview still receives no production API binding or secret. [Invocation routing](https://developers.cloudflare.com/pages/functions/routing/#fail-open--closed)
 4. Set the Pages Functions compatibility date to **2026-10-12** in production. The proxy's `fetch(..., { cache: "no-store" })` requires `cache_option_enabled`, enabled by default from **2024-11-11**; do not add `cache_option_disabled`. Current Workers Fetch supports this option and bypasses its cache for external origins. [Compatibility requirement](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#enable-cache-no-store-http-standard-api), [Fetch options](https://developers.cloudflare.com/workers/runtime-apis/fetch/#parameters)
 5. Add the three exact production portal origins to Render's `TRUSTED_ORIGINS`, comma-separated. Keep `BETTER_AUTH_URL` on the Render HTTPS API origin. Keep production secure, host-only cookies (`crossSubDomainCookies.enabled: false`). In proxy mode, the API rewrites password-reset email links to the exact trusted callback portal origin, preserving the token and callback query, so the email opens that portal's `/api/auth` proxy rather than bypassing it through Render.
 6. Do not connect arbitrary preview deployment domains to the production database. A preview requires its own API environment, proxy secret, and explicit trusted origin. Missing `API_ORIGIN` or missing/invalid `PORTAL_PROXY_SECRET` makes API requests fail closed with a generic 503 response.
@@ -26,6 +38,8 @@ For each project's production environment:
 The proxy forwards the browser's original Origin rather than replacing it with a trusted value. It removes incoming proxy credentials and forwarding/IP headers, then injects `x-slate-proxy-key` from its secret binding and `x-slate-client-ip` only from Cloudflare's edge-supplied `CF-Connecting-IP`. It rejects a different browser Origin, never follows upstream redirects carrying credentials, keeps cookies host-only, and makes all API responses non-cacheable. A student session therefore stays on the student portal and is not shared with either admin portal. Existing role checks remain enforced by the API.
 
 ## Direct deployment
+
+The live projects use **Direct Upload**, with `main` configured as the Pages production-branch label. Keep `--branch main` in release commands so uploads update the production URLs. This label does not pull from Git's `main` branch: build the reviewed local checkout of `codex/free-cloud-deployment`, which is also the branch tracked by Render, then upload its compiled portal output. Git pushes do not automatically release these Pages projects.
 
 After Wrangler is installed in the repository and signed into the intended Cloudflare account, run the create commands **only for projects that do not exist yet**. Wrangler 4.149 delegates new Pages project creation to Workers unless `--force` is supplied; here `--force` explicitly keeps creation on Pages. Existing projects only need the build/deploy commands.
 
