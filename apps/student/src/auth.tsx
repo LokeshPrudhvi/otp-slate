@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, authClient, useMe } from "@slate/ui";
+import { api, ApiError, authClient, useMe } from "@slate/ui";
 import type { Identity } from "@slate/contracts";
 import { Artwork, Status } from "./design";
 
@@ -39,6 +39,54 @@ export function AuthFrame({
   );
 }
 export function StudentLogin() {
+  const me = useMe({ refetchOnMount: "always" });
+  // Validate even a cached identity on entry, without resetting form state
+  // during subsequent window-focus checks.
+  if (me.isPending || !me.isFetchedAfterMount)
+    return (
+      <AuthFrame
+        title="Opening your workspace…"
+        description="Checking your existing session."
+      >
+        <p className="auth-message" role="status">
+          Please wait…
+        </p>
+      </AuthFrame>
+    );
+  if (me.isSuccess && me.data)
+    return (
+      <Navigate to={me.data.onboardingStep ? "/onboarding" : "/"} replace />
+    );
+  const guest =
+    me.error instanceof ApiError &&
+    (me.error.status === 401 || me.error.status === 403);
+  if (!guest)
+    return (
+      <AuthFrame
+        title="We couldn't check your session"
+        description="Please retry to continue to your workspace."
+      >
+        <Status error={me.error} />
+        <button
+          className="lg-btn"
+          disabled={me.isFetching}
+          onClick={() => void me.refetch()}
+        >
+          {me.isFetching ? "Checking…" : "Retry"}
+        </button>
+      </AuthFrame>
+    );
+  return (
+    <StudentLoginForm
+      sessionError={
+        me.error instanceof ApiError && me.error.status === 403
+          ? me.error
+          : null
+      }
+    />
+  );
+}
+function StudentLoginForm({ sessionError }: { sessionError: Error | null }) {
   const location = useLocation(),
     navigate = useNavigate(),
     query = useQueryClient();
@@ -103,6 +151,7 @@ export function StudentLogin() {
             : "Your next step starts here. Sign in to learn, practise and prepare for your career."
       }
     >
+      <Status error={sessionError} />
       {notice && (
         <p className="auth-message" role="status">
           {notice}

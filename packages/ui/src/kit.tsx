@@ -84,7 +84,13 @@ export async function api<T>(
 export function usePortal() {
   return useContext(Context);
 }
-export function useMe({ poll = false }: { poll?: boolean } = {}) {
+export function useMe({
+  poll = false,
+  refetchOnMount = true,
+}: {
+  poll?: boolean;
+  refetchOnMount?: boolean | "always";
+} = {}) {
   const portal = usePortal();
   const client = useQueryClient();
   return useQuery({
@@ -98,6 +104,7 @@ export function useMe({ poll = false }: { poll?: boolean } = {}) {
       ),
     retry: false,
     staleTime: 5_000,
+    refetchOnMount,
     refetchOnWindowFocus: "always",
     refetchInterval: poll && portal === "student" ? 20_000 : false,
   });
