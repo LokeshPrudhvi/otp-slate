@@ -18,7 +18,7 @@ export function AdminShell({ navigation }: { navigation: NavigationItem[] }) {
   const groups = [
     { name: "Workspace", paths: ["/", "/organizations", "/members", "/registrations"] },
     { name: "Learning", paths: ["/access", "/courses", "/assessments"] },
-    { name: "Platform", paths: ["/jobs", "/integrations"] },
+    { name: "Platform", paths: ["/jobs", "/announcements", "/integrations"] },
   ];
   return <div className="platform-admin">
     <a className="skip-link" href="#main">Skip to content</a>

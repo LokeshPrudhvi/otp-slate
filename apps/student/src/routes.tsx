@@ -35,6 +35,7 @@ import { CodingLibrary } from "./coding";
 import { CompilerPage } from "./compiler";
 import { SelfAssessment } from "./self-assessment";
 import { StudentLessonActivity, lessonPresentation } from "./lessons";
+import { AnnouncementsPage } from "./announcements";
 import {
   AccessRoute,
   hasAccess,
@@ -1064,13 +1065,13 @@ function Jobs() {
     </div>
   );
 }
-function Inbox({ announcementsOnly = false }: { announcementsOnly?: boolean }) {
+function Inbox() {
   const me = useMe();
   const data = useData<Announcement[]>(
     "announcements",
     "student/announcements",
   );
-  const title = announcementsOnly ? "Announcements" : "Inbox";
+  const title = "Inbox";
   if (!hasAccess(me.data, "announcements"))
     return (
       <div className="a-page">
@@ -1087,9 +1088,7 @@ function Inbox({ announcementsOnly = false }: { announcementsOnly?: boolean }) {
       <Status pending={data.isPending} error={data.error} />
       {data.data?.length ? (
         <>
-          <p className="hub-note">
-            Organization announcements · Sample notices
-          </p>
+          <p className="hub-note">Organization announcements</p>
           <div className="hub-grid">
             {data.data.map((message) => (
               <article className="hub-card" key={message.id}>
@@ -1101,7 +1100,7 @@ function Inbox({ announcementsOnly = false }: { announcementsOnly?: boolean }) {
                 </div>
                 <h2>{message.title}</h2>
                 <p>{message.body}</p>
-                <small>Sample announcement</small>
+                {message.sample && <small>Sample announcement</small>}
               </article>
             ))}
           </div>
@@ -1300,7 +1299,7 @@ export function StudentRoutes() {
             path="announcements"
             element={
               <AccessRoute feature="announcements">
-                <Inbox announcementsOnly />
+                <AnnouncementsPage />
               </AccessRoute>
             }
           />

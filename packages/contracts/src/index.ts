@@ -193,7 +193,44 @@ export interface Announcement {
   body: string;
   date: string;
   from: string;
-  sample: true;
+  sample?: boolean;
+  format?: "plain" | "markdown";
+  organizationId?: string;
+  organizationName?: string;
+  branchCode?: string | null;
+  branchName?: string | null;
+}
+export interface OrganizationAnnouncement extends Announcement {
+  clientId: string;
+  organizationId: string;
+  organizationName: string;
+  branchCode: string | null;
+  branchName: string | null;
+  format: "plain" | "markdown";
+  status: "published" | "archived";
+  createdAt: string;
+  updatedAt: string;
+}
+export interface AnnouncementAudience {
+  organizationId: string;
+  organizationName: string;
+  status: "active" | "archived";
+  studentCount: number;
+  branches: { code: string; name: string; studentCount: number }[];
+}
+export interface AnnouncementPage {
+  items: OrganizationAnnouncement[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+export interface PublishAnnouncement {
+  clientId: string;
+  organizationId: string;
+  branchCode: string | null;
+  title: string;
+  body: string;
+  format: "plain" | "markdown";
 }
 export interface MailContact {
   id: string;

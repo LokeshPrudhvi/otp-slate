@@ -30,6 +30,7 @@ import { scoped, type Database, type Transaction } from "./database.js";
 import { createUpload, r2Configured, type PhoneSender } from "./providers.js";
 import * as s from "./schema.js";
 import { AccessService, practiceModule, resolvePolicies } from "./access.js";
+import { AnnouncementService } from "./announcements.js";
 import {
   demoAnnouncements,
   demoExams,
@@ -320,8 +321,7 @@ export class SlateService {
       : [];
   }
   announcements(actor: Actor) {
-    this.feature(actor, "announcements");
-    return actor.demo ? demoAnnouncements() : [];
+    return new AnnouncementService(this).student(actor);
   }
   async mailboxActor(request: Request) {
     const actor = await this.actor(request);

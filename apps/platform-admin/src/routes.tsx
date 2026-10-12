@@ -30,6 +30,7 @@ import {
   useData,
 } from "@slate/ui";
 import { DemoAssessments } from "./assessments";
+import { Announcements } from "./announcements";
 import { AddStudent, Registrations } from "./registrations";
 import { LearningAccess } from "./access";
 import { AdminDashboard } from "./dashboard";
@@ -67,6 +68,7 @@ const navigation = [
     demoOnly: true,
   },
   { to: "/jobs", label: "Jobs", icon: "jobs" },
+  { to: "/announcements", label: "Announcements", icon: "resume" },
   { to: "/integrations", label: "Services", icon: "toolkit" },
 ];
 function useOrganizations() {
@@ -1088,6 +1090,7 @@ export function PlatformRoutes() {
           <Route path="courses/:id" element={<CourseEditor />} />
           <Route path="assessments" element={<DemoAssessments />} />
           <Route path="jobs" element={<Jobs />} />
+          <Route path="announcements" element={<Announcements />} />
           <Route path="integrations" element={<Integrations />} />
           <Route path="*" element={<NotFound />} />
         </Route>

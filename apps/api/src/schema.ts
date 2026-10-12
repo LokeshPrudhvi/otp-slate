@@ -255,6 +255,20 @@ export const jobs = pgTable("jobs", {
     .defaultNow()
     .notNull(),
 });
+export const announcements = pgTable("announcements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("client_id").notNull().unique(),
+  organizationId: uuid("org_id").notNull().references(() => organizations.id),
+  branchCode: text("branch_code"),
+  branchName: text("branch_name"),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  format: text("format").$type<"plain" | "markdown">().notNull(),
+  status: text("status").$type<"published" | "archived">().default("published").notNull(),
+  createdBy: uuid("created_by").notNull().references(() => members.id),
+  authorName: text("author_name").notNull(),
+  ...dates(),
+});
 export const resumes = pgTable("resumes", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("org_id").notNull(),

@@ -114,7 +114,7 @@ export async function migrateDatabase(db: Database) {
 }
 export async function checkProductionRole(db: Database) {
   const result = await db.execute(
-    sql`select r.rolsuper, r.rolbypassrls, exists(select 1 from pg_tables where schemaname='public' and tablename IN ('organizations','members','courses','course_versions','course_enrollments','lesson_progress','jobs','resumes','phone_challenges','outbox','audit_logs','messages','message_deliveries','registration_requests','registration_rate_limits','access_policies','lesson_uploads','lesson_submissions') and tableowner=current_user) as owns_domain from pg_roles r where r.rolname=current_user`,
+    sql`select r.rolsuper, r.rolbypassrls, exists(select 1 from pg_tables where schemaname='public' and tablename IN ('organizations','members','courses','course_versions','course_enrollments','lesson_progress','jobs','resumes','phone_challenges','outbox','audit_logs','messages','message_deliveries','registration_requests','registration_rate_limits','access_policies','lesson_uploads','lesson_submissions','announcements') and tableowner=current_user) as owns_domain from pg_roles r where r.rolname=current_user`,
   );
   const role = result.rows[0];
   if (!role || role.rolsuper || role.rolbypassrls || role.owns_domain)

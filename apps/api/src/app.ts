@@ -14,6 +14,7 @@ import { ZodError } from "zod";
 import { RegistrationController } from "./registration-controller.js";
 import { ApiController } from "./controller.js";
 import { AccessController } from "./access-controller.js";
+import { AnnouncementController } from "./announcement-controller.js";
 import { SlateService } from "./service.js";
 import { portalProxyIngress } from "./portal-proxy.js";
 
@@ -59,7 +60,7 @@ class Errors implements ExceptionFilter {
 }
 export async function createApplication(service: SlateService) {
   @Module({
-    controllers: [ApiController, RegistrationController, AccessController],
+    controllers: [ApiController, RegistrationController, AccessController, AnnouncementController],
     providers: [{ provide: SlateService, useValue: service }],
   })
   class ApplicationModule {}

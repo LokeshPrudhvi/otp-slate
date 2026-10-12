@@ -6,8 +6,9 @@ export interface RichTextEditorProps {
   label: string;
   disabled?: boolean;
   format?: "plain" | "markdown";
+  maxLength?: number;
 }
 const Editor = lazy(() => import("./rich-text-editor-impl"));
 export function RichTextEditor(props: RichTextEditorProps) {
-  return <Suspense fallback={<p role="status">Opening lesson editor…</p>}><Editor {...props} /></Suspense>;
+  return <Suspense fallback={<p role="status">Opening editor…</p>}><Editor {...props} /></Suspense>;
 }

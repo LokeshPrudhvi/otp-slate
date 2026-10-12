@@ -16,7 +16,7 @@ const plainDocument = (value: string) => ({
   content: value.split("\n").map((text) => ({ type: "paragraph", ...(text ? { content: [{ type: "text", text }] } : {}) })),
 });
 
-export default function LessonEditor({ value, onChange, label, disabled = false, format = "plain" }: RichTextEditorProps) {
+export default function LessonEditor({ value, onChange, label, disabled = false, format = "plain", maxLength = 100_000 }: RichTextEditorProps) {
   const id = useId();
   const callback = useRef(onChange);
   callback.current = onChange;
@@ -55,7 +55,7 @@ export default function LessonEditor({ value, onChange, label, disabled = false,
     previous.current = value;
     editor.commands.setContent(format === "markdown" ? value : plainDocument(value), { emitUpdate: false, ...(format === "markdown" ? { contentType: "markdown" as const } : {}) });
   }, [editor, value, format]);
-  if (!editor) return <p role="status">Opening lesson editor…</p>;
+  if (!editor) return <p role="status">Opening editor…</p>;
 
   // Pointer clicks should keep the document selection; keyboard users can still
   // tab into the toolbar and activate controls normally.
@@ -125,9 +125,9 @@ export default function LessonEditor({ value, onChange, label, disabled = false,
       </div>}
     </>}
     <div hidden={mode !== "write"}><EditorContent editor={editor} /></div>
-    {mode === "markdown" && <textarea className="rte-source" aria-label={`${label} Markdown source`} spellCheck={false} rows={14} maxLength={100_000} disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />}
-    {mode === "preview" && <div className="rte-preview">{value.trim() ? <LessonContent body={value} format={format} /> : <p className="rte-empty">Your formatted lesson will appear here.</p>}</div>}
-    <div className="rte-footer"><span>Select text to format · Enter starts a paragraph · Shift+Enter adds a line break</span><span className={value.length > 100_000 ? "rte-over-limit" : ""}>{value.length.toLocaleString()} / 100,000</span></div>
-    {value.length > 100_000 && <p className="rte-limit-error" role="alert">Shorten this lesson to 100,000 characters before publishing.</p>}
+    {mode === "markdown" && <textarea className="rte-source" aria-label={`${label} Markdown source`} spellCheck={false} rows={14} maxLength={maxLength} disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />}
+    {mode === "preview" && <div className="rte-preview">{value.trim() ? <LessonContent body={value} format={format} /> : <p className="rte-empty">Your formatted content will appear here.</p>}</div>}
+    <div className="rte-footer"><span>Select text to format · Enter starts a paragraph · Shift+Enter adds a line break</span><span className={value.length > maxLength ? "rte-over-limit" : ""}>{value.length.toLocaleString()} / {maxLength.toLocaleString()}</span></div>
+    {value.length > maxLength && <p className="rte-limit-error" role="alert">Shorten this content to {maxLength.toLocaleString()} characters before publishing.</p>}
   </section>;
 }
