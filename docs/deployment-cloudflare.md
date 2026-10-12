@@ -4,7 +4,9 @@ Each React portal is a separate Pages project. The browser keeps using its exist
 
 ## Live portals — 12 October 2026
 
-The organization branch catalog update is deployed to Platform Admin (`5c58f53d`) and Student (`d63c5064`), built from source `54ae644`. Create branches using **Admin → Access → select organization → Branches → Add branch**, entering the official name and code. Student create/edit/registration forms then show that organization's branches in a searchable dropdown and fill the code automatically. Existing branches and student progress were preserved. See the [release verification](deployment-render.md#organization-branch-catalog-release--12-october-2026).
+Branch editing is deployed to Platform Admin (`fc39000a`), built from source `2c99cc7`. Open **Admin → Access → select organization → Branches → select branch → Edit branch** to change its name or code. Save updates assigned students and branch references while retaining their course access, version pins and progress. Save or reset any unsaved learning-access changes before opening the editor. See the [release verification](deployment-render.md#branch-editing-release--12-october-2026).
+
+The Student bundle remains `d63c5064` from source `54ae644`. Create branches using **Admin → Access → select organization → Branches → Add branch**, entering the official name and code. Student create/edit/registration forms show that organization's saved branches in a searchable dropdown and fill the code automatically. The Organization bundle remains `50c314db`.
 
 Announcements remain available under **Admin → Announcements**. Choose an organization and **All branches** or a saved branch, enter a title and message, then preview and publish. Notices appear in the student's Announcements section; they are not emails.
 
@@ -14,7 +16,7 @@ Announcements remain available under **Admin → Announcements**. Choose an orga
 | Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
 | Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
 
-All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#organization-branch-catalog-release--12-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#branch-editing-release--12-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
 
 ## Build configuration
 
