@@ -13,6 +13,8 @@ import { relations } from "drizzle-orm";
 import type {
   AccessPolicy,
   Lesson,
+  LessonFile,
+  LessonSubmission,
   PortalDisplay,
   Resume,
 } from "@slate/contracts";
@@ -325,3 +327,54 @@ export const deliveries = pgTable("message_deliveries", {
   starred: boolean("starred").default(false).notNull(),
   archivedAt: timestamp("archived_at", { withTimezone: true }),
 });
+
+export const lessonUploads = pgTable("lesson_uploads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerId: uuid("owner_id").notNull(),
+  organizationId: uuid("org_id"),
+  purpose: text("purpose").notNull(),
+  fileName: text("file_name").notNull(),
+  contentType: text("content_type").notNull(),
+  size: bigint("size", { mode: "number" }).notNull(),
+  stagingKey: text("staging_key").notNull(),
+  objectKey: text("object_key"),
+  status: text("status").notNull().default("pending"),
+  courseId: uuid("course_id"),
+  versionId: uuid("version_id"),
+  lessonId: text("lesson_id"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  readyAt: timestamp("ready_at", { withTimezone: true }),
+});
+export const lessonSubmissions = pgTable(
+  "lesson_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("org_id").notNull(),
+    memberId: uuid("member_id").notNull(),
+    courseId: uuid("course_id").notNull(),
+    versionId: uuid("version_id").notNull(),
+    lessonId: text("lesson_id").notNull(),
+    kind: text("kind").$type<"assignment" | "quiz">().notNull(),
+    answer: text("answer").notNull().default(""),
+    url: text("url").notNull().default(""),
+    files: jsonb("files").$type<LessonFile[]>().notNull().default([]),
+    score: integer("score"),
+    passed: boolean("passed"),
+    quizResults: jsonb("quiz_results")
+      .$type<LessonSubmission["quizResults"]>()
+      .notNull()
+      .default([]),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("member_lesson_submission").on(
+      table.memberId,
+      table.versionId,
+      table.lessonId,
+    ),
+  ],
+);

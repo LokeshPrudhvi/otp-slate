@@ -36,6 +36,7 @@ import { AdminDashboard } from "./dashboard";
 import { AdminPagination, AdminShell } from "./shell";
 import { AdminSelect } from "./select";
 import { AdminPage } from "./page";
+import { CourseLessonBuilder, CourseSubmissions, lessonValidation } from "./lesson-editor";
 
 async function updateCachedList<T>(
   client: QueryClient,
@@ -732,7 +733,10 @@ function CourseEditor() {
     [lessons, setLessons] = useState<Lesson[]>([]),
     [loaded, setLoaded] = useState(""),
     [lifecyclePending, setLifecyclePending] = useState(false),
+    [uploading, setUploading] = useState(false),
+    [tab, setTab] = useState<"content" | "submissions">("content"),
     [notice, setNotice] = useState("");
+  const issues = lessons.flatMap((lesson, index) => { const message = lessonValidation(lesson); return message ? [`Lesson ${index + 1}: ${message}`] : []; });
   const archived = data.data?.status === "archived";
   const unsaved = Boolean(data.data && (title !== data.data.title || description !== data.data.description || JSON.stringify(lessons) !== JSON.stringify(data.data.lessons)));
   useEffect(() => {
@@ -742,7 +746,7 @@ function CourseEditor() {
       setLessons(
         data.data.lessons.length
           ? data.data.lessons
-          : [{ id: crypto.randomUUID(), title: "", body: "" }],
+          : [{ id: crypto.randomUUID(), title: "", body: "", kind: "text", format: "markdown" }],
       );
       setLoaded(`${id}:${data.data.versionId || ""}:${data.data.status}`);
     }
@@ -785,6 +789,8 @@ function CourseEditor() {
           title: result.title,
           description: result.description,
           status: "published",
+          version: result.number,
+          versionId: result.id,
         } : course).sort((a, b) => a.title.localeCompare(b.title)),
       );
       setNotice(
@@ -794,120 +800,50 @@ function CourseEditor() {
       void client.invalidateQueries({ queryKey: ["platform", "summary"] });
     },
   });
-  const update = (index: number, key: "title" | "body", value: string) =>
-    setLessons((items) =>
-      items.map((item, i) => (i === index ? { ...item, [key]: value } : item)),
-    );
+  useEffect(() => {
+    if (!unsaved && !uploading) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [unsaved, uploading]);
   return (
     <AdminPage
-        title="Course editor"
-        description="Publishing creates a new version. Existing students keep their assigned content and progress."
-        action={
-          <Link to="/courses" className="btn">
-            Back to courses
-          </Link>
-        }
+      title="Course editor"
+      description="Create reading lessons, videos, assignments and MCQs in one learning experience."
+      action={<Link to="/courses" className="btn">Back to courses</Link>}
     >
       <DataState pending={data.isPending} error={data.error}>
         {archived && <div className="access-archived-notice" role="status"><div><strong>Archived course · view only</strong><p>Existing assignments and progress are preserved. Restore this course to edit, publish a new version or make it available for new learning selections.</p></div></div>}
-        {data.data && <Panel title="Course status" action={<span className={`badge ${data.data.status === "published" ? "green" : "amber"}`}>{data.data.status}</span>}>
-          <CourseActions course={data.data} onChanged={setNotice} onDeleted={() => navigate("/courses")} disabled={publish.isPending} unsaved={unsaved && !archived} onPending={setLifecyclePending} />
+        {data.data && <Panel title={data.data.title || "Course status"} action={<span className={`badge ${data.data.status === "published" ? "green" : "amber"}`}>{data.data.status}{data.data.version ? ` · Version ${data.data.version}` : ""}</span>}>
+          <CourseActions course={data.data} onChanged={setNotice} onDeleted={() => navigate("/courses")} disabled={publish.isPending || uploading} unsaved={unsaved && !archived} onPending={setLifecyclePending} />
         </Panel>}
-        <Panel
-          title={`Content · ${data.data?.version ? `latest version ${data.data.version}` : "new draft"}`}
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!archived && !lifecyclePending) publish.mutate({ courseId: id!, title, description, lessons });
-            }}
-          >
-            <Field label="Course title">
-              <input
-                required
-                maxLength={150}
-                value={title}
-                readOnly={archived}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={publish.isPending || lifecyclePending}
-              />
-            </Field>
-            <Field label="Description">
-              <textarea
-                required
-                maxLength={2000}
-                value={description}
-                readOnly={archived}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={publish.isPending || lifecyclePending}
-              />
-            </Field>
-            {lessons.map((lesson, index) => (
-              <section className="lesson-editor" key={lesson.id}>
-                <h3>Lesson {index + 1}</h3>
-                <Field label="Lesson title">
-                  <input
-                    required
-                    maxLength={150}
-                    value={lesson.title}
-                    readOnly={archived}
-                    onChange={(e) => update(index, "title", e.target.value)}
-                    disabled={publish.isPending || lifecyclePending}
-                  />
-                </Field>
-                <Field label="Lesson content">
-                  <textarea
-                    required
-                    rows={7}
-                    maxLength={20_000}
-                    value={lesson.body}
-                    readOnly={archived}
-                    onChange={(e) => update(index, "body", e.target.value)}
-                    disabled={publish.isPending || lifecyclePending}
-                  />
-                </Field>
-                {!archived && <button
-                  type="button"
-                  className="text-button"
-                  disabled={lessons.length === 1 || publish.isPending || lifecyclePending}
-                  onClick={() =>
-                    setLessons((items) => items.filter((_, i) => i !== index))
-                  }
-                >
-                  Remove lesson
-                </button>}
-              </section>
-            ))}
-            {!archived && <div className="actions">
-              <button
-                type="button"
-                className="btn"
-                disabled={publish.isPending || lifecyclePending || lessons.length >= 200}
-                onClick={() =>
-                  setLessons((items) => [
-                    ...items,
-                    { id: crypto.randomUUID(), title: "", body: "" },
-                  ])
-                }
-              >
-                Add lesson
-              </button>
-              <button className="btn primary" disabled={publish.isPending || lifecyclePending}>
-                {publish.isPending ? "Publishing…" : "Publish new version"}
-              </button>
-            </div>}
-            <ErrorMessage error={publish.error} />
-            {notice && (
-              <p className="success-note" role="status">
-                {notice}
-              </p>
-            )}
-          </form>
-        </Panel>
+        <div className="course-editor-tabs" role="group" aria-label="Course workspace">
+          <button type="button" className="btn" disabled={uploading || publish.isPending} aria-pressed={tab === "content"} onClick={() => setTab("content")}>Lessons & content</button>
+          <button type="button" className="btn" disabled={uploading || publish.isPending} aria-pressed={tab === "submissions"} onClick={() => setTab("submissions")}>Student submissions</button>
+        </div>
+        {tab === "content" ? <form onSubmit={event => {
+          event.preventDefault();
+          if (!archived && !lifecyclePending && !uploading && !issues.length && lessons.length) publish.mutate({ courseId: id!, title, description, lessons });
+        }}>
+          <Panel title="Course details">
+            <div className="course-settings-grid">
+              <Field label="Course title"><input required maxLength={150} value={title} readOnly={archived} onChange={event => setTitle(event.target.value)} disabled={publish.isPending || lifecyclePending || uploading} /></Field>
+              <Field label="Course description"><textarea required maxLength={2000} rows={3} value={description} readOnly={archived} onChange={event => setDescription(event.target.value)} disabled={publish.isPending || lifecyclePending || uploading} /></Field>
+            </div>
+          </Panel>
+          <CourseLessonBuilder courseId={id!} lessons={lessons} onChange={setLessons} disabled={publish.isPending || lifecyclePending} readOnly={archived} onUploadStateChange={setUploading} />
+          {!archived && <>
+            {issues.length > 0 && <div className="course-validation-summary"><strong>{issues.length} {issues.length === 1 ? "lesson needs" : "lessons need"} a little more detail before publishing</strong><ul>{issues.slice(0, 5).map(issue => <li key={issue}>{issue}</li>)}</ul>{issues.length > 5 && <p>And {issues.length - 5} more. Select a lesson in the outline to finish it.</p>}</div>}
+            <div className="course-publish-bar"><div><strong>{uploading ? "Uploading your video…" : unsaved ? "Your next course version" : "Published content is up to date"}</strong><p>{uploading ? "Keep this page open while the video uploads." : "Publishing preserves existing students’ assigned versions and progress."}</p></div><button className="btn primary" disabled={publish.isPending || lifecyclePending || uploading || Boolean(issues.length) || !lessons.length || !title.trim() || !description.trim()}>{publish.isPending ? "Publishing…" : "Publish new version"}</button></div>
+          </>}
+          <ErrorMessage error={publish.error} />
+        </form> : <CourseSubmissions courseId={id!} lessons={data.data?.lessons || []} />}
+        {notice && <p className="success-note" role="status">{notice}</p>}
       </DataState>
     </AdminPage>
   );
 }
+
 function Jobs() {
   const org = useOrganizations(),
     query = useQueryClient(),

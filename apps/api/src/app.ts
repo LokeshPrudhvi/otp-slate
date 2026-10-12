@@ -112,6 +112,10 @@ export async function createApplication(service: SlateService) {
     "/api/v1/platform/registrations/import",
     express.json({ limit: "2mb" }),
   );
+  app.use(
+    "/api/v1/platform/courses/:id/publish",
+    express.json({ limit: "2mb" }),
+  );
   app.use(express.json({ limit: "128kb" }));
   app.use("/api/v1", (req: Request, res: Response, next: () => void) => {
     if (

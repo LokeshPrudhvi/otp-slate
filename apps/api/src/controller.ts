@@ -16,6 +16,8 @@ import {
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { SlateService } from "./service.js";
+import { LessonService } from "./lessons.js";
+import { lessonInput, uploadInput, submissionInput } from "./lesson-input.js";
 import { MailboxService } from "./mailbox.js";
 
 const id = z.string().uuid();
@@ -40,9 +42,6 @@ const courseInput = z
     ]),
   })
   .strict();
-const lesson = z
-  .object({ id: id.optional(), title: text(150), body: text(20_000) })
-  .strict();
 const resumeInput = z
   .object({
     name: z.string().max(150),
@@ -64,8 +63,10 @@ const resumeInput = z
 @Controller("api/v1")
 export class ApiController {
   readonly mailbox: MailboxService;
+  readonly lessons: LessonService;
   constructor(@Inject(SlateService) private readonly service: SlateService) {
     this.mailbox = new MailboxService(service.db);
+    this.lessons = new LessonService(service, service.lessonStorage);
   }
   @Get("mailbox/contacts") async contacts(@Req() req: Request) {
     return this.mailbox.contacts(await this.service.mailboxActor(req));
@@ -233,8 +234,15 @@ export class ApiController {
     @Body() body: unknown,
   ) {
     const actor = await this.service.actor(req, "platform_admin");
-    const input = z.object({ status: z.enum(["active", "archived"]) }).strict().parse(body);
-    return this.service.updateOrganizationStatus(actor, id.parse(organization), input.status);
+    const input = z
+      .object({ status: z.enum(["active", "archived"]) })
+      .strict()
+      .parse(body);
+    return this.service.updateOrganizationStatus(
+      actor,
+      id.parse(organization),
+      input.status,
+    );
   }
   @Get("platform/organizations/:id/members") async members(
     @Req() req: Request,
@@ -318,7 +326,11 @@ export class ApiController {
       .object({ status: z.enum(["archived", "published"]) })
       .strict()
       .parse(body);
-    return this.service.updateCourseStatus(actor, id.parse(course), input.status);
+    return this.service.updateCourseStatus(
+      actor,
+      id.parse(course),
+      input.status,
+    );
   }
   @Delete("platform/courses/:id") async deleteCourse(
     @Req() req: Request,
@@ -340,7 +352,7 @@ export class ApiController {
       .object({
         title: text(150),
         description: text(2000),
-        lessons: z.array(lesson).min(1).max(200),
+        lessons: z.array(lessonInput).min(1).max(200),
       })
       .strict()
       .refine(
@@ -423,6 +435,80 @@ export class ApiController {
     return this.service.upload(
       await this.service.actor(req, "platform_admin"),
       input.contentType,
+    );
+  }
+  @Post("lesson-uploads") async lessonUpload(
+    @Req() req: Request,
+    @Body() body: unknown,
+  ) {
+    return this.lessons.createUpload(
+      await this.service.actor(req),
+      uploadInput.parse(body),
+    );
+  }
+  @Post("lesson-uploads/:id/complete") async finishLessonUpload(
+    @Req() req: Request,
+    @Param("id") upload: string,
+  ) {
+    return this.lessons.completeUpload(
+      await this.service.actor(req),
+      id.parse(upload),
+    );
+  }
+  @Get("lesson-uploads/:id/download") async downloadLessonUpload(
+    @Req() req: Request,
+    @Param("id") upload: string,
+  ) {
+    return this.lessons.download(
+      await this.service.actor(req),
+      id.parse(upload),
+    );
+  }
+  @Get("student/courses/:id/lessons/:lesson/video") async lessonVideo(
+    @Req() req: Request,
+    @Param("id") course: string,
+    @Param("lesson") lesson: string,
+  ) {
+    return this.lessons.video(
+      await this.service.actor(req, "student"),
+      id.parse(course),
+      id.parse(lesson),
+    );
+  }
+  @Get("student/courses/:id/lessons/:lesson/submission") async lessonSubmission(
+    @Req() req: Request,
+    @Param("id") course: string,
+    @Param("lesson") lesson: string,
+    @Res() res: Response,
+  ) {
+    return res.json(
+      await this.lessons.submission(
+        await this.service.actor(req, "student"),
+        id.parse(course),
+        id.parse(lesson),
+      ),
+    );
+  }
+  @Post("student/courses/:id/lessons/:lesson/submission") async submitLesson(
+    @Req() req: Request,
+    @Param("id") course: string,
+    @Param("lesson") lesson: string,
+    @Body() body: unknown,
+  ) {
+    return this.lessons.submit(
+      await this.service.actor(req, "student"),
+      id.parse(course),
+      id.parse(lesson),
+      submissionInput.parse(body),
+    );
+  }
+  @Get("platform/courses/:id/submissions") async reviewLessonSubmissions(
+    @Req() req: Request,
+    @Param("id") course: string,
+  ) {
+    return this.lessons.review(
+      await this.service.actor(req, "platform_admin"),
+      id.parse(course),
     );
   }
   @Get("student/courses") async studentCourses(@Req() req: Request) {

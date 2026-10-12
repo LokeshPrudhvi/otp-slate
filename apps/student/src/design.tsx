@@ -96,6 +96,12 @@ const iconPaths: Record<string, ReactNode> = {
       <path d="M14 3v5h5M9 12h7M9 16h7" />
     </>
   ),
+  video: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="m10 8 6 4-6 4z" />
+    </>
+  ),
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   ann: (
     <>

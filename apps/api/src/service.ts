@@ -18,6 +18,12 @@ import {
 import { createLocalJWKSet, jwtVerify } from "jose";
 import { fromNodeHeaders } from "better-auth/node";
 import type { Course, Identity, Lesson, Role, Resume } from "@slate/contracts";
+import {
+  lessonInput,
+  redactLesson,
+  type PublishLesson,
+} from "./lesson-input.js";
+import { r2LessonStorage, type LessonStorage } from "./lesson-storage.js";
 import { createAuth, type Auth } from "./auth.js";
 import type { Config } from "./config.js";
 import { scoped, type Database, type Transaction } from "./database.js";
@@ -47,6 +53,7 @@ export class SlateService {
     readonly config: Config,
     readonly phoneSender: PhoneSender,
     readonly local: boolean,
+    readonly lessonStorage: LessonStorage = r2LessonStorage,
   ) {}
   async actor(
     request: Request,
@@ -410,7 +417,9 @@ export class SlateService {
     status: "active" | "archived",
   ) {
     if (actor.role !== "platform_admin")
-      throw new ForbiddenException("Only Platform Admin can archive or restore organizations.");
+      throw new ForbiddenException(
+        "Only Platform Admin can archive or restore organizations.",
+      );
     return this.scope(actor, async (tx) => {
       const [organization] = await tx
         .select()
@@ -430,11 +439,17 @@ export class SlateService {
         .returning();
       // Revoke on restore too: a login attempted while archived must not become
       // a valid session later. Individual member statuses and learning stay intact.
-      await tx.delete(s.session).where(inArray(
-        s.session.userId,
-        tx.select({ id: s.members.authUserId }).from(s.members)
-          .where(eq(s.members.organizationId, organizationId)),
-      ));
+      await tx
+        .delete(s.session)
+        .where(
+          inArray(
+            s.session.userId,
+            tx
+              .select({ id: s.members.authUserId })
+              .from(s.members)
+              .where(eq(s.members.organizationId, organizationId)),
+          ),
+        );
       await this.log(
         tx, actor, status === "archived" ? "organization.archived" : "organization.restored",
         organizationId, organizationId,
@@ -574,11 +589,22 @@ export class SlateService {
     return this.scope(actor, async (tx) => {
       // An admin email correction may rotate an unfinished account's password.
       // Serialize both the credential and setup flag with that member edit.
-      const [member] = await tx.select({ id: s.members.id }).from(s.members)
-        .where(and(eq(s.members.id, actor.id), eq(s.members.authUserId, actor.authId)))
+      const [member] = await tx
+        .select({ id: s.members.id })
+        .from(s.members)
+        .where(
+          and(
+            eq(s.members.id, actor.id),
+            eq(s.members.authUserId, actor.authId),
+          ),
+        )
         .for("update");
       if (!member) throw new NotFoundException();
-      const auth = createAuth(tx as unknown as Database, this.config, this.local);
+      const auth = createAuth(
+        tx as unknown as Database,
+        this.config,
+        this.local,
+      );
       const response = await auth.api.changePassword({
         body: { currentPassword, newPassword, revokeOtherSessions: true },
         headers: fromNodeHeaders(headers),
@@ -852,6 +878,7 @@ export class SlateService {
     actor: Actor,
     id: string,
     transaction?: Transaction,
+    includeAnswerKeys = false,
   ): Promise<Course & { lessons: Lesson[]; completedLessonIds: string[] }> {
     if (actor.role === "student") {
       this.feature(actor, "courses");
@@ -928,7 +955,10 @@ export class SlateService {
               description: record.version.description,
               versionId: record.version.id,
               version: record.version.number,
-              lessons: record.version.lessons,
+              lessons:
+                isAdmin || includeAnswerKeys
+                  ? record.version.lessons
+                  : record.version.lessons.map(redactLesson),
             }
           : { lessons: [] }),
         completedLessonIds: record.completedLessonIds,
@@ -943,10 +973,37 @@ export class SlateService {
     input: {
       title: string;
       description: string;
-      lessons: { id?: string; title: string; body: string }[];
+      lessons: PublishLesson[];
     },
   ) {
+    const lessons = input.lessons.map((item) => lessonInput.parse(item));
     return this.scope(actor, async (tx) => {
+      const uploadIds = lessons.flatMap((item) =>
+        item.kind === "video" && item.video?.uploadId
+          ? [item.video.uploadId]
+          : [],
+      );
+      if (uploadIds.length) {
+        const uploads = await tx
+          .select()
+          .from(s.lessonUploads)
+          .where(inArray(s.lessonUploads.id, uploadIds));
+        if (
+          uploadIds.some(
+            (id) =>
+              !uploads.some(
+                (upload) =>
+                  upload.id === id &&
+                  upload.purpose === "video" &&
+                  upload.status === "ready" &&
+                  upload.objectKey,
+              ),
+          )
+        )
+          throw new BadRequestException(
+            "Finish uploading each video before publishing this course.",
+          );
+      }
       const [course] = await tx
         .select()
         .from(s.courses)
@@ -970,7 +1027,7 @@ export class SlateService {
           number: (previous?.number || 0) + 1,
           title: input.title,
           description: input.description,
-          lessons: input.lessons.map((lesson) => ({
+          lessons: lessons.map((lesson) => ({
             ...lesson,
             id: lesson.id || randomUUID(),
           })),
@@ -1060,6 +1117,11 @@ export class SlateService {
       !course.lessons.some((lesson) => lesson.id === lessonId)
     )
       throw new NotFoundException();
+    const lesson = course.lessons.find((item) => item.id === lessonId)!;
+    if (lesson.kind === "assignment" || lesson.kind === "quiz")
+      throw new BadRequestException(
+        "Submit the assignment or pass the MCQ assignment to complete this lesson.",
+      );
     await this.scope(actor, (tx) =>
       tx
         .insert(s.progress)

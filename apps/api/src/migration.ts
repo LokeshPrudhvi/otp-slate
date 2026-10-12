@@ -3,6 +3,7 @@ import { mailboxMigration } from "./mailbox-migration.js";
 import { legacyTableMigration } from "./legacy-table-migration.js";
 import { registrationMigration } from "./registration-migration.js";
 import { accessMigration } from "./access-migration.js";
+import { lessonMigration } from "./lesson-migration.js";
 import { courseLifecycleMigration } from "./course-lifecycle-migration.js";
 export const migration =
   legacyTableMigration +
@@ -70,4 +71,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS member_student_identity ON members(org_id, low
 ` +
   registrationMigration +
   accessMigration +
-  courseLifecycleMigration;
+  courseLifecycleMigration +
+  lessonMigration;

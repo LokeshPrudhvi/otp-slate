@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, Route, Routes, useParams } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
   Announcement,
   Course,
@@ -10,7 +9,7 @@ import type {
   Ranking,
   PracticeAssessment,
 } from "@slate/contracts";
-import { api, Protected, useMe } from "@slate/ui";
+import { Protected, useMe } from "@slate/ui";
 import {
   Artwork,
   Banner,
@@ -35,6 +34,7 @@ import {
 import { CodingLibrary } from "./coding";
 import { CompilerPage } from "./compiler";
 import { SelfAssessment } from "./self-assessment";
+import { StudentLessonActivity, lessonPresentation } from "./lessons";
 import {
   AccessRoute,
   hasAccess,
@@ -610,7 +610,7 @@ function CoursePage() {
               <h2>{next?.title || "You have completed this course"}</h2>
               <p>
                 {next
-                  ? `Module ${nextIndex + 1} · Guided lesson`
+                  ? `Module ${nextIndex + 1} · ${lessonPresentation[next.kind ?? "text"].label}`
                   : "Revisit any module to keep your skills sharp."}
               </p>
             </div>
@@ -660,19 +660,22 @@ function CoursePage() {
                 </button>
                 <div id={`module-${lesson.id}`} hidden={!open}>
                   <p className="module-intro">
-                    Learn the concepts, then revisit the lesson to keep your
-                    skills sharp.
+                    {lessonPresentation[lesson.kind ?? "text"].description}
                   </p>
                   <Link
                     to={`/courses/${course.id}/lessons/${lesson.id}`}
                     className={`a-item${done ? " done" : ""}${next?.id === lesson.id ? " next" : ""}`}
                   >
                     <span className="ic">
-                      <StudentIcon name="page" />
+                      <StudentIcon
+                        name={lessonPresentation[lesson.kind ?? "text"].icon}
+                      />
                     </span>
                     <span className="nm">
                       <b>{lesson.title}</b>
-                      <small>Guided lesson</small>
+                      <small>
+                        {lessonPresentation[lesson.kind ?? "text"].label}
+                      </small>
                     </span>
                     <span
                       className="st"
@@ -736,14 +739,7 @@ function CoursePage() {
 }
 function LessonPage() {
   const { id, lessonId } = useParams(),
-    data = useCourse(),
-    query = useQueryClient();
-  const complete = useMutation({
-    mutationFn: () =>
-      api(`student/courses/${id}/lessons/${lessonId}/complete`, "POST"),
-    onSuccess: () =>
-      query.invalidateQueries({ queryKey: ["student", `course-${id}`] }),
-  });
+    data = useCourse();
   if (data.isPending || data.error)
     return (
       <div className="a-page">
@@ -758,7 +754,7 @@ function LessonPage() {
     previous = course.lessons[index - 1],
     next = course.lessons[index + 1];
   return (
-    <div className="a-page">
+    <div className="a-page lesson-page">
       <div className="a-crumbs">
         <Link to="/courses">Courses</Link>
         <span>›</span>
@@ -766,27 +762,23 @@ function LessonPage() {
         <span>›</span>
         <span>Module {index + 1}</span>
       </div>
-      <section className="a-lesson">
+      <section className="a-lesson lesson-activity">
+        <span className="lesson-kind">
+          <StudentIcon name={lessonPresentation[lesson.kind ?? "text"].icon} />
+          {lessonPresentation[lesson.kind ?? "text"].label}
+        </span>
         <h1>{lesson.title}</h1>
         <p className="a-meta">
-          Module {index + 1} · Guided lesson · Assigned version {course.version}
+          Module {index + 1} of {course.lessons.length} · Assigned version{" "}
+          {course.version}
         </p>
-        <div className="lesson-copy">{lesson.body}</div>
-        <div className="lesson-completion">
-          <button
-            className={`a-btn${done ? "" : " pri"}`}
-            disabled={done || complete.isPending}
-            onClick={() => complete.mutate()}
-          >
-            {done && <StudentIcon name="check" />}
-            {done
-              ? "Completed"
-              : complete.isPending
-                ? "Saving…"
-                : "Mark as complete"}
-          </button>
-          <Status error={complete.error} />
-        </div>
+        <StudentLessonActivity
+          key={`${course.versionId ?? course.version}-${lesson.id}`}
+          courseId={course.id}
+          versionId={course.versionId}
+          lesson={lesson}
+          done={done}
+        />
       </section>
       <div className="a-seq" style={{ maxWidth: 860 }}>
         {previous ? (

@@ -1,4 +1,5 @@
 export * from "./access.js";
+export * from "./lesson-media.js";
 import type { EffectiveAccess } from "./access.js";
 export type Portal = "student" | "platform" | "organization";
 export type Role = "student" | "platform_admin" | "organization_viewer";
@@ -41,6 +42,46 @@ export interface Lesson {
   id: string;
   title: string;
   body: string;
+  kind?: "text" | "video" | "assignment" | "quiz";
+  format?: "plain" | "markdown";
+  video?: { url?: string; uploadId?: string };
+  assignment?: { acceptText: boolean; acceptLink: boolean; acceptFiles: boolean };
+  quiz?: { passingScore: number; questions: LessonQuestion[] };
+}
+export interface LessonQuestion {
+  id: string;
+  prompt: string;
+  options: string[];
+  /** Only returned to Platform Admin; students receive answers after submitting. */
+  correctOption?: number;
+  explanation?: string;
+}
+export interface LessonFile {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+}
+export interface LessonSubmission {
+  id: string;
+  memberId: string;
+  courseId: string;
+  versionId: string;
+  lessonId: string;
+  kind: "assignment" | "quiz";
+  answer: string;
+  url: string;
+  files: LessonFile[];
+  score: number | null;
+  passed: boolean | null;
+  quizResults: { questionId: string; selectedOption: number; correctOption: number; explanation?: string }[];
+  submittedAt: string;
+  studentName?: string;
+  studentEmail?: string;
+  organizationName?: string;
+  lessonTitle?: string;
+  versionNumber?: number;
+  quizQuestions?: { id: string; prompt: string; options: string[] }[];
 }
 export interface Course {
   id: string;
