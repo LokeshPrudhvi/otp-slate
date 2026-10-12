@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
@@ -7,6 +7,7 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Image from "@tiptap/extension-image";
 import { LessonContent, safeLessonLink } from "./lesson-content";
+import { isolateTextStyleLines } from "./rich-text-formatting";
 import type { RichTextEditorProps } from "./rich-text-editor";
 import "./rich-text-editor.css";
 
@@ -56,7 +57,10 @@ export default function LessonEditor({ value, onChange, label, disabled = false,
   }, [editor, value, format]);
   if (!editor) return <p role="status">Opening lesson editor…</p>;
 
-  const tool = (name: string, content: ReactNode, action: () => void, active = false, unavailable = false) => <button type="button" title={name} aria-label={name} aria-pressed={active} disabled={disabled || unavailable} className={active ? "is-active" : ""} onClick={action}>{content}</button>;
+  // Pointer clicks should keep the document selection; keyboard users can still
+  // tab into the toolbar and activate controls normally.
+  const keepSelection = (event: MouseEvent) => { if (event.button === 0) event.preventDefault(); };
+  const tool = (name: string, content: ReactNode, action: () => void, active = false, unavailable = false) => <button type="button" title={name} aria-label={name} aria-pressed={active} disabled={disabled || unavailable} className={active ? "is-active" : ""} onMouseDown={keepSelection} onClick={action}>{content}</button>;
   const add = () => {
     const url = safeLessonLink(address.trim(), insert === "image");
     if (!url) { setError(insert === "image" ? "Use a public HTTPS image link." : "Use an HTTPS, HTTP or email link."); return; }
@@ -75,9 +79,9 @@ export default function LessonEditor({ value, onChange, label, disabled = false,
     </div>
     {mode === "write" && <>
       <div className="rte-toolbar" role="group" aria-label="Text formatting">
-        <details className="rte-style-picker"><summary>Text style <span aria-hidden="true">⌄</span></summary><div className="rte-style-menu">
-          <button type="button" disabled={disabled} onClick={(event) => { editor.chain().focus().setParagraph().run(); event.currentTarget.closest("details")?.removeAttribute("open"); }}>Paragraph</button>
-          {([1, 2, 3, 4, 5, 6] as const).map(level => <button type="button" disabled={disabled} key={level} onClick={(event) => { editor.chain().focus().setHeading({ level }).run(); event.currentTarget.closest("details")?.removeAttribute("open"); }}>Heading {level}</button>)}
+        <details className="rte-style-picker"><summary aria-label="Text style" onMouseDown={keepSelection}>{editor.isActive("heading") ? `Heading ${editor.getAttributes("heading").level}` : "Text style"} <span aria-hidden="true">⌄</span></summary><div className="rte-style-menu">
+          <button type="button" disabled={disabled} aria-pressed={editor.isActive("paragraph")} onMouseDown={keepSelection} onClick={(event) => { editor.chain().focus().command(isolateTextStyleLines).setParagraph().run(); event.currentTarget.closest("details")?.removeAttribute("open"); }}>Paragraph</button>
+          {([1, 2, 3, 4, 5, 6] as const).map(level => <button type="button" disabled={disabled} aria-pressed={editor.isActive("heading", { level })} onMouseDown={keepSelection} key={level} onClick={(event) => { editor.chain().focus().command(isolateTextStyleLines).setHeading({ level }).run(); event.currentTarget.closest("details")?.removeAttribute("open"); }}>Heading {level}</button>)}
         </div></details>
         <span className="rte-tools">
           {tool("Bold", <b>B</b>, () => editor.chain().focus().toggleBold().run(), editor.isActive("bold"))}
@@ -86,10 +90,10 @@ export default function LessonEditor({ value, onChange, label, disabled = false,
           {tool("Inline code", "<>" , () => editor.chain().focus().toggleCode().run(), editor.isActive("code"))}
         </span>
         <span className="rte-tools">
-          {tool("Bullet list", "• List", () => editor.chain().focus().toggleBulletList().run(), editor.isActive("bulletList"))}
-          {tool("Numbered list", "1. List", () => editor.chain().focus().toggleOrderedList().run(), editor.isActive("orderedList"))}
-          {tool("Checklist", "☑", () => editor.chain().focus().toggleTaskList().run(), editor.isActive("taskList"))}
-          {tool("Quote", "❞", () => editor.chain().focus().toggleBlockquote().run(), editor.isActive("blockquote"))}
+          {tool("Bullet list", "• List", () => editor.chain().focus().command(isolateTextStyleLines).toggleBulletList().run(), editor.isActive("bulletList"))}
+          {tool("Numbered list", "1. List", () => editor.chain().focus().command(isolateTextStyleLines).toggleOrderedList().run(), editor.isActive("orderedList"))}
+          {tool("Checklist", "☑", () => editor.chain().focus().command(isolateTextStyleLines).toggleTaskList().run(), editor.isActive("taskList"))}
+          {tool("Quote", "❞", () => editor.chain().focus().command(isolateTextStyleLines).toggleBlockquote().run(), editor.isActive("blockquote"))}
           {tool("Code block", "{ }", () => editor.chain().focus().toggleCodeBlock().run(), editor.isActive("codeBlock"))}
         </span>
         <span className="rte-tools">
@@ -123,7 +127,7 @@ export default function LessonEditor({ value, onChange, label, disabled = false,
     <div hidden={mode !== "write"}><EditorContent editor={editor} /></div>
     {mode === "markdown" && <textarea className="rte-source" aria-label={`${label} Markdown source`} spellCheck={false} rows={14} maxLength={100_000} disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />}
     {mode === "preview" && <div className="rte-preview">{value.trim() ? <LessonContent body={value} format={format} /> : <p className="rte-empty">Your formatted lesson will appear here.</p>}</div>}
-    <div className="rte-footer"><span>Headings, lists, tables and code · Markdown shortcuts supported</span><span className={value.length > 100_000 ? "rte-over-limit" : ""}>{value.length.toLocaleString()} / 100,000</span></div>
+    <div className="rte-footer"><span>Select text to format · Enter starts a paragraph · Shift+Enter adds a line break</span><span className={value.length > 100_000 ? "rte-over-limit" : ""}>{value.length.toLocaleString()} / 100,000</span></div>
     {value.length > 100_000 && <p className="rte-limit-error" role="alert">Shorten this lesson to 100,000 characters before publishing.</p>}
   </section>;
 }
