@@ -28,6 +28,7 @@ test("Platform Admin can provision and correct students without changing identit
   }, true);
   const [org, otherOrg, archivedOrg] = await scoped(connection.db, { platform: true }, tx =>
     tx.insert(s.organizations).values([{ name: "Management College" }, { name: "Other College" }, { name: "Archived College", status: "archived" }]).returning());
+  await scoped(connection.db, { platform: true }, tx => tx.insert(s.organizationBranches).values([org, otherOrg, archivedOrg].flatMap(organization => [{ organizationId: organization.id, code: "CSE", name: "Computer Science" }, { organizationId: organization.id, code: "ME", name: "Mechanical Engineering" }])));
   const password = "Student-management-tests-only!2026";
   async function signIn(email: string, currentPassword = password) {
     const response = await auth.api.signInEmail({ body: { email, password: currentPassword }, asResponse: true });

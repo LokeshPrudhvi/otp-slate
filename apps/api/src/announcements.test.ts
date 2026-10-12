@@ -48,6 +48,7 @@ test("organization announcements enforce audience, lifecycle and tenant access t
         ])
         .returning(),
   );
+  await scoped(connection.db, { platform: true }, tx => tx.insert(s.organizationBranches).values([{ organizationId: org.id, code: "CSE", name: "Computer Science" }, { organizationId: org.id, code: "ME", name: "Mechanical" }, { organizationId: org.id, code: "CIVIL", name: "Civil Engineering" }, { organizationId: other.id, code: "ECE", name: "ECE" }]));
   async function person(
     name: string,
     role: "platform_admin" | "student" | "organization_viewer",

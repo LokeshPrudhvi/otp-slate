@@ -30,6 +30,7 @@ test("registration HTTP endpoints enforce approval, request limits, portal origi
       { authUserId: adminIdentity.user.id, role: "platform_admin", passwordSetupComplete: true },
       { authUserId: viewerIdentity.user.id, role: "organization_viewer", organizationId: org.id, passwordSetupComplete: true },
     ]);
+    await tx.insert(s.organizationBranches).values([{ organizationId: org.id, code: "CSE", name: "Computer Science" }, { organizationId: org.id, code: "ME", name: "Mechanical Engineering" }]);
     return org.id;
   });
   async function signIn(email: string, password: string) {

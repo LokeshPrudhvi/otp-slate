@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { PortalRoot } from "@slate/ui";
 import { StudentRoutes } from "./routes";
 import "./reference.css";
+import "@slate/ui/select.css";
 import "./student.css";
 import "@slate/ui/lesson-content.css";
 createRoot(document.getElementById("root")!).render(

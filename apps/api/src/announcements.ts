@@ -16,21 +16,15 @@ import type {
 import type { Actor, SlateService } from "./service.js";
 import type { Transaction } from "./database.js";
 import { normalizedBranch } from "./access.js";
+import { branchCodeInput } from "./branches.js";
 import { demoAnnouncements } from "./demo-data.js";
 import * as s from "./schema.js";
 
-const branch = z
-  .string()
-  .trim()
-  .min(1)
-  .max(20)
-  .regex(/^[A-Za-z0-9_-]+$/)
-  .transform((value) => value.toUpperCase());
 export const publishAnnouncementInput = z
   .object({
     clientId: z.string().uuid(),
     organizationId: z.string().uuid(),
-    branchCode: branch.nullable(),
+    branchCode: branchCodeInput.nullable(),
     title: z.string().trim().min(1).max(150),
     body: z.string().trim().min(1).max(10000),
     format: z.enum(["plain", "markdown"]),
@@ -106,43 +100,23 @@ export class AnnouncementService {
         ),
       )
       .groupBy(sql`nullif(upper(btrim(${s.members.branchCode})), '')`);
-    const policies = await tx
+    const catalog = await tx
       .select({
-        code: s.accessPolicies.targetKey,
-        name: s.accessPolicies.branchName,
+        code: s.organizationBranches.code,
+        name: s.organizationBranches.name,
       })
-      .from(s.accessPolicies)
-      .where(
-        and(
-          eq(s.accessPolicies.organizationId, organizationId),
-          eq(s.accessPolicies.scope, "branch"),
-        ),
-      );
-    const branches = new Map<
-      string,
-      AnnouncementAudience["branches"][number]
-    >();
-    for (const member of people)
-      if (member.code)
-        branches.set(member.code, {
-          code: member.code,
-          name: member.name || member.code,
-          studentCount: member.studentCount,
-        });
-    for (const policy of policies) {
-      const code = normalizedBranch(policy.code);
-      if (code)
-        branches.set(code, {
-          code,
-          name: policy.name?.trim() || branches.get(code)?.name || code,
-          studentCount: branches.get(code)?.studentCount || 0,
-        });
-    }
+      .from(s.organizationBranches)
+      .where(eq(s.organizationBranches.organizationId, organizationId));
+    const peopleByCode = new Map(
+      people.map((row) => [row.code, row.studentCount]),
+    );
+    const branches = catalog.map((branch) => ({
+      ...branch,
+      studentCount: peopleByCode.get(branch.code) || 0,
+    }));
     return {
       studentCount: people.reduce((sum, row) => sum + row.studentCount, 0),
-      branches: [...branches.values()].sort((a, b) =>
-        a.name.localeCompare(b.name),
-      ),
+      branches: branches.sort((a, b) => a.name.localeCompare(b.name)),
     };
   }
   audience(

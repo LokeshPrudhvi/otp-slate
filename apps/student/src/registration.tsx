@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { api, useData } from "@slate/ui";
+import { api, Select, useData } from "@slate/ui";
 import { AuthFrame } from "./auth";
 
 type Registration = {
@@ -17,6 +17,7 @@ type Registration = {
 type FieldName = keyof Registration;
 type FieldErrors = Partial<Record<FieldName, string>>;
 type OrganizationOption = { id: string; name: string };
+type BranchOption = { organizationId: string; code: string; name: string };
 
 const initialValues: Registration = {
   studentId: "",
@@ -29,7 +30,7 @@ const initialValues: Registration = {
   cohort: "",
 };
 const fields: {
-  name: Exclude<FieldName, "organizationId">;
+  name: Exclude<FieldName, "organizationId" | "branchName" | "branchCode">;
   label: string;
   maxLength: number;
   type?: "email" | "tel";
@@ -56,18 +57,6 @@ const fields: {
     hint: "Enter a 10-digit Indian mobile number or include your country code, e.g. +91.",
   },
   {
-    name: "branchName",
-    label: "Branch name",
-    maxLength: 120,
-    hint: "For example, Computer Science.",
-  },
-  {
-    name: "branchCode",
-    label: "Branch code",
-    maxLength: 32,
-    hint: "For example, CSE. Saved in uppercase.",
-  },
-  {
     name: "cohort",
     label: "Cohort / batch",
     maxLength: 120,
@@ -87,6 +76,19 @@ export function StudentRegistration() {
     "registration/organizations",
   );
   const [values, setValues] = useState(initialValues);
+  const branches = useData<BranchOption[]>(
+    `registration-branches-${values.organizationId}`,
+    `registration/organizations/${encodeURIComponent(values.organizationId)}/branches`,
+    !!values.organizationId,
+  );
+  const availableBranches = (branches.data || []).filter(
+    (branch) => branch.organizationId === values.organizationId,
+  );
+  const selectedBranch = availableBranches.find(
+    (branch) => branch.code === values.branchCode,
+  );
+  const branchesReady =
+    !!values.organizationId && branches.isSuccess && !branches.isFetching;
   const [errors, setErrors] = useState<FieldErrors>({});
   const inFlight = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -109,9 +111,31 @@ export function StudentRegistration() {
   function update(name: FieldName, value: string) {
     setValues((current) => ({
       ...current,
-      [name]: name === "branchCode" ? value.toUpperCase() : value,
+      [name]: value,
+      ...(name === "organizationId" ? { branchName: "", branchCode: "" } : {}),
     }));
-    setErrors((current) => ({ ...current, [name]: undefined }));
+    setErrors((current) => ({
+      ...current,
+      [name]: undefined,
+      ...(name === "organizationId"
+        ? { branchName: undefined, branchCode: undefined }
+        : {}),
+    }));
+    if (registration.isError) registration.reset();
+  }
+
+  function chooseBranch(code: string) {
+    const branch = availableBranches.find((item) => item.code === code);
+    setValues((current) => ({
+      ...current,
+      branchName: branch?.name || "",
+      branchCode: branch?.code || "",
+    }));
+    setErrors((current) => ({
+      ...current,
+      branchName: undefined,
+      branchCode: undefined,
+    }));
     if (registration.isError) registration.reset();
   }
 
@@ -124,8 +148,8 @@ export function StudentRegistration() {
       email: values.email.trim().toLowerCase(),
       phone: normalizePhone(values.phone),
       organizationId: values.organizationId,
-      branchName: values.branchName.trim(),
-      branchCode: values.branchCode.trim().toUpperCase(),
+      branchName: selectedBranch?.name || "",
+      branchCode: selectedBranch?.code || "",
       ...(values.cohort.trim() ? { cohort: values.cohort.trim() } : {}),
     };
     const nextErrors: FieldErrors = {};
@@ -143,11 +167,14 @@ export function StudentRegistration() {
         "Enter a 10-digit Indian mobile number starting with 6–9, or a number with its +country code.";
     if (!organizations.data?.some((org) => org.id === input.organizationId))
       nextErrors.organizationId = "Choose your college from the list.";
+    if (!branchesReady || !selectedBranch)
+      nextErrors.branchName = "Choose one of your organization's branches.";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       const first = [
         ...fields.map((field) => field.name),
         "organizationId",
+        "branchName",
       ].find((name) => nextErrors[name as FieldName]);
       formRef.current
         ?.querySelector<HTMLElement>(`#registration-${first}`)
@@ -156,6 +183,53 @@ export function StudentRegistration() {
     }
     inFlight.current = true;
     registration.mutate(input);
+  }
+
+  function renderField(field: (typeof fields)[number]) {
+    return (
+      <div className="registration-field" key={field.name}>
+        <label htmlFor={`registration-${field.name}`}>
+          {field.label}
+          {field.optional ? " (optional)" : ""}
+        </label>
+        <input
+          id={`registration-${field.name}`}
+          name={field.name}
+          type={field.type || "text"}
+          required={!field.optional}
+          maxLength={field.maxLength}
+          autoComplete={field.autoComplete || "off"}
+          spellCheck={field.name === "email" ? false : undefined}
+          value={values[field.name]}
+          onChange={(event) => update(field.name, event.target.value)}
+          aria-invalid={!!errors[field.name]}
+          aria-describedby={
+            [
+              field.hint ? `registration-${field.name}-hint` : "",
+              errors[field.name] ? `registration-${field.name}-error` : "",
+            ]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
+        />
+        {field.hint && (
+          <p
+            id={`registration-${field.name}-hint`}
+            className="registration-hint"
+          >
+            {field.hint}
+          </p>
+        )}
+        {errors[field.name] && (
+          <p
+            id={`registration-${field.name}-error`}
+            className="registration-error"
+          >
+            {errors[field.name]}
+          </p>
+        )}
+      </div>
+    );
   }
 
   const collegesReady = !!organizations.data?.length && !organizations.isError;
@@ -209,90 +283,38 @@ export function StudentRegistration() {
               Student registration details
             </legend>
             <div className="registration-grid">
-              {fields.map((field) => (
-                <div className="registration-field" key={field.name}>
-                  <label htmlFor={`registration-${field.name}`}>
-                    {field.label}
-                    {field.optional ? " (optional)" : ""}
-                  </label>
-                  <input
-                    id={`registration-${field.name}`}
-                    name={field.name}
-                    type={field.type || "text"}
-                    required={!field.optional}
-                    maxLength={field.maxLength}
-                    autoComplete={field.autoComplete || "off"}
-                    autoCapitalize={
-                      field.name === "branchCode" ? "characters" : undefined
-                    }
-                    spellCheck={
-                      field.name === "email" || field.name === "branchCode"
-                        ? false
-                        : undefined
-                    }
-                    value={values[field.name]}
-                    onChange={(event) => update(field.name, event.target.value)}
-                    aria-invalid={!!errors[field.name]}
-                    aria-describedby={
-                      [
-                        field.hint ? `registration-${field.name}-hint` : "",
-                        errors[field.name]
-                          ? `registration-${field.name}-error`
-                          : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ") || undefined
-                    }
-                  />
-                  {field.hint && (
-                    <p
-                      id={`registration-${field.name}-hint`}
-                      className="registration-hint"
-                    >
-                      {field.hint}
-                    </p>
-                  )}
-                  {errors[field.name] && (
-                    <p
-                      id={`registration-${field.name}-error`}
-                      className="registration-error"
-                    >
-                      {errors[field.name]}
-                    </p>
-                  )}
-                </div>
-              ))}
+              {fields
+                .filter((field) => field.name !== "cohort")
+                .map(renderField)}
               <div className="registration-field registration-college">
                 <label htmlFor="registration-organizationId">
                   College / organization
                 </label>
-                <select
+                <Select
                   id="registration-organizationId"
                   name="organizationId"
                   required
                   disabled={!collegesReady || registration.isPending}
                   value={values.organizationId}
-                  onChange={(event) =>
-                    update("organizationId", event.target.value)
+                  onChange={(value) => update("organizationId", value)}
+                  options={(organizations.data || []).map((org) => ({
+                    value: org.id,
+                    label: org.name,
+                  }))}
+                  placeholder={
+                    organizations.isPending
+                      ? "Loading colleges…"
+                      : "Choose your college"
                   }
+                  searchable
+                  aria-label="College / organization"
                   aria-invalid={!!errors.organizationId}
                   aria-describedby={
                     errors.organizationId
                       ? "registration-organizationId-error"
                       : "registration-college-help"
                   }
-                >
-                  <option value="">
-                    {organizations.isPending
-                      ? "Loading colleges…"
-                      : "Choose your college"}
-                  </option>
-                  {organizations.data?.map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.name}
-                    </option>
-                  ))}
-                </select>
+                />
                 <p className="registration-hint" id="registration-college-help">
                   College missing? Contact your placement team before
                   registering.
@@ -306,8 +328,100 @@ export function StudentRegistration() {
                   </p>
                 )}
               </div>
+              <div className="registration-field">
+                <label htmlFor="registration-branchName">Branch</label>
+                <Select
+                  key={values.organizationId}
+                  id="registration-branchName"
+                  value={selectedBranch?.code || ""}
+                  onChange={chooseBranch}
+                  options={availableBranches.map((branch) => ({
+                    value: branch.code,
+                    label: branch.name,
+                  }))}
+                  placeholder={
+                    !values.organizationId
+                      ? "Choose your college first"
+                      : branches.isFetching
+                        ? "Loading branches…"
+                        : "Choose your branch"
+                  }
+                  disabled={
+                    !branchesReady ||
+                    !availableBranches.length ||
+                    registration.isPending
+                  }
+                  required
+                  searchable
+                  aria-label="Branch"
+                  aria-invalid={!!errors.branchName}
+                  aria-describedby={
+                    errors.branchName
+                      ? "registration-branchName-error"
+                      : "registration-branch-help"
+                  }
+                />
+                <p className="registration-hint" id="registration-branch-help">
+                  Select a branch registered under your college.
+                </p>
+                {errors.branchName && (
+                  <p
+                    className="registration-error"
+                    id="registration-branchName-error"
+                  >
+                    {errors.branchName}
+                  </p>
+                )}
+              </div>
+              <div className="registration-field">
+                <label htmlFor="registration-branchCode">Branch code</label>
+                <input
+                  id="registration-branchCode"
+                  name="branchCode"
+                  readOnly
+                  value={selectedBranch?.code || ""}
+                  placeholder="Filled after selecting a branch"
+                  aria-describedby="registration-branchCode-hint"
+                />
+                <p
+                  className="registration-hint"
+                  id="registration-branchCode-hint"
+                >
+                  This code is set by your college and cannot be edited here.
+                </p>
+              </div>
+              {fields
+                .filter((field) => field.name === "cohort")
+                .map(renderField)}
             </div>
           </fieldset>
+          {values.organizationId && branches.isFetching && (
+            <p className="auth-message" role="status">
+              Loading this college's branches…
+            </p>
+          )}
+          {values.organizationId && branches.isError && (
+            <div className="auth-message" role="alert">
+              <p>
+                We could not load branches. Your details are still here; retry
+                to continue.
+              </p>
+              <button
+                className="auth-link"
+                type="button"
+                disabled={branches.isFetching}
+                onClick={() => branches.refetch()}
+              >
+                {branches.isFetching ? "Retrying…" : "Retry loading branches"}
+              </button>
+            </div>
+          )}
+          {branchesReady && !availableBranches.length && (
+            <p className="auth-message" role="status">
+              No branches have been set up for this college yet. Contact your
+              placement team before registering.
+            </p>
+          )}
           {organizations.isPending && (
             <p className="auth-message" role="status">
               Loading available colleges…
@@ -352,7 +466,12 @@ export function StudentRegistration() {
           <button
             className="lg-btn"
             type="submit"
-            disabled={registration.isPending || !collegesReady}
+            disabled={
+              registration.isPending ||
+              !collegesReady ||
+              !branchesReady ||
+              !selectedBranch
+            }
           >
             {registration.isPending
               ? "Submitting application…"

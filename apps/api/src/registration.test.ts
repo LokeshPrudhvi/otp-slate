@@ -70,6 +70,7 @@ test("registration staging, approval and encrypted welcome mail are atomic and a
         .insert(s.organizations)
         .values({ name: "Registration College" })
         .returning();
+      await tx.insert(s.organizationBranches).values({ organizationId: organization.id, code: "CSE", name: "Computer Science" });
       const [archived] = await tx
         .insert(s.organizations)
         .values({ name: "Archived College", status: "archived" })

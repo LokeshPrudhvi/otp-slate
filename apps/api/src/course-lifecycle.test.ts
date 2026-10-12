@@ -24,6 +24,7 @@ test("course lifecycle protects enrolled learning and permits only safe draft de
   }, true);
   const [org, legacyOrg] = await scoped(connection.db, { platform: true }, tx =>
     tx.insert(s.organizations).values([{ name: "Policy College" }, { name: "Legacy College" }]).returning());
+  await scoped(connection.db, { platform: true }, tx => tx.insert(s.organizationBranches).values([{ organizationId: org.id, code: "CSE", name: "Computer Science" }, { organizationId: org.id, code: "REMOVE", name: "Removal check" }, { organizationId: org.id, code: "NEW", name: "New branch" }]));
   async function person(name: string, role: "platform_admin" | "student" | "organization_viewer", organizationId: string | null, branchCode: string | null = null) {
     const password = "Course-lifecycle-tests-only!2026";
     const identity = await auth.api.createUser({ body: {

@@ -36,6 +36,7 @@ import { LearningAccess } from "./access";
 import { AdminDashboard } from "./dashboard";
 import { AdminPagination, AdminShell } from "./shell";
 import { AdminSelect } from "./select";
+import { BranchFields, selectedOrganizationBranch, useOrganizationBranches } from "./student-branches";
 import { AdminPage } from "./page";
 import { CourseLessonBuilder, CourseSubmissions, lessonValidation } from "./lesson-editor";
 
@@ -149,6 +150,7 @@ function OrganizationCard({ organization, onUpdated }: { organization: Organizat
       <div className="actions">
         {!archived && <Link className="btn primary" to={`/access?organizationId=${organization.id}`}>Customize learning →</Link>}
         <Link className="btn" to={`/members?organizationId=${organization.id}`}>{archived ? "View people →" : "Manage people →"}</Link>
+        {!archived && <Link className="btn" to={`/access?organizationId=${organization.id}&tab=branches`}>Manage branches →</Link>}
         <button
           ref={actionButton}
           type="button"
@@ -256,12 +258,19 @@ function StudentDetailsEditor({ member, onClose, onSaved, onPending }: {
 }) {
   const client = useQueryClient();
   const [details, setDetails] = useState({ name: member.name, email: member.email, phone: member.phone || "", branchName: member.branchName || "", branchCode: member.branchCode || "" });
+  const organizationId = member.organizationId || "";
+  const branchQuery = useOrganizationBranches(organizationId);
+  const selectedBranch = selectedOrganizationBranch(branchQuery.data, organizationId, details.branchCode);
+  const branchReady = Boolean(selectedBranch) && !branchQuery.isPending && !branchQuery.error;
   const dirty = details.name.trim() !== member.name || details.email.trim().toLowerCase() !== member.email || details.phone.trim() !== (member.phone || "") || details.branchName.trim() !== (member.branchName || "") || details.branchCode.trim().toUpperCase() !== (member.branchCode || "");
   const update = useMutation({
-    mutationFn: () => api<Member & { welcomeEmailStatus?: string }>(`platform/organizations/${member.organizationId}/students/${member.id}`, "PATCH", {
-      name: details.name.trim(), email: details.email.trim().toLowerCase(), phone: details.phone.trim(),
-      branchName: details.branchName.trim(), branchCode: details.branchCode.trim().toUpperCase(),
-    }),
+    mutationFn: () => {
+      if (!branchReady || !selectedBranch) throw new Error("Choose a branch from this organization before saving.");
+      return api<Member & { welcomeEmailStatus?: string }>(`platform/organizations/${member.organizationId}/students/${member.id}`, "PATCH", {
+        name: details.name.trim(), email: details.email.trim().toLowerCase(), phone: details.phone.trim(),
+        branchName: selectedBranch.name, branchCode: selectedBranch.code,
+      });
+    },
     onSuccess: async (updated) => {
       await updateCachedList<Member>(client, ["platform", `members-${member.organizationId}`], (items) => items.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
       void client.invalidateQueries({ queryKey: ["platform", "access", member.organizationId], exact: true });
@@ -274,18 +283,22 @@ function StudentDetailsEditor({ member, onClose, onSaved, onPending }: {
   useEffect(() => () => onPending(false), [onPending]);
   const fields: { key: keyof typeof details; label: string; max: number; type?: string }[] = [
     { key: "name", label: "Full name", max: 120 }, { key: "email", label: "Student email", max: 200, type: "email" },
-    { key: "phone", label: "Phone number", max: 30, type: "tel" }, { key: "branchName", label: "Branch name", max: 120 }, { key: "branchCode", label: "Branch code", max: 32 },
+    { key: "phone", label: "Phone number", max: 30, type: "tel" },
   ];
-  return <form className="student-details-editor" aria-label={`Edit details for ${member.name}`} aria-busy={update.isPending} onSubmit={(event) => { event.preventDefault(); if (dirty && !update.isPending) update.mutate(); }}>
+  return <form className="student-details-editor" aria-label={`Edit details for ${member.name}`} aria-busy={update.isPending} onSubmit={(event) => { event.preventDefault(); if (dirty && branchReady && !update.isPending) update.mutate(); }}>
     <strong>Edit student details</strong>
-    <p className="registration-help">Changing email signs the student out. A new phone number requires verification. Changing branch can change inherited learning access. Use the existing branch name when reusing a branch code.</p>
+    <p className="registration-help">Changing email signs the student out. A new phone number requires verification. Changing branch can change inherited learning access. Select an existing organization branch; its code is filled automatically.</p>
     <fieldset className="registration-student-fields" disabled={update.isPending}>
       <div className="form-grid">{fields.map((field) => <Field key={field.key} label={field.label}>
-        <input required type={field.type || "text"} maxLength={field.max} value={details[field.key]} onChange={(event) => setDetails((current) => ({ ...current, [field.key]: field.key === "branchCode" ? event.target.value.toUpperCase() : event.target.value }))} />
-      </Field>)}</div>
+        <input required type={field.type || "text"} maxLength={field.max} value={details[field.key]} onChange={(event) => setDetails((current) => ({ ...current, [field.key]: event.target.value }))} />
+      </Field>)}
+        <BranchFields organizationId={organizationId} branches={branchQuery.data} code={details.branchCode}
+          onChange={branch => setDetails(current => ({ ...current, branchName: branch?.name || "", branchCode: branch?.code || "" }))}
+          pending={branchQuery.isPending} error={branchQuery.error} disabled={update.isPending} onRetry={() => { void branchQuery.refetch(); }} />
+      </div>
     </fieldset>
     <ErrorMessage error={update.error} />
-    <div className="actions"><button className="btn primary" disabled={!dirty || update.isPending}>{update.isPending ? "Saving…" : "Save details"}</button>
+    <div className="actions"><button className="btn primary" disabled={!dirty || !branchReady || update.isPending}>{update.isPending ? "Saving…" : "Save details"}</button>
       <button type="button" className="btn" disabled={update.isPending} onClick={onClose}>Cancel</button></div>
   </form>;
 }

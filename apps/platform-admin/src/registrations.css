@@ -391,3 +391,18 @@
     flex: 1;
   }
 }
+.registration-branch-code[readonly] {
+  background: #edf3fa;
+  color: var(--navy);
+  border-color: #d9e4f1;
+  font-weight: 700;
+}
+.registration-branch-notice {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #edf3fa;
+  color: var(--muted);
+  line-height: 1.6;
+}

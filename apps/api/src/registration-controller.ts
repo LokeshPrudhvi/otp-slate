@@ -28,6 +28,11 @@ export class RegistrationController {
   @Get("registration/organizations") organizations() {
     return this.registration.organizations();
   }
+  @Get("registration/organizations/:organizationId/branches") branches(
+    @Param("organizationId") organizationId: string,
+  ) {
+    return this.registration.branches(z.uuid().parse(organizationId));
+  }
   @Post("registration/requests") submit(
     @Req() req: Request,
     @Body() body: unknown,

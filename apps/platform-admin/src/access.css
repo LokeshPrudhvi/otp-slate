@@ -1197,3 +1197,7 @@
   .access-scope-tabs button { grid-template-columns: 1fr; padding: 13px 9px; }
   .access-scope-tabs button > span { display: none; }
 }
+.branch-create-card { align-self: start; max-width: 900px; }
+.branch-create-card fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.branch-create-card .access-section-title { margin-bottom: 26px; }
+.branch-catalog-note { padding: 15px 18px; border: 1px solid #d6e3f2; border-radius: 8px; background: #edf4fc; color: #49617c; line-height: 1.7; margin: 22px 0; font-size: 13px; }

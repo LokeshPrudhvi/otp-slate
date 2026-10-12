@@ -24,6 +24,10 @@ import type { Transaction } from "./database.js";
 import * as s from "./schema.js";
 import { demoOrganization, demoPractice } from "./demo-data.js";
 import { jsonObject, jsonRows } from "./json-query.js";
+import {
+  branchCodeInput as branchCode,
+  requireOrganizationBranch,
+} from "./branches.js";
 
 const list = <T extends z.ZodType>(item: T, max: number) =>
   z
@@ -34,16 +38,6 @@ const list = <T extends z.ZodType>(item: T, max: number) =>
       "Remove duplicate selections.",
     )
     .nullable();
-const branchCode = z
-  .string()
-  .trim()
-  .min(1)
-  .max(20)
-  .regex(
-    /^[A-Za-z0-9_-]+$/,
-    "Use letters, numbers, hyphens or underscores for branch codes.",
-  )
-  .transform((value) => value.toUpperCase());
 export const updateAccessInput = z
   .object({
     revision: z.number().int().min(0),
@@ -395,6 +389,10 @@ export class AccessService {
             }));
           },
         ),
+        branchCatalog: jsonRows(
+          getTableColumns(s.organizationBranches),
+          sql`from ${s.organizationBranches} where ${s.organizationBranches.organizationId} = ${organizationId}`,
+        ),
         grants: jsonRows(
           getTableColumns(s.grants),
           sql`from ${s.grants} where ${s.grants.organizationId} = ${organizationId}`,
@@ -435,25 +433,17 @@ export class AccessService {
       grantsByStudent.set(grant.memberId, own);
     }
     const branches = new Map<string, AccessWorkspace["branches"][number]>();
-    for (const row of records.filter((row) => row.scope === "branch"))
-      branches.set(row.targetKey, {
-        code: row.targetKey,
-        name: row.branchName || row.targetKey,
+    for (const branch of snapshot.branchCatalog)
+      branches.set(branch.code, {
+        code: branch.code,
+        name: branch.name,
         studentCount: 0,
-        policy: row.policy,
+        policy: branchPolicies.get(branch.code)?.policy || inheritPolicy(),
       });
     for (const { member } of people) {
       const code = normalizedBranch(member.branchCode);
-      if (code) {
-        const branch = branches.get(code) || {
-          code,
-          name: member.branchName || code,
-          studentCount: 0,
-          policy: inheritPolicy(),
-        };
-        branch.studentCount++;
-        branches.set(code, branch);
-      }
+      const branch = code ? branches.get(code) : undefined;
+      if (branch) branch.studentCount++;
     }
     const demo =
       this.service.local &&
@@ -561,7 +551,17 @@ export class AccessService {
         );
       let target = "organization";
       let member: MemberRecord | undefined;
-      if (input.scope === "branch") target = branchCode.parse(input.targetId);
+      let selectedBranch:
+        Awaited<ReturnType<typeof requireOrganizationBranch>> | undefined;
+      if (input.scope === "branch") {
+        target = branchCode.parse(input.targetId);
+        selectedBranch = await requireOrganizationBranch(
+          tx,
+          organizationId,
+          target,
+          input.branchName,
+        );
+      }
       if (input.scope === "student") {
         target = z.string().uuid().parse(input.targetId);
         [member] = await tx
@@ -672,20 +672,7 @@ export class AccessService {
           versions[id] = previous?.courseVersions[id] || version;
         }
       }
-      let name = input.branchName || previous?.branchName || null;
-      if (input.scope === "branch" && !name) {
-        const [existing] = await tx
-          .select({ name: s.members.branchName })
-          .from(s.members)
-          .where(
-            and(
-              eq(s.members.organizationId, organizationId),
-              eq(s.members.branchCode, target),
-            ),
-          )
-          .limit(1);
-        name = existing?.name || target;
-      }
+      const name = selectedBranch?.name || null;
       const [savedPolicy] = await tx
         .insert(s.accessPolicies)
         .values({
@@ -717,29 +704,13 @@ export class AccessService {
       ) {
         let academicName: string | null = null;
         if (input.branchCode) {
-          const branch = records.find(
-            (row) =>
-              row.scope === "branch" && row.targetKey === input.branchCode,
-          );
-          const peer = branch
-            ? undefined
-            : (
-                await tx
-                  .select({ name: s.members.branchName })
-                  .from(s.members)
-                  .where(
-                    and(
-                      eq(s.members.organizationId, organizationId),
-                      eq(s.members.branchCode, input.branchCode),
-                    ),
-                  )
-                  .limit(1)
-              )[0];
-          if (!branch && !peer)
-            throw new BadRequestException(
-              "Create the branch before assigning a student.",
-            );
-          academicName = branch?.branchName || peer?.name || input.branchCode;
+          academicName = (
+            await requireOrganizationBranch(
+              tx,
+              organizationId,
+              input.branchCode,
+            )
+          ).name;
         }
         await tx
           .update(s.members)

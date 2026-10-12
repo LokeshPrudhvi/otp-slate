@@ -85,6 +85,7 @@ test("admin-created student completes emailed-password onboarding and accesses o
       const organization = await admin.request("/api/v1/platform/organizations", "POST", { name: "Student Flow College" });
       assert.equal(organization.status, 201);
       organizationId = organization.body.id;
+      assert.equal((await admin.request(`/api/v1/platform/organizations/${organizationId}/branches`, "POST", { name: "Computer Science", code: "CSE" })).status, 201);
       for (const [title, lessonId] of [["Assigned Python course", assignedLesson], ["Unassigned Java course", unassignedLesson]]) {
         const course = await admin.request("/api/v1/platform/courses", "POST", { title, description: "Flow test course", track: "foundation" });
         assert.equal(course.status, 201);

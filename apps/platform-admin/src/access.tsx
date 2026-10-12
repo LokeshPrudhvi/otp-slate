@@ -21,6 +21,7 @@ import {
   useData,
 } from "@slate/ui";
 import { AdminSelect } from "./select";
+import { CreateBranch } from "./branch-create";
 import "./access.css";
 
 type Scope = UpdateAccess["scope"];
@@ -242,13 +243,11 @@ function AccessEditor({
       ? existingBranch?.code || ""
       : student?.branchCode || "",
   );
-  const [branchName, setBranchName] = useState(existingBranch?.name || "");
   const [reviewedRevision, setReviewedRevision] = useState(workspace.revision);
   const [refreshError, setRefreshError] = useState<Error | null>(null);
   const [loadingConflict, setLoadingConflict] = useState(false);
   const [conflictReviewed, setConflictReviewed] = useState(false);
   const isOrg = selection.scope === "organization";
-  const isNewBranch = selection.scope === "branch" && !existingBranch;
   const parentBranch = currentWorkspace.branches.find(
     (item) => item.code === branchCode,
   );
@@ -281,9 +280,7 @@ function AccessEditor({
     JSON.stringify(policy) !== JSON.stringify(initialPolicy) ||
     (isOrg &&
       JSON.stringify(display) !== JSON.stringify(currentWorkspace.display)) ||
-    branchCode !== initialBranch ||
-    (selection.scope === "branch" &&
-      branchName !== (existingBranch?.name || "")));
+    branchCode !== initialBranch);
   useEffect(() => onDirty(dirty), [dirty, onDirty]);
   useEffect(() => {
     const guard = (event: BeforeUnloadEvent) => {
@@ -350,9 +347,6 @@ function AccessEditor({
               }
             : {}),
           policy,
-          ...(selection.scope === "branch"
-            ? { branchName: branchName.trim() }
-            : {}),
           ...(selection.scope === "student"
             ? { branchCode: branchCode || null }
             : {}),
@@ -391,7 +385,6 @@ function AccessEditor({
     setPolicy(structuredClone(initialPolicy));
     setDisplay({ ...currentWorkspace.display });
     setBranchCode(initialBranch);
-    setBranchName(existingBranch?.name || "");
     setReviewedRevision(currentWorkspace.revision);
     setConflictReviewed(false);
     save.reset();
@@ -400,7 +393,7 @@ function AccessEditor({
   const title = isOrg
     ? "Organization defaults"
     : selection.scope === "branch"
-      ? existingBranch?.name || "Create a branch"
+      ? existingBranch?.name || "Branch access"
       : student?.name || "Student access";
   const affected = isOrg
     ? currentWorkspace.students.length
@@ -529,22 +522,16 @@ function AccessEditor({
                   required
                   maxLength={120}
                   placeholder="Mechanical Engineering"
-                  value={branchName}
-                  readOnly={readOnly}
-                  onChange={(event) => setBranchName(event.target.value)}
+                  value={existingBranch?.name || ""}
+                  readOnly
                 />
               </Field>
               <Field label="Branch code">
                 <input
                   required
-                  maxLength={20}
-                  pattern="[A-Za-z0-9_-]+"
                   placeholder="ME"
                   value={branchCode}
-                  disabled={readOnly || !isNewBranch}
-                  onChange={(event) =>
-                    setBranchCode(event.target.value.toUpperCase())
-                  }
+                  readOnly
                 />
               </Field>
             </div>
@@ -963,7 +950,7 @@ function AccessEditor({
             type="submit"
             className="btn primary"
             disabled={
-              (!dirty && !isNewBranch) ||
+              !dirty ||
               save.isPending ||
               stale ||
               loadingConflict
@@ -1018,8 +1005,8 @@ export function LearningAccess() {
     params.get("organizationId") || "",
   );
   const [selection, setSelection] = useState<Selection>({
-    scope: params.get("studentId") ? "student" : "organization",
-    id: params.get("studentId") || "",
+    scope: params.get("studentId") ? "student" : params.get("tab") === "branches" ? "branch" : "organization",
+    id: params.get("studentId") || params.get("branchCode") || "",
   });
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
@@ -1117,6 +1104,7 @@ export function LearningAccess() {
     setParams(
       {
         organizationId: nextOrganizationId,
+        ...(next.scope === "branch" ? { tab: "branches", ...(next.id ? { branchCode: next.id } : {}) } : {}),
         ...(next.scope === "student" && next.id ? { studentId: next.id } : {}),
       },
       { replace: true },
@@ -1142,7 +1130,7 @@ export function LearningAccess() {
     ) || [];
   const canView = (selection.scope !== "student" ||
     Boolean(data?.students.find((student) => student.id === selection.id))) &&
-    !(archived && selection.scope === "branch" && !data?.branches.some((branch) => branch.code === selection.id));
+    (selection.scope !== "branch" || Boolean(data?.branches.some((branch) => branch.code === selection.id)));
   return (
     <div className="learning-access">
       <header className="access-hero">
@@ -1229,6 +1217,12 @@ export function LearningAccess() {
           </button>
         </div>
       )}
+      {workspace.error && !organizations.error && (
+        <div className="access-archived-notice" role="status">
+          <div><strong>Refresh the learning access view</strong><p>Saved branches are safe. Reload this view before changing access.</p></div>
+          <button className="btn" type="button" disabled={workspace.isFetching} onClick={() => void workspace.refetch()}>{workspace.isFetching ? "Refreshing…" : "Retry"}</button>
+        </div>
+      )}
       <DataState
         pending={
           organizations.isPending ||
@@ -1254,7 +1248,7 @@ export function LearningAccess() {
                         }
                         disabled={saving}
                       >
-                        + Add
+                        + Add branch
                       </button>
                     )}
                   </div>
@@ -1353,7 +1347,19 @@ export function LearningAccess() {
                   </div>
                 </aside>
               )}
-              {canView ? (
+              {selection.scope === "branch" && !selection.id && !archived ? (
+                <CreateBranch key={`${organizationId}-${editorVersion}`} organizationId={organizationId} organizationName={data.organization.name} onDirty={setDirty} onPending={setSaving} onCreated={async branch => {
+                  setDirty(false);
+                  setNotice(`${branch.name} (${branch.code}) created. It is now available on this organization’s student forms.`);
+                  await client.invalidateQueries({ queryKey: ["platform", "access", organizationId], exact: true });
+                  void client.invalidateQueries({ queryKey: ["platform", `organization-branches-${organizationId}`], exact: true });
+                  void client.invalidateQueries({ queryKey: ["platform", `announcement-audience:${organizationId}`], exact: true });
+                  setSaving(false);
+                  setSelection({ scope: "branch", id: branch.code });
+                  setParams({ organizationId, tab: "branches", branchCode: branch.code }, { replace: true });
+                  setEditorVersion(value => value + 1);
+                }} />
+              ) : canView ? (
                 <AccessEditor
                   key={`${organizationId}-${selection.scope}-${selection.id}-${editorVersion}-${archived}`}
                   workspace={data}
@@ -1388,6 +1394,8 @@ export function LearningAccess() {
                 >
                   {archived ? (
                     selection.scope === "branch" ? "Select an existing branch to review its saved settings. New branches can be created after the organization is restored." : "Select a student to review saved access. Student records stay available while this organization is archived."
+                  ) : selection.scope === "branch" ? (
+                    "Choose a saved branch from the list, or select Add branch to create one."
                   ) : data.students.length ? (
                     "Select a student to review inherited access and add an individual selection."
                   ) : (
@@ -1442,7 +1450,7 @@ export function LearningAccess() {
           >
             <h2 id="access-discard-title">Keep editing your changes?</h2>
             <p>
-              Your changes have not been applied. Update access before
+              Your changes have not been applied. Save your changes before
               switching, or discard this draft.
             </p>
             <div className="actions">

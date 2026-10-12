@@ -22,6 +22,11 @@ export interface Organization {
   status: string;
   createdAt: string;
 }
+export interface OrganizationBranch {
+  organizationId: string;
+  code: string;
+  name: string;
+}
 export interface Member {
   id: string;
   name: string;

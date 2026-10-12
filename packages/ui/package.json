@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles.css",
-    "./lesson-content.css": "./src/lesson-content.css"
+    "./lesson-content.css": "./src/lesson-content.css",
+    "./select.css": "./src/select.css"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.90.0",

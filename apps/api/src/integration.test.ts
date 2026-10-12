@@ -193,6 +193,7 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         assert.equal(b.status, 201);
         orgA = a.body.id;
         orgB = b.body.id;
+        assert.equal((await platform.request(`/api/v1/platform/organizations/${orgA}/branches`, "POST", { name: "Computer Science", code: "CSE" })).status, 201);
         const blockedLegacy = await platform.request(
           "/api/v1/platform/members",
           "POST",

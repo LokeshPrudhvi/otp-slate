@@ -24,6 +24,7 @@ test("organization archive and restore revoke access while preserving student re
   }, true);
   const [org, other] = await scoped(connection.db, { platform: true }, tx =>
     tx.insert(s.organizations).values([{ name: "Archive College" }, { name: "Other College" }]).returning());
+  await scoped(connection.db, { platform: true }, tx => tx.insert(s.organizationBranches).values([{ organizationId: org.id, code: "CSE", name: "Computer Science" }]));
   const password = "Organization-status-tests-only!2026";
   async function signIn(email: string) {
     const response = await auth.api.signInEmail({ body: { email, password }, asResponse: true });

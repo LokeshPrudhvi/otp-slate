@@ -15,6 +15,7 @@ import { RegistrationController } from "./registration-controller.js";
 import { ApiController } from "./controller.js";
 import { AccessController } from "./access-controller.js";
 import { AnnouncementController } from "./announcement-controller.js";
+import { BranchController } from "./branch-controller.js";
 import { SlateService } from "./service.js";
 import { portalProxyIngress } from "./portal-proxy.js";
 
@@ -60,7 +61,13 @@ class Errors implements ExceptionFilter {
 }
 export async function createApplication(service: SlateService) {
   @Module({
-    controllers: [ApiController, RegistrationController, AccessController, AnnouncementController],
+    controllers: [
+      ApiController,
+      RegistrationController,
+      AccessController,
+      AnnouncementController,
+      BranchController,
+    ],
     providers: [{ provide: SlateService, useValue: service }],
   })
   class ApplicationModule {}

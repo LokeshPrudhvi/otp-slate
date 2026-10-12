@@ -15,6 +15,11 @@ import { type Database, type Transaction } from "./database.js";
 import { encryptPayload, type WelcomeMailPayload } from "./providers.js";
 import type { Actor, SlateService } from "./service.js";
 import * as s from "./schema.js";
+import {
+  branchCodeInput,
+  branchNameInput,
+  requireOrganizationBranch,
+} from "./branches.js";
 
 const clean = (max: number) =>
   z
@@ -54,13 +59,8 @@ export const registrationFields = {
     .max(120)
     .refine((value) => !/[\u0000-\u001f\u007f]/.test(value))
     .optional(),
-  branchName: clean(120),
-  branchCode: clean(32)
-    .regex(
-      /^[A-Za-z0-9][A-Za-z0-9 ._/-]*$/,
-      "Use letters, numbers, spaces, hyphens, dots or slashes for the branch code.",
-    )
-    .transform((value) => value.toUpperCase()),
+  branchName: branchNameInput,
+  branchCode: branchCodeInput,
 };
 export const registrationInput = z
   .object({ organizationId: z.uuid(), ...registrationFields })
@@ -137,6 +137,30 @@ export class RegistrationService {
         .orderBy(s.organizations.name),
     );
   }
+  async branches(organizationId: string) {
+    return this.publicScope(organizationId, async (tx) => {
+      const [organization] = await tx
+        .select({ id: s.organizations.id })
+        .from(s.organizations)
+        .where(
+          and(
+            eq(s.organizations.id, organizationId),
+            eq(s.organizations.status, "active"),
+          ),
+        );
+      if (!organization)
+        throw new BadRequestException("Choose an active organization.");
+      return tx
+        .select({
+          organizationId: s.organizationBranches.organizationId,
+          code: s.organizationBranches.code,
+          name: s.organizationBranches.name,
+        })
+        .from(s.organizationBranches)
+        .where(eq(s.organizationBranches.organizationId, organizationId))
+        .orderBy(s.organizationBranches.name, s.organizationBranches.code);
+    });
+  }
   private async throttle(ip: string) {
     const hash = createHmac("sha256", this.service.config.secret)
       .update(ip)
@@ -191,6 +215,14 @@ export class RegistrationService {
             ),
           );
     if (!org) throw new BadRequestException("Choose an active organization.");
+    const branch = await requireOrganizationBranch(
+      tx,
+      input.organizationId,
+      input.branchCode,
+      input.branchName,
+    );
+    input.branchCode = branch.code;
+    input.branchName = branch.name;
     const [identity] = await tx
       .select({ email: s.user.email })
       .from(s.user)
@@ -368,39 +400,9 @@ export class RegistrationService {
     organizationId: string,
     code: string,
     name: string,
-    excludeMember?: string,
   ) {
-    const [policy] = await tx
-      .select({ name: s.accessPolicies.branchName })
-      .from(s.accessPolicies)
-      .where(
-        and(
-          eq(s.accessPolicies.organizationId, organizationId),
-          eq(s.accessPolicies.scope, "branch"),
-          eq(s.accessPolicies.targetKey, code),
-        ),
-      );
-    const [peer] = policy?.name
-      ? []
-      : await tx
-          .select({ name: s.members.branchName })
-          .from(s.members)
-          .where(
-            and(
-              eq(s.members.organizationId, organizationId),
-              sql`upper(${s.members.branchCode}) = ${code}`,
-              excludeMember ? ne(s.members.id, excludeMember) : undefined,
-            ),
-          )
-          .limit(1);
-    const existing = policy?.name || peer?.name;
-    const normalize = (value: string) =>
-      value.trim().replace(/\s+/g, " ").toLowerCase();
-    if (existing && normalize(existing) !== normalize(name))
-      throw new BadRequestException(
-        `Branch ${code} is named ${existing}. Use the existing branch name or a different code.`,
-      );
-    return existing || name;
+    return (await requireOrganizationBranch(tx, organizationId, code, name))
+      .name;
   }
   async createStudent(
     actor: Actor,
@@ -624,7 +626,6 @@ export class RegistrationService {
           organizationId,
           input.branchCode,
           input.branchName,
-          memberId,
         );
         let welcomeEmailStatus: "pending" | undefined;
         if (emailChanged) {
@@ -798,6 +799,13 @@ export class RegistrationService {
     const organization =
       knownOrganization ||
       (await this.activeOrganization(tx, request.organizationId));
+    request.branchName = await this.branchName(
+      tx,
+      request.organizationId,
+      request.branchCode,
+      request.branchName,
+    );
+    request.branchCode = branchCodeInput.parse(request.branchCode);
     await this.ensureAvailable(
       tx,
       {

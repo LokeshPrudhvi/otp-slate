@@ -14,6 +14,8 @@ import {
 import "./registrations.css";
 import { AdminPage } from "./page";
 import { AdminSelect } from "./select";
+import { BranchFields, selectedOrganizationBranch, useOrganizationBranches } from "./student-branches";
+import { buildStudentTemplate, columns, fieldKeys, readStudentFile, validateRows, type ImportRow, type PreviewRow } from "./student-import";
 
 type ReviewStatus = "pending" | "approved" | "rejected" | "all";
 type RequestRow = {
@@ -35,17 +37,6 @@ type RequestRow = {
   emailStatus:
     "pending" | "processing" | "accepted" | "failed" | "expired" | null;
 };
-type ImportRow = {
-  studentId: string;
-  name: string;
-  email: string;
-  phone: string;
-  collegeName: string;
-  branchName: string;
-  branchCode: string;
-  cohort: string;
-};
-type PreviewRow = { line: number; data: ImportRow; errors: string[] };
 type ImportResult = {
   row: number;
   status: "approved" | "duplicate" | "invalid" | "failed";
@@ -58,29 +49,6 @@ const reviewFilters: { value: ReviewStatus; label: string }[] = [
   { value: "all", label: "All records" },
 ];
 const reviewPageSize = 25;
-const columns = [
-  "student_id",
-  "full_name",
-  "email",
-  "phone",
-  "college_name",
-  "branch_name",
-  "branch_code",
-  "cohort",
-];
-const fieldKeys: (keyof ImportRow)[] = [
-  "studentId",
-  "name",
-  "email",
-  "phone",
-  "collegeName",
-  "branchName",
-  "branchCode",
-  "cohort",
-];
-const limits = [80, 120, 200, 30, 150, 120, 32, 120];
-const normalize = (value: string) =>
-  value.trim().replace(/\s+/g, " ").toLowerCase();
 const emailLabels: Record<string, string> = {
   pending: "Email queued",
   processing: "Sending email",
@@ -99,159 +67,6 @@ export function refreshStudentData(client: QueryClient, organizationId?: string)
     void client.invalidateQueries({ queryKey: ["platform", "access"] });
   }
   void client.invalidateQueries({ queryKey: ["platform", "summary"], exact: true });
-}
-
-function parseCsv(source: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [],
-    cell = "",
-    quoted = false,
-    closed = false;
-  const text = source.replace(/^\uFEFF/, "");
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (quoted) {
-      if (char === '"' && text[i + 1] === '"') {
-        cell += '"';
-        i++;
-      } else if (char === '"') {
-        quoted = false;
-        closed = true;
-      } else cell += char;
-    } else if (char === '"') {
-      if (cell || closed)
-        throw new Error(
-          "Invalid CSV quotation. Save the file as a UTF-8 CSV and retry.",
-        );
-      quoted = true;
-    } else if (char === ",") {
-      row.push(cell);
-      cell = "";
-      closed = false;
-    } else if (char === "\n" || char === "\r") {
-      if (char === "\r" && text[i + 1] === "\n") i++;
-      row.push(cell);
-      rows.push(row);
-      row = [];
-      cell = "";
-      closed = false;
-      if (rows.length > 2002)
-        throw new Error("Import up to 2,000 students per file.");
-    } else {
-      if (closed)
-        throw new Error("Unexpected characters after a quoted CSV field.");
-      cell += char;
-    }
-  }
-  if (quoted) throw new Error("The CSV has an unfinished quoted field.");
-  if (cell || row.length) {
-    row.push(cell);
-    rows.push(row);
-  }
-  return rows;
-}
-
-async function readFile(file: File): Promise<string[][]> {
-  if (file.size > 5 * 1024 * 1024)
-    throw new Error("Choose a file smaller than 5 MB.");
-  if (/\.csv$/i.test(file.name)) return parseCsv(await file.text());
-  if (!/\.xlsx$/i.test(file.name))
-    throw new Error("Choose an .xlsx workbook or a .csv file.");
-  const { Workbook } = await import("exceljs");
-  const workbook = new Workbook();
-  await workbook.xlsx.load(await file.arrayBuffer());
-  const sheet = workbook.getWorksheet("Students") || workbook.worksheets[0];
-  if (!sheet) throw new Error("The workbook has no student sheet.");
-  if (sheet.rowCount > 2001 || sheet.columnCount > 30)
-    throw new Error("Use the template with up to 2,000 student rows.");
-  const rows: string[][] = [];
-  for (let line = 1; line <= sheet.rowCount; line++) {
-    const row: string[] = [];
-    for (let column = 1; column <= sheet.columnCount; column++) {
-      const cell = sheet.getRow(line).getCell(column);
-      if (cell.type === 6)
-        throw new Error(
-          `Row ${line} contains a formula. Paste values only before importing.`,
-        );
-      row.push(cell.text);
-    }
-    rows.push(row);
-  }
-  return rows;
-}
-
-function validateRows(matrix: string[][], organization: string): PreviewRow[] {
-  if (!matrix.length)
-    throw new Error("The file is empty. Start with the import template.");
-  const headers = matrix[0].map((value) => value.trim().toLowerCase());
-  if (new Set(headers.filter(Boolean)).size !== headers.filter(Boolean).length)
-    throw new Error("Each column header must appear only once.");
-  const missing = columns.filter(
-    (column) => column !== "cohort" && !headers.includes(column),
-  );
-  if (missing.length)
-    throw new Error(
-      `Missing columns: ${missing.join(", ")}. Download the current template.`,
-    );
-  const unknown = headers.filter(
-    (column) => column && !columns.includes(column),
-  );
-  if (unknown.length)
-    throw new Error(
-      `Unsupported columns: ${unknown.join(", ")}. Use the current student import template.`,
-    );
-  const emails = new Set<string>(),
-    ids = new Set<string>();
-  const rows = matrix.slice(1).flatMap((cells, index): PreviewRow[] => {
-    if (!cells.some((value) => value.trim())) return [];
-    const data = Object.fromEntries(
-      fieldKeys.map((key, i) => [
-        key,
-        (cells[headers.indexOf(columns[i])] || "").trim(),
-      ]),
-    ) as ImportRow;
-    data.email = data.email.toLowerCase();
-    data.branchCode = data.branchCode.toUpperCase();
-    data.phone = data.phone.replace(/[\s()-]/g, "");
-    if (/^[6-9]\d{9}$/.test(data.phone)) data.phone = `+91${data.phone}`;
-    const errors: string[] = [];
-    fieldKeys.forEach((key, i) => {
-      if (key !== "cohort" && !data[key])
-        errors.push(`${columns[i]} is required`);
-      if (data[key].length > limits[i])
-        errors.push(`${columns[i]} exceeds ${limits[i]} characters`);
-      if (/[\u0000-\u001f\u007f]/.test(data[key]))
-        errors.push(`${columns[i]} contains a line break or control character`);
-    });
-    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
-      errors.push("Enter a valid email");
-    if (data.phone && !/^\+[1-9]\d{7,14}$/.test(data.phone))
-      errors.push(
-        "Phone needs a country code or a 10-digit Indian mobile number",
-      );
-    if (
-      data.branchCode &&
-      !/^[A-Za-z0-9][A-Za-z0-9 ._/-]*$/.test(data.branchCode)
-    )
-      errors.push("Branch code contains unsupported characters");
-    if (
-      data.collegeName &&
-      normalize(data.collegeName) !== normalize(organization)
-    )
-      errors.push("College must match the selected organization");
-    if (data.email && emails.has(data.email))
-      errors.push("Email repeats in this file");
-    if (data.studentId && ids.has(data.studentId.toLowerCase()))
-      errors.push("Student ID repeats in this file");
-    emails.add(data.email);
-    ids.add(data.studentId.toLowerCase());
-    return [{ line: index + 2, data, errors }];
-  });
-  if (!rows.length)
-    throw new Error("Add at least one student below the header row.");
-  if (rows.length > 2000)
-    throw new Error("Import up to 2,000 students per file.");
-  return rows;
 }
 
 export function AddStudent({
@@ -281,24 +96,24 @@ export function AddStudent({
   const [error, setError] = useState<unknown>(null);
   const lock = useRef(false);
   const organization = active.find((item) => item.id === organizationId);
+  const branchQuery = useOrganizationBranches(organizationId);
+  const selectedBranch = selectedOrganizationBranch(branchQuery.data, organizationId, details.branchCode);
+  const branchReady = Boolean(selectedBranch) && !branchQuery.isPending && !branchQuery.error;
   const fields: { key: keyof typeof details; label: string; max: number; type?: string; hint?: string }[] = [
     { key: "name", label: "Full name", max: 120 },
     { key: "studentId", label: "Student ID / roll number", max: 80 },
     { key: "email", label: "Student email", type: "email", max: 200, hint: "The welcome email and temporary password will be sent here." },
     { key: "phone", label: "Phone number", type: "tel", max: 30, hint: "Use a country code or a 10-digit Indian mobile number." },
-    { key: "branchName", label: "Branch name", max: 120, hint: "For example, Computer Science and Engineering." },
-    { key: "branchCode", label: "Branch code", max: 32, hint: "For example, CSE or ME." },
-    { key: "cohort", label: "Cohort (optional)", max: 120, hint: "For example, Class of 2027." },
   ];
   async function submit() {
-    if (lock.current || !organization) return;
+    if (lock.current || !organization || !branchReady || !selectedBranch) return;
     lock.current = true;
     setBusy(true);
     onPending(true);
     setError(null);
     try {
-      const input: ImportRow = { ...details, collegeName: organization.name };
-      const [validated] = validateRows([columns, fieldKeys.map((key) => input[key])], organization.name);
+      const input: ImportRow = { ...details, collegeName: organization.name, branchCode: selectedBranch.code, branchName: selectedBranch.name };
+      const [validated] = validateRows([columns, fieldKeys.map((key) => input[key])], organization.name, branchQuery.data || []);
       if (validated.errors.length) throw new Error(validated.errors.join(". "));
       const { collegeName: _collegeName, ...fields } = validated.data;
       const result = await api<{ id: string; memberId: string; status: "approved"; emailStatus: "pending" }>("platform/students", "POST", {
@@ -323,21 +138,25 @@ export function AddStudent({
       <form aria-busy={busy} onSubmit={(event) => { event.preventDefault(); void submit(); }}>
         <fieldset className="registration-student-fields" disabled={busy}>
           <Field label="College / organization" hint="The college name is taken from this organization.">
-            <AdminSelect aria-label="College / organization" required disabled={fixedOrganization || busy} value={organizationId} onChange={setOrganizationId} searchable
+            <AdminSelect aria-label="College / organization" required disabled={fixedOrganization || busy} value={organizationId} onChange={value => { setOrganizationId(value); setDetails(current => ({ ...current, branchName: "", branchCode: "" })); setError(null); }} searchable
               options={[{ value: "", label: "Choose an active organization" }, ...active.map(item => ({ value: item.id, label: item.name }))]} />
           </Field>
           <div className="form-grid">
             {fields.map((field) => <Field key={field.key} label={field.label} hint={field.hint}>
               <input required={field.key !== "cohort"} type={field.type || "text"} maxLength={field.max}
                 value={details[field.key]} onChange={(event) => setDetails((current) => ({
-                  ...current, [field.key]: field.key === "branchCode" ? event.target.value.toUpperCase() : event.target.value,
+                  ...current, [field.key]: event.target.value,
                 }))} />
             </Field>)}
+            <BranchFields organizationId={organizationId} branches={branchQuery.data} code={details.branchCode}
+              onChange={branch => setDetails(current => ({ ...current, branchName: branch?.name || "", branchCode: branch?.code || "" }))}
+              pending={branchQuery.isPending} error={branchQuery.error} disabled={busy} onRetry={() => { void branchQuery.refetch(); }} />
+            <Field label="Cohort (optional)" hint="For example, Class of 2027."><input maxLength={120} value={details.cohort} onChange={event => setDetails(current => ({ ...current, cohort: event.target.value }))} /></Field>
           </div>
         </fieldset>
         <ErrorMessage error={error} />
         <div className="actions">
-          <button className="btn primary" disabled={busy || !organization}>{busy ? "Creating student…" : "Create student & send welcome email"}</button>
+          <button className="btn primary" disabled={busy || !organization || !branchReady}>{busy ? "Creating student…" : "Create student & send welcome email"}</button>
           {onCancel && <button type="button" className="btn" disabled={busy} onClick={onCancel}>Cancel</button>}
         </div>
       </form>}
@@ -363,50 +182,18 @@ function BulkImport({
   const input = useRef<HTMLInputElement>(null),
     lock = useRef(false);
   const organization = organizations.find((org) => org.id === organizationId);
+  const branchQuery = useOrganizationBranches(organizationId);
+  const branches = (branchQuery.data || []).filter(branch => branch.organizationId === organizationId);
+  const branchesReady = !!organization && !branchQuery.isPending && !branchQuery.error && branches.length > 0;
   const invalid = preview.filter((row) => row.errors.length),
     active = organizations.filter((org) => org.status === "active");
   async function template() {
-    if (lock.current) return;
+    if (lock.current || !organization || !branchesReady) return;
     lock.current = true;
     setBusy(true);
     setError(null);
     try {
-      const { Workbook } = await import("exceljs");
-      const workbook = new Workbook();
-      const sheet = workbook.addWorksheet("Students");
-      sheet.columns = columns.map((header, index) => ({
-        header,
-        key: header,
-        width: [22, 28, 34, 22, 40, 36, 18, 22][index],
-        style: { numFmt: "@" },
-      }));
-      sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-      sheet.getRow(1).height = 28;
-      sheet.getRow(1).eachCell((cell) => {
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FF0F2747" },
-        };
-      });
-      sheet.views = [{ state: "frozen", ySplit: 1 }];
-      const guide = workbook.addWorksheet("Instructions");
-      guide.getColumn(1).width = 110;
-      [
-        "STUDENT IMPORT · OTP SLATE",
-        "Fill the Students sheet. Keep the column headers unchanged.",
-        `College name must exactly match the selected organization${organization ? `: ${organization.name}` : ""}.`,
-        "Required: student ID, full name, email, phone, college name, branch name and branch code. Cohort is optional.",
-        "Student IDs and phone numbers are text. Preserve leading zeroes. Use +country code for international phone numbers.",
-        "Import up to 2,000 students per file (maximum 5 MB). No formulas, passwords or access settings.",
-        "Uploading previews and validates the file only. Confirm Create accounts & send emails to create accounts and queue welcome emails, with no second approval.",
-        "Students must change their password and verify their phone before using assigned learning.",
-      ].forEach((text) => guide.addRow([text]));
-      guide.getRow(1).font = {
-        bold: true,
-        size: 16,
-        color: { argb: "FF0F2747" },
-      };
+      const workbook = await buildStudentTemplate(organization, branches);
       const buffer = await workbook.xlsx.writeBuffer();
       const url = URL.createObjectURL(
         new Blob([buffer], {
@@ -415,7 +202,7 @@ function BulkImport({
       );
       const link = document.createElement("a");
       link.href = url;
-      link.download = "student-import-template.xlsx";
+      link.download = `student-import-${organization.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.xlsx`;
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (cause) {
@@ -426,7 +213,7 @@ function BulkImport({
     }
   }
   async function upload(file: File) {
-    if (lock.current || !organization) return;
+    if (lock.current || !organization || !branchesReady) return;
     lock.current = true;
     setBusy(true);
     setError(null);
@@ -435,7 +222,7 @@ function BulkImport({
     setProgress(0);
     setFilename(file.name);
     try {
-      setPreview(validateRows(await readFile(file), organization.name));
+      setPreview(validateRows(await readStudentFile(file, branches), organization.name, branches));
     } catch (cause) {
       setError(cause);
     } finally {
@@ -445,7 +232,7 @@ function BulkImport({
     }
   }
   async function stage() {
-    if (lock.current || !preview.length || invalid.length || results.length)
+    if (lock.current || !branchesReady || !preview.length || invalid.length || results.length)
       return;
     lock.current = true;
     setBusy(true);
@@ -485,7 +272,7 @@ function BulkImport({
         <button
           type="button"
           className="btn"
-          disabled={busy}
+          disabled={busy || !branchesReady}
           onClick={template}
         >
           Download Excel template ↓
@@ -514,19 +301,23 @@ function BulkImport({
         </Field>
         <Field
           label="Student roster"
-          hint="Excel (.xlsx) or CSV · 2,000 students · 5 MB maximum"
+          hint="Use this organization’s template · Excel or CSV · 2,000 students · 5 MB"
         >
           <input
             ref={input}
             type="file"
             accept=".xlsx,.csv"
-            disabled={!organization || busy}
+            disabled={!branchesReady || busy}
             onChange={(event) => {
               if (event.target.files?.[0]) void upload(event.target.files[0]);
             }}
           />
         </Field>
       </div>
+      {!!organizationId && branchQuery.isPending && <p role="status">Loading organization branches…</p>}
+      {!!organizationId && !!branchQuery.error && <div className="registration-branch-notice"><ErrorMessage error={branchQuery.error} /><button type="button" className="link" onClick={() => { void branchQuery.refetch(); }}>Retry loading branches</button></div>}
+      {!!organizationId && !branchQuery.isPending && !branchQuery.error && !branches.length && <p className="registration-branch-notice">Create this organization’s branches before downloading a template or importing students. <Link to={`/access?organizationId=${encodeURIComponent(organizationId)}&tab=branches`}>Manage branches →</Link></p>}
+      {branchesReady && <p className="registration-help">The Excel template contains a branch dropdown for {organization?.name}. Branch code fills automatically. CSV files must contain a matching branch name and code.</p>}
       <ErrorMessage error={error} />
       {busy && (
         <p role="status">
@@ -549,7 +340,7 @@ function BulkImport({
             </div>
             <button
               className="btn primary"
-              disabled={busy || !!invalid.length || !!results.length}
+              disabled={busy || !branchesReady || !!invalid.length || !!results.length}
               onClick={stage}
             >
               {results.length

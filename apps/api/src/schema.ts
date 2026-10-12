@@ -132,6 +132,25 @@ export const organizations = pgTable("organizations", {
   portalDisplay: jsonb("portal_display").$type<PortalDisplay | null>(),
   ...dates(),
 });
+export const organizationBranches = pgTable(
+  "organization_branches",
+  {
+    organizationId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("organization_branch_code").on(
+      table.organizationId,
+      table.code,
+    ),
+  ],
+);
 export const accessPolicies = pgTable(
   "access_policies",
   {

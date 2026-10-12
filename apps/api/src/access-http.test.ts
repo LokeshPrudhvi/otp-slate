@@ -49,6 +49,7 @@ test("organization, branch and student policies enforce live HTTP access without
       .values([{ name: "Access College" }, { name: "Other College" }])
       .returning(),
   );
+  await scoped(connection.db, { platform: true }, tx => tx.insert(s.organizationBranches).values([{ organizationId: org.id, code: "CSE", name: "Computer Science" }, { organizationId: org.id, code: "ME", name: "Mechanical Engineering" }]));
   async function person(
     name: string,
     role: "platform_admin" | "student" | "organization_viewer",
