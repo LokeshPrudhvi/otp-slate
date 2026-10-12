@@ -6,6 +6,7 @@ import type {
   AccessWorkspace,
   FeatureKey,
   Organization,
+  OrganizationBranch,
   PortalDisplay,
   UpdateAccess,
 } from "@slate/contracts";
@@ -22,6 +23,7 @@ import {
 } from "@slate/ui";
 import { AdminSelect } from "./select";
 import { CreateBranch } from "./branch-create";
+import { EditBranch } from "./branch-editor";
 import "./access.css";
 
 type Scope = UpdateAccess["scope"];
@@ -210,6 +212,7 @@ function AccessEditor({
   onSaved,
   onDirty,
   onPending,
+  onEditBranch,
   readOnly,
 }: {
   workspace: AccessWorkspace;
@@ -217,6 +220,7 @@ function AccessEditor({
   onSaved: (workspace: AccessWorkspace, selection: Selection) => void;
   onDirty: (value: boolean) => void;
   onPending: (value: boolean) => void;
+  onEditBranch: () => void;
   readOnly: boolean;
 }) {
   const [currentWorkspace, setCurrentWorkspace] = useState(workspace);
@@ -515,7 +519,9 @@ function AccessEditor({
                 <h3>Academic branch</h3>
                 <p>Students with this branch code receive these defaults.</p>
               </div>
+              {!readOnly && <button type="button" className="btn branch-edit-action" disabled={dirty || save.isPending || loadingConflict || stale} onClick={onEditBranch}>Edit branch</button>}
             </div>
+            {!readOnly && dirty && <p className="access-field-note">Save or reset access changes before editing the branch details.</p>}
             <div className="form-grid">
               <Field label="Branch name">
                 <input
@@ -1014,6 +1020,7 @@ export function LearningAccess() {
   const [saving, setSaving] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
   const [notice, setNotice] = useState("");
+  const [editingBranch, setEditingBranch] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<
     { organizationId: string; selection: Selection } | { href: string } | null
   >(null);
@@ -1033,6 +1040,8 @@ export function LearningAccess() {
       setDirty(false);
       setPendingNavigation(null);
       setNotice("");
+      setEditingBranch(false);
+      setSaving(false);
     }
   }, [archived]);
   useEffect(() => {
@@ -1095,6 +1104,7 @@ export function LearningAccess() {
   function applyNavigation(nextOrganizationId: string, next: Selection) {
     setOrganizationId(nextOrganizationId);
     setSelection(next);
+    setEditingBranch(false);
     setDirty(false);
     setSearch("");
     setBranchFilter("");
@@ -1109,6 +1119,34 @@ export function LearningAccess() {
       },
       { replace: true },
     );
+  }
+  async function loadBranchWorkspace() {
+    const key = ["platform", "access", organizationId];
+    await client.cancelQueries({ queryKey: key, exact: true });
+    const latest = await api<AccessWorkspace>(`platform/organizations/${organizationId}/access`);
+    client.setQueryData(key, latest);
+    return latest;
+  }
+  function invalidateBranchLists() {
+    void client.invalidateQueries({ predicate: query => query.queryKey[0] === "platform" && typeof query.queryKey[1] === "string" && (
+      query.queryKey[1] === `organization-branches-${organizationId}` ||
+      query.queryKey[1] === `members-${organizationId}` ||
+      query.queryKey[1] === `announcement-audience:${organizationId}` ||
+      query.queryKey[1].startsWith("announcements:") ||
+      query.queryKey[1].startsWith("registrations-")
+    ) });
+  }
+  async function finishBranchEdit(updated: OrganizationBranch) {
+    invalidateBranchLists();
+    const latest = await loadBranchWorkspace();
+    const available = latest.branches.some(branch => branch.code === updated.code);
+    setSelection({ scope: "branch", id: updated.code });
+    setParams({ organizationId, tab: "branches", branchCode: updated.code }, { replace: true });
+    setDirty(false);
+    setSaving(false);
+    setEditingBranch(false);
+    setEditorVersion(value => value + 1);
+    setNotice(available ? `${updated.name} (${updated.code}) updated across this organization. Assigned learning and student progress are preserved.` : "Branch saved, but its details changed again in another session. Select a branch from the refreshed list.");
   }
   const data = workspace.data;
   const filteredStudents = useMemo(
@@ -1359,6 +1397,10 @@ export function LearningAccess() {
                   setParams({ organizationId, tab: "branches", branchCode: branch.code }, { replace: true });
                   setEditorVersion(value => value + 1);
                 }} />
+              ) : editingBranch && selection.scope === "branch" && !archived ? (
+                <EditBranch key={`${organizationId}-${selection.id}-${editorVersion}`} branch={{ organizationId, code: selection.id, name: data.branches.find(branch => branch.code === selection.id)?.name || selection.id }} revision={data.revision}
+                  studentCount={data.branches.find(branch => branch.code === selection.id)?.studentCount || 0} onDirty={setDirty} onPending={setSaving}
+                  loadWorkspace={loadBranchWorkspace} onSaved={finishBranchEdit} onCancel={() => { setEditingBranch(false); setDirty(false); setSaving(false); setEditorVersion(value => value + 1); }} />
               ) : canView ? (
                 <AccessEditor
                   key={`${organizationId}-${selection.scope}-${selection.id}-${editorVersion}-${archived}`}
@@ -1367,6 +1409,7 @@ export function LearningAccess() {
                   readOnly={archived}
                   onDirty={setDirty}
                   onPending={setSaving}
+                  onEditBranch={() => { if (!dirty && !saving && !archived) { setEditingBranch(true); setNotice(""); } }}
                   onSaved={(updated, next) => {
                     client.setQueryData(
                       ["platform", "access", organizationId],

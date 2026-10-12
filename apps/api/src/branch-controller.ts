@@ -4,12 +4,17 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   Req,
 } from "@nestjs/common";
 import type { Request } from "express";
 import { z } from "zod";
-import { BranchService, createBranchInput } from "./branches.js";
+import {
+  BranchService,
+  createBranchInput,
+  updateBranchInput,
+} from "./branches.js";
 import { SlateService } from "./service.js";
 
 @Controller("api/v1/platform/organizations")
@@ -36,6 +41,19 @@ export class BranchController {
       await this.service.actor(req, "platform_admin"),
       z.uuid().parse(organizationId),
       createBranchInput.parse(body),
+    );
+  }
+  @Patch(":organizationId/branches/:code") async update(
+    @Req() req: Request,
+    @Param("organizationId") organizationId: string,
+    @Param("code") code: string,
+    @Body() body: unknown,
+  ) {
+    return this.branches.update(
+      await this.service.actor(req, "platform_admin"),
+      z.uuid().parse(organizationId),
+      code,
+      updateBranchInput.parse(body),
     );
   }
 }

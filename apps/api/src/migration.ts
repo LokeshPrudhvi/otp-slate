@@ -6,6 +6,7 @@ import { accessMigration } from "./access-migration.js";
 import { lessonMigration } from "./lesson-migration.js";
 import { announcementMigration } from "./announcement-migration.js";
 import { branchMigration } from "./branch-migration.js";
+import { branchEditMigration } from "./branch-edit-migration.js";
 import { courseLifecycleMigration } from "./course-lifecycle-migration.js";
 export const migration =
   legacyTableMigration +
@@ -76,4 +77,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS member_student_identity ON members(org_id, low
   courseLifecycleMigration +
   lessonMigration +
   announcementMigration +
-  branchMigration;
+  branchMigration +
+  branchEditMigration;

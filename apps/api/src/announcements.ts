@@ -16,7 +16,7 @@ import type {
 import type { Actor, SlateService } from "./service.js";
 import type { Transaction } from "./database.js";
 import { normalizedBranch } from "./access.js";
-import { branchCodeInput } from "./branches.js";
+import { branchCodeInput, lockOrganizationBranches } from "./branches.js";
 import { demoAnnouncements } from "./demo-data.js";
 import * as s from "./schema.js";
 
@@ -176,6 +176,7 @@ export class AnnouncementService {
     this.admin(actor);
     const input = publishAnnouncementInput.parse(supplied);
     return this.service.scope(actor, async (tx) => {
+      await lockOrganizationBranches(tx, input.organizationId);
       const match = async (row: Row) => {
         if (
           row.organizationId !== input.organizationId ||
@@ -250,6 +251,7 @@ export class AnnouncementService {
         .from(s.announcements)
         .where(eq(s.announcements.id, id));
       if (!before) throw new NotFoundException("Announcement not found.");
+      await lockOrganizationBranches(tx, before.organizationId);
       const organization = await this.organization(
         tx,
         before.organizationId,
@@ -284,6 +286,7 @@ export class AnnouncementService {
       throw new ForbiddenException();
     this.service.feature(actor, "announcements");
     return this.service.scope(actor, async (tx) => {
+      await lockOrganizationBranches(tx, actor.organizationId!);
       // Resolve the current membership, rather than trusting a branch cached in a session.
       const [member] = await tx
         .select({ branchCode: s.members.branchCode })

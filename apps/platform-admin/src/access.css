@@ -1201,3 +1201,14 @@
 .branch-create-card fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .branch-create-card .access-section-title { margin-bottom: 26px; }
 .branch-catalog-note { padding: 15px 18px; border: 1px solid #d6e3f2; border-radius: 8px; background: #edf4fc; color: #49617c; line-height: 1.7; margin: 22px 0; font-size: 13px; }
+.branch-editor-card { align-self: start; max-width: 900px; }
+.branch-editor-card fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.branch-editor-card .access-section-title { margin-bottom: 26px; }
+.branch-edit-action { margin-left: auto; flex-shrink: 0; }
+.branch-catalog-note strong { color: var(--navy); }
+.branch-catalog-note p { margin: 6px 0 0; }
+.branch-review-note { padding: 14px 16px; margin: 16px 0; color: #315b81; background: #edf4fc; border-radius: 8px; line-height: 1.6; }
+@media (max-width: 640px) {
+  .access-section-title:has(.branch-edit-action) { flex-wrap: wrap; }
+  .branch-edit-action { margin-left: 0; }
+}

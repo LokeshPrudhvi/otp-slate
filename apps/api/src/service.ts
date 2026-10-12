@@ -31,6 +31,7 @@ import { createUpload, r2Configured, type PhoneSender } from "./providers.js";
 import * as s from "./schema.js";
 import { AccessService, practiceModule, resolvePolicies } from "./access.js";
 import { AnnouncementService } from "./announcements.js";
+import { lockOrganizationBranches } from "./branches.js";
 import {
   demoAnnouncements,
   demoExams,
@@ -191,6 +192,7 @@ export class SlateService {
                     .where(eq(s.organizations.id, found.organizationId))
                     .then((organizations) => ({
                       organization: organizations[0],
+                      branchCode: found.branchCode,
                       records: [],
                       grants: [],
                     }));
@@ -210,7 +212,7 @@ export class SlateService {
             )
               resolved = resolvePolicies(
                 organization,
-                found,
+                { ...found, branchCode: access.branchCode },
                 access.records,
                 access.grants,
                 this.local &&
@@ -1293,6 +1295,7 @@ export class SlateService {
     return this.scope(
       actor,
       async (tx) => {
+        await lockOrganizationBranches(tx, actor.organizationId!);
         const [organization] = await tx
           .select()
           .from(s.organizations)

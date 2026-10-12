@@ -19,6 +19,7 @@ import {
   branchCodeInput,
   branchNameInput,
   requireOrganizationBranch,
+  lockOrganizationBranches,
 } from "./branches.js";
 
 const clean = (max: number) =>
@@ -203,6 +204,7 @@ export class RegistrationService {
     input: RegistrationInput,
     organizationVerified = false,
   ) {
+    await lockOrganizationBranches(tx, input.organizationId);
     const [org] = organizationVerified
       ? [{ id: input.organizationId }]
       : await tx
@@ -413,6 +415,7 @@ export class RegistrationService {
     const input = registrationInput.parse(raw);
     try {
       return await this.service.scope(actor, async (tx) => {
+        await lockOrganizationBranches(tx, input.organizationId);
         const organization = await this.activeOrganization(
           tx,
           input.organizationId,
@@ -555,8 +558,10 @@ export class RegistrationService {
     const input = studentProfileInput.parse(raw);
     try {
       return await this.service.scope(actor, async (tx) => {
-        // Review/retry lock requests first; organization then member matches
-        // access updates. Email delivery never waits on a member lock.
+        // Branch rename, access and profile writes serialize before taking row
+        // locks. Keep organization before requests/members to avoid inversion.
+        await lockOrganizationBranches(tx, organizationId);
+        const organization = await this.activeOrganization(tx, organizationId);
         const requests = await tx
           .select()
           .from(registrationRequests)
@@ -569,7 +574,6 @@ export class RegistrationService {
           )
           .orderBy(registrationRequests.id)
           .for("update");
-        const organization = await this.activeOrganization(tx, organizationId);
         const [member] = await tx
           .select()
           .from(s.members)
@@ -889,6 +893,17 @@ export class RegistrationService {
     for (const id of ids) {
       try {
         const status = await this.service.scope(actor, async (tx) => {
+          const [reference] = await tx
+            .select({ organizationId: registrationRequests.organizationId })
+            .from(registrationRequests)
+            .where(eq(registrationRequests.id, id));
+          if (!reference)
+            throw new NotFoundException("Registration not found.");
+          await lockOrganizationBranches(tx, reference.organizationId);
+          const organization = await this.activeOrganization(
+            tx,
+            reference.organizationId,
+          );
           const [request] = await tx
             .select()
             .from(registrationRequests)
@@ -897,7 +912,13 @@ export class RegistrationService {
           if (!request) throw new NotFoundException("Registration not found.");
           if (request.status === "approved") return "already_approved" as const;
           if (request.status === "rejected") return "rejected" as const;
-          await this.provision(tx, actor, request);
+          await this.provision(
+            tx,
+            actor,
+            request,
+            "registration.approved",
+            organization,
+          );
           return "approved" as const;
         });
         results.push({ id, status });

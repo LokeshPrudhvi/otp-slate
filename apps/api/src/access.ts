@@ -27,6 +27,7 @@ import { jsonObject, jsonRows } from "./json-query.js";
 import {
   branchCodeInput as branchCode,
   requireOrganizationBranch,
+  lockOrganizationBranches,
 } from "./branches.js";
 
 const list = <T extends z.ZodType>(item: T, max: number) =>
@@ -280,7 +281,7 @@ export class AccessService {
     if (!snapshot.organization) throw new NotFoundException();
     return resolvePolicies(
       snapshot.organization,
-      member,
+      { ...member, branchCode: snapshot.branchCode },
       snapshot.records,
       snapshot.grants,
       demo,
@@ -291,9 +292,15 @@ export class AccessService {
     member: MemberRecord,
     knownOrganization?: OrganizationRecord,
   ) {
-    const branch = normalizedBranch(member.branchCode);
+    const branch = sql<
+      string | null
+    >`(select nullif(upper(btrim(${s.members.branchCode})), '') from ${s.members} where ${s.members.id} = ${member.id})`;
     const [access] = await tx
       .select({
+        memberId: sql<
+          string | null
+        >`(select ${s.members.id} from ${s.members} where ${s.members.id} = ${member.id})`,
+        branchCode: branch,
         organizations: knownOrganization
           ? sql<OrganizationRecord[]>`'[]'::jsonb`
           : jsonRows(
@@ -306,12 +313,10 @@ export class AccessService {
             eq(s.accessPolicies.organizationId, member.organizationId!),
             or(
               eq(s.accessPolicies.scope, "organization"),
-              branch
-                ? and(
-                    eq(s.accessPolicies.scope, "branch"),
-                    eq(s.accessPolicies.targetKey, branch),
-                  )
-                : undefined,
+              and(
+                eq(s.accessPolicies.scope, "branch"),
+                eq(s.accessPolicies.targetKey, branch),
+              ),
               and(
                 eq(s.accessPolicies.scope, "student"),
                 eq(s.accessPolicies.targetKey, member.id),
@@ -325,8 +330,11 @@ export class AccessService {
         ),
       })
       .from(sql`(values (true)) as access_snapshot`);
+    if (!access.memberId)
+      throw new NotFoundException("Student membership is no longer available.");
     return {
       organization: knownOrganization || access.organizations[0],
+      branchCode: access.branchCode,
       records: access.records,
       grants: access.grants,
     };
@@ -535,6 +543,7 @@ export class AccessService {
     this.assertAdmin(actor);
     const input = updateAccessInput.parse(raw);
     return this.service.scope(actor, async (tx) => {
+      await lockOrganizationBranches(tx, organizationId);
       const [organization] = await tx
         .select()
         .from(s.organizations)

@@ -43,7 +43,7 @@ export function CreateBranch({ organizationId, organizationName, onCreated, onDi
           <Field label="Branch name" hint="Use the official department name."><input required maxLength={120} autoComplete="off" value={name} placeholder="Computer Science and Engineering" onChange={event => { setName(event.target.value); create.reset(); }} /></Field>
           <Field label="Branch code" hint="A unique code within this organization, such as CSE or MECH."><input required maxLength={32} autoComplete="off" spellCheck={false} value={code} placeholder="CSE" onChange={event => { setCode(event.target.value.toUpperCase()); setValidation(""); create.reset(); }} /></Field>
         </div>
-        <p className="branch-catalog-note">The selected branch will automatically fill its code on student forms. Branch codes stay fixed so learning access, announcements and reports remain consistent.</p>
+        <p className="branch-catalog-note">The selected branch will automatically fill its code on student forms. Editing branch details later updates the organization’s student records, learning access and announcement audiences together.</p>
         <ErrorMessage error={validation ? new Error(validation) : create.error} />
         <button className="btn primary" type="submit" disabled={create.isPending || create.isSuccess || !name.trim() || !code.trim()}>{create.isPending ? "Creating branch…" : create.isSuccess ? "Branch created" : "Create branch"}</button>
       </fieldset>

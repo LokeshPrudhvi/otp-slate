@@ -135,6 +135,7 @@ export const organizations = pgTable("organizations", {
 export const organizationBranches = pgTable(
   "organization_branches",
   {
+    id: uuid("id").notNull().defaultRandom().unique(),
     organizationId: uuid("org_id")
       .notNull()
       .references(() => organizations.id),
@@ -331,6 +332,7 @@ export const audit = pgTable("audit_logs", {
   organizationId: uuid("org_id"),
   action: text("action").notNull(),
   resourceId: text("resource_id"),
+  details: jsonb("details").$type<Record<string, unknown>>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

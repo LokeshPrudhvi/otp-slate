@@ -279,3 +279,179 @@ test("batched access reads retain timestamp decoding, expiration, pins and tenan
     await connection.close();
   }
 });
+
+test("access resolution uses the current branch and its policy in one snapshot after a branch rename", async () => {
+  const connection = await connectDatabase("pglite://memory");
+  try {
+    await migrateDatabase(connection.db);
+    const authId = randomUUID();
+    await connection.db.insert(s.user).values({
+      id: authId,
+      name: "Branch Student",
+      email: "renamed-access@example.test",
+    });
+    const fixture = await scoped(
+      connection.db,
+      { platform: true },
+      async (tx) => {
+        const [organization] = await tx
+          .insert(s.organizations)
+          .values({ name: "Rename Snapshot College" })
+          .returning();
+        const [member] = await tx
+          .insert(s.members)
+          .values({
+            authUserId: authId,
+            organizationId: organization.id,
+            role: "student",
+            branchCode: "ME",
+            branchName: "Mechanical Engineering",
+          })
+          .returning();
+        const [assigned, unassigned] = await tx
+          .insert(s.courses)
+          .values([
+            {
+              title: "Assigned course",
+              description: "Branch-assigned course",
+              track: "general",
+              status: "published",
+            },
+            {
+              title: "Other course",
+              description: "Available to the organization only",
+              track: "general",
+              status: "published",
+            },
+          ])
+          .returning();
+        const [pinned, latest, otherVersion] = await tx
+          .insert(s.versions)
+          .values([
+            {
+              courseId: assigned.id,
+              title: assigned.title,
+              description: "Pinned branch version",
+              number: 1,
+              lessons: [],
+            },
+            {
+              courseId: assigned.id,
+              title: assigned.title,
+              description: "Latest catalog version",
+              number: 2,
+              lessons: [],
+            },
+            {
+              courseId: unassigned.id,
+              title: unassigned.title,
+              description: unassigned.description,
+              number: 1,
+              lessons: [],
+            },
+          ])
+          .returning();
+        const policies = await tx
+          .insert(s.accessPolicies)
+          .values([
+            {
+              organizationId: organization.id,
+              scope: "organization",
+              targetKey: "organization",
+              policy: {
+                ...inheritPolicy(),
+                features: ["courses", "practice", "compiler"],
+                courseIds: [assigned.id, unassigned.id],
+                practiceModuleIds: ["aptitude", "competitive-coding"],
+              },
+              courseVersions: {
+                [assigned.id]: latest.id,
+                [unassigned.id]: otherVersion.id,
+              },
+            },
+            {
+              organizationId: organization.id,
+              scope: "branch",
+              targetKey: "ME",
+              branchName: "Mechanical Engineering",
+              policy: {
+                ...inheritPolicy(),
+                features: ["courses", "practice"],
+                courseIds: [assigned.id],
+                practiceModuleIds: ["aptitude"],
+              },
+              courseVersions: { [assigned.id]: pinned.id },
+            },
+          ])
+          .returning();
+        return {
+          organization,
+          member,
+          assigned,
+          unassigned,
+          pinned,
+          branchPolicy: policies[1],
+        };
+      },
+    );
+    const access = new AccessService({} as SlateService);
+    const context = { authId, organizationId: fixture.organization.id };
+    const before = await scoped(connection.db, context, (tx) =>
+      access.resolve(tx, fixture.member, false),
+    );
+    assert.deepEqual(before.effective.courseIds, [fixture.assigned.id]);
+    assert.equal(before.versionIds[fixture.assigned.id], fixture.pinned.id);
+    assert.deepEqual(before.effective.practiceModuleIds, ["aptitude"]);
+    assert.equal(before.effective.features.includes("compiler"), false);
+
+    // Reproduce the interleaving: authentication already read the old member,
+    // then a rename commits before its access snapshot runs.
+    await scoped(connection.db, { platform: true }, async (tx) => {
+      await tx
+        .update(s.members)
+        .set({ branchCode: "MECH", branchName: "Mechanical Sciences" })
+        .where(eq(s.members.id, fixture.member.id));
+      await tx
+        .update(s.accessPolicies)
+        .set({ targetKey: "MECH", branchName: "Mechanical Sciences" })
+        .where(eq(s.accessPolicies.id, fixture.branchPolicy.id));
+      await tx
+        .update(s.organizations)
+        .set({ accessRevision: fixture.organization.accessRevision + 1 })
+        .where(eq(s.organizations.id, fixture.organization.id));
+    });
+    assert.equal(
+      fixture.member.branchCode,
+      "ME",
+      "the previously read member deliberately remains stale",
+    );
+    const after = await scoped(connection.db, context, (tx) =>
+      access.resolve(tx, fixture.member, false),
+    );
+    assert.equal(after.effective.revision, before.effective.revision + 1);
+    assert.deepEqual(
+      { ...after.effective, revision: before.effective.revision },
+      before.effective,
+      "a renamed branch must not fall back to broader organization selections",
+    );
+    assert.deepEqual(
+      after.versionIds,
+      before.versionIds,
+      "branch-pinned course versions survive the stale member interleaving",
+    );
+    assert.equal(after.versionIds[fixture.unassigned.id], undefined);
+
+    const snapshot = await scoped(connection.db, context, (tx) =>
+      access.snapshot(tx, fixture.member),
+    );
+    assert.equal(snapshot.branchCode, "MECH");
+    assert.ok(
+      snapshot.records.some(
+        (record) =>
+          record.id === fixture.branchPolicy.id && record.targetKey === "MECH",
+      ),
+    );
+  } finally {
+    await connection.close();
+  }
+});
