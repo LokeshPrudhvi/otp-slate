@@ -4,9 +4,11 @@ Each React portal is a separate Pages project. The browser keeps using its exist
 
 ## Live portals — 13 October 2026
 
-The live exams release uses source `5edd008`, with Admin Pages deployment `53f3b26f` and Student `888ad46d`. Open **Admin → Learning → Live exams** to create and schedule MCQ/coding assessments for an organization, selected branches or selected students. Eligible students open **Live exams** to start or resume their timed attempt. Coding uses a plain source textbox and manual Admin marks/feedback; there are no exam Run buttons or third-party execution calls. MCQs grade automatically, and Admin releases results after the exam closes and grading is complete. The standalone Compiler remains separate optional practice.
+The current MCQ image release uses source `ad124a6`, with Admin Pages deployment `8684478b` and Student `1a8db42e`. In **Admin → Courses → MCQ lesson** or **Admin → Live exams → Multiple choice**, use **Add image**, enter its accessible description, then publish the course version or save/review the exam. One optional PNG, JPEG or WebP image up to 5 MiB is supported per question, with replace/remove controls. Student questions and feedback show the image with an in-page enlargement. Practice authoring is unchanged. The Organization bundle remains `50c314db`. See the [current API and migration verification](deployment-render.md#mcq-image-release--13-october-2026).
 
-Both public exam deep links returned the exact tested bundle bytes, API health returned 200 and anonymous exam reads/mutations returned 401. Browser acceptance checks used isolated synthetic accounts. The Organization bundle remains `50c314db`. See the [current API and migration verification](deployment-render.md#live-exams-release--13-october-2026).
+Production course/exam deep links serve the exact tested JavaScript and CSS bytes. Both portal health checks returned 200, and unauthenticated question-image reads/uploads returned 401. Authenticated browser tests used an isolated database with synthetic accounts and the real private R2 storage; all temporary image objects were removed afterward.
+
+The preceding live exams release used source `5edd008`, Admin `53f3b26f` and Student `888ad46d`. Open **Admin → Learning → Live exams** to create and schedule MCQ/coding assessments for an organization, selected branches or selected students. Eligible students open **Live exams** to start or resume their timed attempt. Coding uses a plain source textbox and manual Admin marks/feedback; there are no exam Run buttons or third-party execution calls. MCQs grade automatically, and Admin releases results after the exam closes and grading is complete. The standalone Compiler remains separate optional practice.
 
 ## Earlier branch releases — 12 October 2026
 
@@ -22,7 +24,7 @@ Announcements remain available under **Admin → Announcements**. Choose an orga
 | Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
 | Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
 
-All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#live-exams-release--13-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#mcq-image-release--13-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
 
 ## Build configuration
 

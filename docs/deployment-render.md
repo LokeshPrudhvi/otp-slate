@@ -2,6 +2,18 @@
 
 The root `render.yaml` defines one **Free** Node web service in Ohio, close to the existing Neon database in AWS us-east-2. Cloudflare hosts the portals separately. The Blueprint does not create a database, paid worker or persistent disk. Automatic deploys and previews are disabled so releases are deliberate.
 
+## MCQ image release — 13 October 2026
+
+Release source `ad124a6` adds one optional private image to each question in the existing course MCQ and live-exam editors. Admins can upload, replace or remove PNG, JPEG or WebP images up to **5 MiB**, with a required accessible description. Students can enlarge images in place while answering and reviewing results. Practice test authoring is unchanged. Question text and answer options remain required.
+
+Images reuse the existing private R2 bucket and direct-upload flow. The API checks file size, declared type and the immutable object's raster signature before accepting the upload. Student image URLs require access to the exact assigned course version/lesson or owned exam attempt. Generic upload downloads remain unavailable to students for question images. Published course versions, submitted answers and their image references remain intact when a newer version replaces an image. Signed image URLs expire after one hour; removing an image from a draft does not delete assets used by historical content.
+
+Migration `011-mcq-images` was rehearsed twice on an auto-expiring Neon clone, including scoped row-security read/write checks. Production application verified counts and digests across **32 existing tables** without changing application rows: 5 organizations, 11 members, 24 enrollments, 21 course versions and 58 progress records were preserved.
+
+Validation: **207 API tests passed**, one existing optional check skipped, and **51 frontend checks passed** across shared image components, Admin course/exam editors and Student workflows. Both affected portals built successfully. Real R2 integration exercised PNG/JPEG/WebP uploads, signed reads, spoof rejection, denied cross-organization access, grading and retained version history using an isolated database. Browser checks covered Admin save/preview, nested-dialog Escape and focus behavior, Student image enlargement, a passing course quiz with feedback, and an image-based timed exam with saved answers. All 12 temporary R2 test objects were removed and their absence verified. No production test accounts, assignments, exams or emails were created.
+
+The API is live on the existing **Free / Ohio** service as `dep-db6u45bl550s73a4bge0` from source `ad124a6`. Matching Pages releases are Admin `8684478b` and Student `1a8db42e`; Organization remains unchanged. Production course/exam deep links and JavaScript/CSS hashes match the tested builds. Both portal health checks returned 200, and anonymous image reads/uploads returned 401. No new service, environment secret or paid plan was added. The previous live-exam rollout is recorded below.
+
 ## Live exams release — 13 October 2026
 
 Release source `5edd008` adds **Admin → Learning → Live exams** and the Student live-exam workflow. Admins create MCQ/coding questions, select an organization and either its whole eligible audience, saved branches or individual students, set the schedule and duration, configure browser monitoring, and publish. Publication freezes questions, timing and recipient member IDs. Renaming a branch updates draft selections but retains published rosters. Each student has one resumable attempt; the server enforces the earlier of its personal deadline and the closing time. Answers are versioned and saved automatically. Admins can review answers and browser events, export results, grade coding answers and release results after the window closes and all started attempts have been graded.
@@ -14,7 +26,7 @@ The additive `010-live-exams` migration was applied twice on an auto-expiring Ne
 
 Validation: **198 API tests passed**, one existing optional check skipped; 29 Student checks (including 18 exam checks) and ten Admin helper checks passed. Browser checks with isolated synthetic accounts covered selecting a student, publishing, answering/resuming, submission, manual grading, withheld/released results and denial for an unselected student. A final submission-only browser check verified saving source, automatic MCQ marks, manual coding marks and student-visible feedback after release. Coding review assigns marks without executing submitted code; the removed execution routes return 404 to authenticated requests.
 
-The existing Free / Ohio API service is live on `dep-db6ilgbl550s73b38klg` from source `5edd008`. Matching Pages releases are Admin `53f3b26f` and Student `888ad46d`; Organization remains unchanged. Public deep links served the exact tested bundle bytes, both portal API health checks returned 200, and anonymous exam reads and mutations returned 401. Authenticated end-to-end tests used isolated sample accounts, not real production student attempts.
+The earlier Free / Ohio API release was `dep-db6ilgbl550s73b38klg` from source `5edd008`; the MCQ image release above supersedes it. Matching Pages releases were Admin `53f3b26f` and Student `888ad46d`; Organization remained unchanged. Public deep links served the exact tested bundle bytes, both portal API health checks returned 200, and anonymous exam reads and mutations returned 401. Authenticated end-to-end tests used isolated sample accounts, not real production student attempts.
 
 ## Branch editing release — 12 October 2026
 
