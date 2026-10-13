@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Link,
@@ -22,6 +22,7 @@ import {
   Field,
   LessonContent,
   Panel,
+  QuestionImageView,
   useData,
 } from "@slate/ui";
 import { AdminPage } from "./page";
@@ -330,6 +331,13 @@ function ExamPreview({ exam }: { exam: ExamDraft }) {
           <LessonContent body={q.prompt} format="markdown" />
           {q.kind === "mcq" ? (
             <>
+              {q.image && (
+                <QuestionImageView
+                  image={q.image}
+                  source={`lesson-uploads/${q.image.uploadId}/download`}
+                  label={`Question ${index + 1} image`}
+                />
+              )}
               <ol type="A">
                 {q.options.map((option, i) => (
                   <li key={i}>
@@ -414,6 +422,13 @@ function ExamEditorState({
     "publish" | "cancel" | "release-results" | null
   >(null);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const pendingUploads = useRef(new Set<string>());
+  const onImagePending = useCallback((questionId: string, pending: boolean) => {
+    if (pending) pendingUploads.current.add(questionId);
+    else pendingUploads.current.delete(questionId);
+    setUploading(pendingUploads.current.size > 0);
+  }, []);
   const issuesRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (errors.length) {
@@ -500,7 +515,7 @@ function ExamEditorState({
       });
     },
   });
-  const busy = save.isPending || action.isPending;
+  const busy = save.isPending || action.isPending || uploading;
   const confirmationDialog = useExamDialog(
     Boolean(confirm),
     () => setConfirm(null),
@@ -557,6 +572,7 @@ function ExamEditorState({
     if (!issues.length && !busy) save.mutate();
   }
   async function reload() {
+    if (busy) return;
     if (
       dirtyRef.current &&
       !window.confirm("Reload the saved exam and discard this unsaved draft?")
@@ -597,7 +613,7 @@ function ExamEditorState({
               disabled={busy || archived}
               onClick={saveDraft}
             >
-              {save.isPending ? "Saving…" : "Save draft"}
+              {uploading ? "Uploading image…" : save.isPending ? "Saving…" : "Save draft"}
             </button>
           )}
           {saved?.status === "draft" && (
@@ -739,17 +755,20 @@ function ExamEditorState({
                 onChange={setDraft}
                 audience={audience.data}
                 disabled={busy || archived}
+                onImagePending={onImagePending}
               />
             </fieldset>
           </DataState>
           <div className="exam-save-bar">
             <span>
-              {dirty
+              {uploading
+                ? "Uploading question image…"
+                : dirty
                 ? "Unsaved draft changes"
                 : saved
                   ? "Draft saved"
                   : "Ready to build"}
-              <small>Students see the exam only after publication.</small>
+              <small>{uploading ? "Keep this page open until the upload finishes." : "Students see the exam only after publication."}</small>
             </span>
             <button
               type="button"
@@ -757,7 +776,7 @@ function ExamEditorState({
               disabled={busy || archived}
               onClick={saveDraft}
             >
-              {save.isPending ? "Saving…" : "Save draft"}
+              {uploading ? "Uploading image…" : save.isPending ? "Saving…" : "Save draft"}
             </button>
           </div>
         </>

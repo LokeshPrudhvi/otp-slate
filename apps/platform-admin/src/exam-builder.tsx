@@ -6,7 +6,7 @@ import {
   type ExamLanguage,
   type ExamQuestion,
 } from "@slate/contracts";
-import { Field, RichTextEditor } from "@slate/ui";
+import { Field, QuestionImageEditor, RichTextEditor } from "@slate/ui";
 import { AdminSelect } from "./select";
 import {
   examLimits,
@@ -20,11 +20,13 @@ export function ExamBuilder({
   onChange,
   audience,
   disabled = false,
+  onImagePending,
 }: {
   value: ExamDraft;
   onChange: (draft: ExamDraft) => void;
   audience: ExamAudienceOptions | undefined;
   disabled?: boolean;
+  onImagePending: (questionId: string, pending: boolean) => void;
 }) {
   const [search, setSearch] = useState("");
   const [openQuestion, setOpenQuestion] = useState<string | null>(
@@ -544,6 +546,13 @@ export function ExamBuilder({
                 </Field>
                 {q.kind === "mcq" ? (
                   <>
+                    <QuestionImageEditor
+                      image={q.image}
+                      label={`Question ${index + 1} image`}
+                      disabled={disabled}
+                      onChange={(image) => editQuestion(q.id, { ...q, image })}
+                      onPending={(pending) => onImagePending(q.id, pending)}
+                    />
                     <div className="exam-options">
                       <p className="muted">
                         Select the radio button beside the correct answer.

@@ -24,6 +24,7 @@ import {
   type PublishLesson,
 } from "./lesson-input.js";
 import { r2LessonStorage, type LessonStorage } from "./lesson-storage.js";
+import { validateQuestionImages } from "./question-images.js";
 import { createAuth, type Auth } from "./auth.js";
 import type { Config } from "./config.js";
 import { scoped, type Database, type Transaction } from "./database.js";
@@ -973,6 +974,10 @@ export class SlateService {
   ) {
     const lessons = input.lessons.map((item) => lessonInput.parse(item));
     return this.scope(actor, async (tx) => {
+      await validateQuestionImages(
+        tx,
+        lessons.flatMap((lesson) => lesson.quiz?.questions || []),
+      );
       const uploadIds = lessons.flatMap((item) =>
         item.kind === "video" && item.video?.uploadId
           ? [item.video.uploadId]

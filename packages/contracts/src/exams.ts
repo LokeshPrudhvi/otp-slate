@@ -1,3 +1,5 @@
+import type { QuestionImage } from "./question-image.js";
+
 export type ExamLanguage =
   | "Python"
   | "Java"
@@ -46,6 +48,7 @@ export type ExamMcqQuestion = {
   kind: "mcq";
   title: string;
   prompt: string;
+  image?: QuestionImage;
   points: number;
   options: string[];
   correctOption: number;

@@ -9,16 +9,19 @@ const documentTypes: Record<string, string> = {
 
 export async function uploadLessonFile(
   file: File,
-  scope: { purpose: "video" | "assignment"; courseId?: string; lessonId?: string },
+  scope: { purpose: "video" | "assignment" | "question_image"; courseId?: string; lessonId?: string },
   onProgress?: (percent: number) => void,
 ): Promise<LessonFile> {
   const extension = file.name.split(".").pop()?.toLowerCase() || "";
   const contentType = scope.purpose === "video"
     ? ({ mp4: "video/mp4", webm: "video/webm" } as Record<string, string>)[extension]
-    : documentTypes[extension];
-  if (!contentType) throw new Error(scope.purpose === "video" ? "Choose an MP4 or WebM video." : "Choose a PDF, text, ZIP, PNG, JPEG or DOCX file.");
-  const limit = (scope.purpose === "video" ? 250 : 10) * 1024 * 1024;
-  if (file.size <= 0 || file.size > limit) throw new Error(`Choose a non-empty file smaller than ${scope.purpose === "video" ? "250" : "10"} MB.`);
+    : scope.purpose === "question_image"
+      ? ({ png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp" } as Record<string, string>)[extension]
+      : documentTypes[extension];
+  if (!contentType) throw new Error(scope.purpose === "video" ? "Choose an MP4 or WebM video." : scope.purpose === "question_image" ? "Choose a PNG, JPEG or WebP image." : "Choose a PDF, text, ZIP, PNG, JPEG or DOCX file.");
+  const megabytes = scope.purpose === "video" ? 250 : scope.purpose === "question_image" ? 5 : 10;
+  const limit = megabytes * 1024 * 1024;
+  if (file.size <= 0 || file.size > limit) throw new Error(`Choose a non-empty file of ${megabytes} MB or smaller.`);
   onProgress?.(0);
   const prepared = await api<{ upload: LessonFile; uploadUrl: string; headers: Record<string, string> }>("lesson-uploads", "POST", {
     ...scope, fileName: file.name, contentType, size: file.size,

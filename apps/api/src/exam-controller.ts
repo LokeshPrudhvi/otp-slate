@@ -179,6 +179,17 @@ export class ExamController {
       uuid.parse(id),
     );
   }
+  @Get("student/exam-attempts/:id/images/:upload") async questionImage(
+    @Req() req: Request,
+    @Param("id") id: string,
+    @Param("upload") upload: string,
+  ) {
+    return this.exams.questionImage(
+      await this.service.actor(req, "student"),
+      uuid.parse(id),
+      uuid.parse(upload),
+    );
+  }
   @Put("student/exam-attempts/:id/answers") async save(
     @Req() req: Request,
     @Param("id") id: string,

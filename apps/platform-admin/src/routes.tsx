@@ -813,8 +813,21 @@ function CourseEditor() {
   useEffect(() => {
     if (!unsaved && !uploading) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    const guardUpload = (event: MouseEvent) => {
+      if (!uploading || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+      if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+      const next = new URL(anchor.href);
+      if (next.origin !== location.origin || next.href === location.href) return;
+      event.preventDefault();
+      event.stopPropagation();
+    };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    document.addEventListener("click", guardUpload, true);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      document.removeEventListener("click", guardUpload, true);
+    };
   }, [unsaved, uploading]);
   return (
     <AdminPage
@@ -844,7 +857,7 @@ function CourseEditor() {
           <CourseLessonBuilder courseId={id!} lessons={lessons} onChange={setLessons} disabled={publish.isPending || lifecyclePending} readOnly={archived} onUploadStateChange={setUploading} />
           {!archived && <>
             {issues.length > 0 && <div className="course-validation-summary"><strong>{issues.length} {issues.length === 1 ? "lesson needs" : "lessons need"} a little more detail before publishing</strong><ul>{issues.slice(0, 5).map(issue => <li key={issue}>{issue}</li>)}</ul>{issues.length > 5 && <p>And {issues.length - 5} more. Select a lesson in the outline to finish it.</p>}</div>}
-            <div className="course-publish-bar"><div><strong>{uploading ? "Uploading your video…" : unsaved ? "Your next course version" : "Published content is up to date"}</strong><p>{uploading ? "Keep this page open while the video uploads." : "Publishing preserves existing students’ assigned versions and progress."}</p></div><button className="btn primary" disabled={publish.isPending || lifecyclePending || uploading || Boolean(issues.length) || !lessons.length || !title.trim() || !description.trim()}>{publish.isPending ? "Publishing…" : "Publish new version"}</button></div>
+            <div className="course-publish-bar"><div><strong>{uploading ? "Uploading lesson media…" : unsaved ? "Your next course version" : "Published content is up to date"}</strong><p>{uploading ? "Keep this page open until the upload finishes." : "Publishing preserves existing students’ assigned versions and progress."}</p></div><button className="btn primary" disabled={publish.isPending || lifecyclePending || uploading || Boolean(issues.length) || !lessons.length || !title.trim() || !description.trim()}>{publish.isPending ? "Publishing…" : "Publish new version"}</button></div>
           </>}
           <ErrorMessage error={publish.error} />
         </form> : <CourseSubmissions courseId={id!} lessons={data.data?.lessons || []} />}

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getLessonVideoSource, type Lesson, type LessonFile, type LessonQuestion, type LessonSubmission } from "@slate/contracts";
 import {
-  DataState, Empty, ErrorMessage, Field, LessonContent, Panel, RichTextEditor,
+  DataState, Empty, ErrorMessage, Field, LessonContent, Panel, QuestionImageEditor, QuestionImageView, RichTextEditor,
   downloadLessonFile, uploadLessonFile, useData,
 } from "@slate/ui";
 import { AdminSelect } from "./select";
@@ -42,6 +42,7 @@ export function lessonValidation(lesson: Lesson): string | null {
     if (!Number.isInteger(quiz.passingScore) || quiz.passingScore < 1 || quiz.passingScore > 100) return "Set a passing score from 1 to 100%.";
     for (const [index, question] of quiz.questions.entries()) {
       if (!question.prompt.trim()) return `Add the question text for question ${index + 1}.`;
+      if (question.image && (!question.image.alt.trim() || question.image.alt.length > 500)) return `Add an image description of up to 500 characters for question ${index + 1}.`;
       if (question.options.length < 2 || question.options.length > 6 || question.options.some(option => !option.trim())) return `Complete all answer options for question ${index + 1}.`;
       if (question.correctOption === undefined || question.correctOption < 0 || question.correctOption >= question.options.length) return `Choose the correct answer for question ${index + 1}.`;
     }
@@ -58,6 +59,13 @@ export function CourseLessonBuilder({ courseId, lessons, onChange, disabled, rea
   const [addMenu, setAddMenu] = useState(false);
   const [removeConfirm, setRemoveConfirm] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const pendingUploads = useRef(new Set<string>());
+  const reportUpload = useCallback((key: string, pending: boolean) => {
+    if (pending) pendingUploads.current.add(key); else pendingUploads.current.delete(key);
+    const active = pendingUploads.current.size > 0;
+    setUploading(active);
+    onUploadStateChange(active);
+  }, [onUploadStateChange]);
   useEffect(() => {
     if (!lessons.some(lesson => lesson.id === selectedId)) setSelectedId(lessons[0]?.id || "");
   }, [lessons, selectedId]);
@@ -106,10 +114,10 @@ export function CourseLessonBuilder({ courseId, lessons, onChange, disabled, rea
         {preview ? <LessonPreview key={selected.id} lesson={selected} /> : <div className="course-lesson-fields">
           <Field label="Lesson title"><input required maxLength={150} value={selected.title} disabled={locked} placeholder="Give this lesson a clear, descriptive title" onChange={event => update({ ...selected, title: event.target.value })} /></Field>
           <fieldset className="course-lesson-types" disabled={locked}><legend>Lesson type</legend><div>{lessonTypes.map(item => <button type="button" key={item.kind} aria-pressed={(selected.kind || "text") === item.kind} onClick={() => update(changeKind(selected, item.kind))}><span className="course-type-symbol" aria-hidden="true">{item.symbol}</span><span><strong>{item.name}</strong><small>{item.detail}</small></span></button>)}</div></fieldset>
-          {(selected.kind === "video") && <VideoLessonEditor key={selected.id} courseId={courseId} lesson={selected} onChange={update} disabled={disabled} onPending={pending => { setUploading(pending); onUploadStateChange(pending); }} />}
+          {(selected.kind === "video") && <VideoLessonEditor key={selected.id} courseId={courseId} lesson={selected} onChange={update} disabled={disabled} onPending={pending => reportUpload(`video:${selected.id}`, pending)} />}
           <RichTextEditor label={selected.kind === "assignment" ? "Assignment instructions" : selected.kind === "quiz" ? "Introduction & instructions" : selected.kind === "video" ? "Video description & notes" : "Lesson content"} value={selected.body} format={selected.format || "plain"} disabled={locked} onChange={(body: string) => update({ ...selected, body, format: "markdown" })} />
           {selected.kind === "assignment" && <AssignmentEditor lesson={selected} onChange={update} disabled={locked} />}
-          {selected.kind === "quiz" && <QuizEditor lesson={selected} onChange={update} disabled={locked} />}
+          {selected.kind === "quiz" && <QuizEditor lesson={selected} onChange={update} disabled={locked} onPending={reportUpload} />}
         </div>}
         {!readOnly && <div className="course-lesson-footer">
           <div className="actions"><button type="button" className="btn" disabled={locked || index === 0} onClick={() => move(-1)} aria-label="Move lesson earlier">↑ Move up</button><button type="button" className="btn" disabled={locked || index === lessons.length - 1} onClick={() => move(1)} aria-label="Move lesson later">↓ Move down</button></div>
@@ -163,7 +171,7 @@ function AssignmentEditor({ lesson, onChange, disabled }: { lesson: Lesson; onCh
   ] as const).map(([key, label, description]) => <label key={key} className={methods[key] ? "selected" : ""}><input type="checkbox" checked={methods[key]} onChange={event => onChange({ ...lesson, assignment: { ...methods, [key]: event.target.checked } })} /><span><strong>{label}</strong><small>{description}</small></span></label>)}</div><small>At least one format is required. Submitting work marks the assignment complete.</small></fieldset>;
 }
 
-function QuizEditor({ lesson, onChange, disabled }: { lesson: Lesson; onChange: (lesson: Lesson) => void; disabled: boolean }) {
+function QuizEditor({ lesson, onChange, disabled, onPending }: { lesson: Lesson; onChange: (lesson: Lesson) => void; disabled: boolean; onPending: (key: string, pending: boolean) => void }) {
   const quiz = lesson.quiz || { passingScore: 70, questions: [] };
   const updateQuestion = (question: LessonQuestion) => onChange({ ...lesson, quiz: { ...quiz, questions: quiz.questions.map(item => item.id === question.id ? question : item) } });
   const removeOption = (question: LessonQuestion, index: number) => updateQuestion({ ...question, options: question.options.filter((_, i) => i !== index), correctOption: question.correctOption === index ? undefined : question.correctOption !== undefined && question.correctOption > index ? question.correctOption - 1 : question.correctOption });
@@ -172,6 +180,7 @@ function QuizEditor({ lesson, onChange, disabled }: { lesson: Lesson; onChange: 
     {quiz.questions.map((question, index) => <fieldset className="course-question" key={question.id} disabled={disabled}>
       <legend>Question {index + 1}</legend>
       <Field label="Question"><textarea required rows={2} maxLength={5000} placeholder="What would you like to ask?" value={question.prompt} onChange={event => updateQuestion({ ...question, prompt: event.target.value })} /></Field>
+      <QuestionImageEditor image={question.image} disabled={disabled} label={`Question ${index + 1} image`} onChange={image => updateQuestion({ ...question, image })} onPending={pending => onPending(`question:${question.id}`, pending)} />
       <p className="course-question-label">Answer options <span>Select the circle beside the correct answer</span></p>
       {question.options.map((option, optionIndex) => <div className={`course-question-option${question.correctOption === optionIndex ? " correct" : ""}`} key={optionIndex}>
         <input type="radio" name={`correct-${lesson.id}-${question.id}`} checked={question.correctOption === optionIndex} onChange={() => updateQuestion({ ...question, correctOption: optionIndex })} aria-label={`Mark option ${String.fromCharCode(65 + optionIndex)} as correct for question ${index + 1}`} />
@@ -207,7 +216,7 @@ function LessonPreview({ lesson }: { lesson: Lesson }) {
     {lesson.kind === "assignment" && <div className="course-preview-assignment"><strong>Submit your work</strong><p>Available formats: {[
       lesson.assignment?.acceptText && "written answer", lesson.assignment?.acceptLink && "project link", lesson.assignment?.acceptFiles && "file upload",
     ].filter(Boolean).join(", ") || "Choose at least one submission format"}.</p><button type="button" className="btn primary" disabled>Submit assignment</button><small>Preview only · submissions are made in the student portal.</small></div>}
-    {lesson.kind === "quiz" && <div className="course-preview-quiz"><div className="note">Admin preview · correct answers are marked below. Students see answers only after submitting.</div><p>Passing score: <strong>{lesson.quiz?.passingScore ?? 70}%</strong></p>{lesson.quiz?.questions.map((question, index) => <div className="course-preview-question" key={question.id}><h3>{index + 1}. {question.prompt || "Question text"}</h3>{question.options.map((option, i) => <div key={i} className={question.correctOption === i ? "correct" : ""}><span>{String.fromCharCode(65 + i)}</span>{option || "Answer option"}{question.correctOption === i && <small>Correct answer</small>}</div>)}{question.explanation && <p><strong>Explanation:</strong> {question.explanation}</p>}</div>)}</div>}
+    {lesson.kind === "quiz" && <div className="course-preview-quiz"><div className="note">Admin preview · correct answers are marked below. Students see answers only after submitting.</div><p>Passing score: <strong>{lesson.quiz?.passingScore ?? 70}%</strong></p>{lesson.quiz?.questions.map((question, index) => <div className="course-preview-question" key={question.id}><h3>{index + 1}. {question.prompt || "Question text"}</h3>{question.image && <QuestionImageView image={question.image} source={`lesson-uploads/${question.image.uploadId}/download`} label={`Question ${index + 1} image`} />}{question.options.map((option, i) => <div key={i} className={question.correctOption === i ? "correct" : ""}><span>{String.fromCharCode(65 + i)}</span>{option || "Answer option"}{question.correctOption === i && <small>Correct answer</small>}</div>)}{question.explanation && <p><strong>Explanation:</strong> {question.explanation}</p>}</div>)}</div>}
   </div>;
 }
 
@@ -237,7 +246,7 @@ export function CourseSubmissions({ courseId, lessons }: { courseId: string; les
         const lesson = lessons.find(item => item.id === submission.lessonId);
         return <details key={submission.id} className="course-submission"><summary><span><strong>{submission.studentName || "Student"}</strong><small>{submission.studentEmail || ""} · {submission.organizationName || "Organization"}</small></span><span><strong>{submission.lessonTitle || lesson?.title || (submission.kind === "quiz" ? "MCQ assignment" : "Assignment")}</strong><small>{new Date(submission.submittedAt).toLocaleString()}</small></span><span className={`badge ${submission.kind === "quiz" ? submission.passed ? "green" : "amber" : "green"}`}>{submission.kind === "quiz" ? `${submission.score ?? 0}% · ${submission.passed ? "Passed" : "Not passed"}` : "Submitted"}</span></summary><div className="course-submission-content"><p className="course-editor-hint">Course version: {submission.versionNumber ? `Version ${submission.versionNumber}` : submission.versionId} · {submission.lessonTitle || "Assigned lesson"}</p>{submission.answer && <div className="course-written-answer"><h4>Written answer</h4><p>{submission.answer}</p></div>}{submission.url && webLink(submission.url) && <p><a href={submission.url} target="_blank" rel="noopener noreferrer">Open submitted project or repository ↗</a></p>}{submission.files.map(file => <SubmissionFile key={file.id} file={file} />)}{submission.kind === "quiz" && <div className="course-submission-results">{submission.quizResults.map((result, index) => {
           const question = submission.quizQuestions?.find(item => item.id === result.questionId);
-          return <div key={result.questionId}><strong>{index + 1}. {question?.prompt || "Question"}</strong><span className={`badge ${result.selectedOption === result.correctOption ? "green" : "amber"}`}>{result.selectedOption === result.correctOption ? "Correct" : "Incorrect"}</span><p>Selected: {String.fromCharCode(65 + result.selectedOption)}{question?.options[result.selectedOption] ? ` · ${question.options[result.selectedOption]}` : ""}</p><p>Correct: {String.fromCharCode(65 + result.correctOption)}{question?.options[result.correctOption] ? ` · ${question.options[result.correctOption]}` : ""}</p>{result.explanation && <p>{result.explanation}</p>}</div>;
+          return <div key={result.questionId}><strong>{index + 1}. {question?.prompt || "Question"}</strong><span className={`badge ${result.selectedOption === result.correctOption ? "green" : "amber"}`}>{result.selectedOption === result.correctOption ? "Correct" : "Incorrect"}</span>{question?.image && <QuestionImageView image={question.image} source={`lesson-uploads/${question.image.uploadId}/download`} label={`Question ${index + 1} image`} />}<p>Selected: {String.fromCharCode(65 + result.selectedOption)}{question?.options[result.selectedOption] ? ` · ${question.options[result.selectedOption]}` : ""}</p><p>Correct: {String.fromCharCode(65 + result.correctOption)}{question?.options[result.correctOption] ? ` · ${question.options[result.correctOption]}` : ""}</p>{result.explanation && <p>{result.explanation}</p>}</div>;
         })}</div>}</div></details>;
       })}</div> : <Empty title={submissions.length ? "No matching submissions" : "Student work will appear here"}>{submissions.length ? "Try another student name or submission type." : "Publish an assignment or MCQ lesson. Submitted work and scores will appear here when students complete it."}</Empty>}
     </DataState>

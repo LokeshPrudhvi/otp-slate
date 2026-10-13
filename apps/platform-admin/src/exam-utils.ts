@@ -128,6 +128,8 @@ export function validateExamDraft(draft: ExamDraft): string[] {
     if (!Number.isInteger(q.points) || q.points < 1 || q.points > 1000)
       issues.push(prefix + "points must be 1–1,000.");
     if (q.kind === "mcq") {
+      if (q.image && (!q.image.alt.trim() || q.image.alt.length > 500))
+        issues.push(prefix + "add an image description of up to 500 characters.");
       if (
         q.options.length < 2 ||
         q.options.length > 8 ||

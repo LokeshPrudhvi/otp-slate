@@ -8,7 +8,7 @@ import type {
   StudentExamDetail,
   StudentExamSummary,
 } from "@slate/contracts";
-import { api, LessonContent, Select } from "@slate/ui";
+import { api, LessonContent, QuestionImageView, Select } from "@slate/ui";
 import { Heading, NoResults, Status } from "./design";
 import { useStudentData } from "./access";
 import { ExamEventBuffer, ExamSession } from "./live-exam-session";
@@ -746,6 +746,7 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
               </span>
               <h2>{question.title}</h2>
               <LessonContent body={question.prompt} format="markdown" />
+              {question.kind === "mcq" && question.image && <QuestionImageView image={question.image} source={`student/exam-attempts/${view.id}/images/${question.image.uploadId}`} label={`Question ${active + 1} image`} />}
               {question.kind === "coding" &&
                 question.testCases.some((item) => !item.hidden) && (
                   <div className="exam-public-cases">
@@ -978,7 +979,9 @@ function ExamSubmitted({
               </span>
             </div>
             <div className="exam-results-list">
-              {result.questions.map((item) => (
+              {result.questions.map((item) => {
+                const question = view.questions.find(question => question.id === item.questionId);
+                return (
                 <details key={item.questionId}>
                   <summary>
                     {item.title}{" "}
@@ -987,6 +990,7 @@ function ExamSubmitted({
                       {item.verdict}
                     </span>
                   </summary>
+                  {question?.kind === "mcq" && question.image && <QuestionImageView image={question.image} source={`student/exam-attempts/${view.id}/images/${question.image.uploadId}`} label={`${item.title} image`} />}
                   {item.totalTests !== undefined && (
                     <p>
                       {item.passedTests ?? 0} of {item.totalTests} tests passed
@@ -1002,7 +1006,7 @@ function ExamSubmitted({
                     <LessonContent body={item.explanation} format="markdown" />
                   )}
                 </details>
-              ))}
+              ); })}
             </div>
           </>
         ) : (

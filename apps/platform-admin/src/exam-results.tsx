@@ -14,6 +14,7 @@ import {
   Field,
   LessonContent,
   Panel,
+  QuestionImageView,
   useData,
 } from "@slate/ui";
 import { AdminPagination } from "./shell";
@@ -600,6 +601,13 @@ function AttemptContent({
             <LessonContent body={question.prompt} format="markdown" />
             {question.kind === "mcq" ? (
               <>
+                {question.image && (
+                  <QuestionImageView
+                    image={question.image}
+                    source={`lesson-uploads/${question.image.uploadId}/download`}
+                    label={`Question ${index + 1} image`}
+                  />
+                )}
                 <p>
                   <strong>Student answer:</strong>{" "}
                   {answer?.selectedOption === null ||

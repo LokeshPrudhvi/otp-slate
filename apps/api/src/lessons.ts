@@ -7,7 +7,11 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import type { LessonFile, LessonSubmission } from "@slate/contracts";
+import type {
+  LessonFile,
+  LessonSubmission,
+  QuestionImage,
+} from "@slate/contracts";
 import type { z } from "zod";
 import type { SlateService, Actor } from "./service.js";
 import { r2LessonStorage, type LessonStorage } from "./lesson-storage.js";
@@ -17,6 +21,11 @@ import {
   type SubmissionInput,
 } from "./lesson-input.js";
 import * as s from "./schema.js";
+import {
+  matchesQuestionImageType,
+  maxQuestionImageBytes,
+  questionImageTypes,
+} from "./question-images.js";
 
 const file = (row: typeof s.lessonUploads.$inferSelect): LessonFile => ({
   id: row.id,
@@ -38,6 +47,7 @@ const types: Record<string, string[]> = {
   "application/zip": ["zip"],
   "image/png": ["png"],
   "image/jpeg": ["jpg", "jpeg"],
+  "image/webp": ["webp"],
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
     "docx",
   ],
@@ -67,8 +77,12 @@ export class LessonService {
   async createUpload(actor: Actor, raw: z.infer<typeof uploadInput>) {
     const input = uploadInput.parse(raw);
     let versionId: string | undefined;
-    if (input.purpose === "video") {
+    if (input.purpose === "video" || input.purpose === "question_image") {
       if (actor.role !== "platform_admin") throw new ForbiddenException();
+      if (input.courseId || input.lessonId)
+        throw new BadRequestException(
+          "Content uploads must not include assignment identifiers.",
+        );
     } else {
       if (!input.courseId || !input.lessonId)
         throw new BadRequestException(
@@ -86,11 +100,14 @@ export class LessonService {
       versionId = course.versionId;
     }
     const isVideo = input.purpose === "video";
+    const isImage = input.purpose === "question_image";
     const allowedType = isVideo
       ? ["video/mp4", "video/webm"].includes(input.contentType)
-      : Object.keys(types)
-          .filter((type) => !type.startsWith("video/"))
-          .includes(input.contentType);
+      : isImage
+        ? questionImageTypes.includes(input.contentType)
+        : Object.keys(types)
+            .filter((type) => !type.startsWith("video/"))
+            .includes(input.contentType);
     if (
       !allowedType ||
       !types[input.contentType]?.includes(
@@ -100,11 +117,13 @@ export class LessonService {
       throw new BadRequestException(
         isVideo
           ? "Upload an MP4 or WebM video."
-          : "Upload a PDF, TXT, ZIP, PNG, JPG or DOCX file.",
+          : isImage
+            ? "Upload a PNG, JPG or WebP image."
+            : "Upload a PDF, TXT, ZIP, PNG, JPG or DOCX file.",
       );
-    if (input.size > (isVideo ? 250 : 10) * 1024 * 1024)
+    if (input.size > (isVideo ? 250 : isImage ? 5 : 10) * 1024 * 1024)
       throw new BadRequestException(
-        `The file must be ${isVideo ? 250 : 10} MB or smaller.`,
+        `The file must be ${isVideo ? 250 : isImage ? 5 : 10} MB or smaller.`,
       );
     this.requireStorage();
     const uploadId = randomUUID();
@@ -120,7 +139,7 @@ export class LessonService {
         .values({
           id: uploadId,
           ownerId: actor.id,
-          organizationId: isVideo ? null : actor.organizationId,
+          organizationId: isVideo || isImage ? null : actor.organizationId,
           purpose: input.purpose,
           fileName: input.fileName,
           contentType: input.contentType,
@@ -199,6 +218,17 @@ export class LessonService {
         throw new BadRequestException(
           "The uploaded file changed while being finalized. Upload it again.",
         );
+      if (upload.purpose === "question_image") {
+        if (!this.storage.readPrefix)
+          throw new ServiceUnavailableException(
+            "Image validation is not available. Try again later.",
+          );
+        const prefix = await this.storage.readPrefix(objectKey, 16);
+        if (!matchesQuestionImageType(prefix, upload.contentType))
+          throw new BadRequestException(
+            "This file is not a valid PNG, JPG or WebP image matching its selected type. Upload the original image again.",
+          );
+      }
       await tx
         .update(s.lessonUploads)
         .set({ status: "ready", objectKey, readyAt: new Date() })
@@ -227,9 +257,56 @@ export class LessonService {
       url: await this.storage.download(
         upload.objectKey,
         upload.fileName,
-        upload.purpose !== "video",
+        upload.purpose === "assignment",
       ),
-      expiresIn: upload.purpose === "video" ? 3600 : 300,
+      expiresIn: upload.purpose === "assignment" ? 300 : 3600,
+    };
+  }
+  async questionImage(
+    actor: Actor,
+    courseId: string,
+    lessonId: string,
+    uploadId: string,
+  ) {
+    const { lesson } = await this.assigned(actor, courseId, lessonId);
+    if (
+      lesson.kind !== "quiz" ||
+      !lesson.quiz?.questions.some((q) => q.image?.uploadId === uploadId)
+    )
+      throw new NotFoundException(
+        "This lesson has no matching question image.",
+      );
+    return this.authorizedQuestionImage(actor, uploadId);
+  }
+  // Internal service helper. The calling course, exam or practice service MUST
+  // authorize the exact published question/owned attempt reference first.
+  async authorizedQuestionImage(actor: Actor, uploadId: string) {
+    this.requireStorage();
+    const [upload] = await this.service.scope(actor, async (tx) => {
+      await tx.execute(
+        sql`select set_config('slate.question_image_id', ${uploadId}, true)`,
+      );
+      return tx
+        .select()
+        .from(s.lessonUploads)
+        .where(eq(s.lessonUploads.id, uploadId));
+    });
+    if (
+      !upload ||
+      upload.purpose !== "question_image" ||
+      upload.status !== "ready" ||
+      !upload.objectKey ||
+      !questionImageTypes.includes(upload.contentType) ||
+      upload.size > maxQuestionImageBytes
+    )
+      throw new NotFoundException("Question image not found.");
+    return {
+      url: await this.storage.download(
+        upload.objectKey,
+        upload.fileName,
+        false,
+      ),
+      expiresIn: 3600,
     };
   }
   async video(actor: Actor, courseId: string, lessonId: string) {
@@ -434,7 +511,12 @@ export class LessonService {
           submittedLesson: sql<{
             title: string;
             quiz?: {
-              questions: { id: string; prompt: string; options: string[] }[];
+              questions: {
+                id: string;
+                prompt: string;
+                options: string[];
+                image?: QuestionImage;
+              }[];
             };
           } | null>`(select jsonb_build_object('title', item->>'title', 'quiz', item->'quiz') from jsonb_array_elements(${s.versions.lessons}) item where item->>'id'=${s.lessonSubmissions.lessonId} limit 1)`,
         })
@@ -456,7 +538,12 @@ export class LessonService {
         ...(submittedLesson?.quiz
           ? {
               quizQuestions: submittedLesson.quiz.questions.map(
-                ({ id, prompt, options }) => ({ id, prompt, options }),
+                ({ id, prompt, options, image }) => ({
+                  id,
+                  prompt,
+                  options,
+                  ...(image ? { image } : {}),
+                }),
               ),
             }
           : {}),

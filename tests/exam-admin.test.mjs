@@ -61,6 +61,34 @@ test("selected branches/students must have an explicit audience", () => {
     );
   }
 });
+test("MCQ images survive draft editing without aliasing the saved assessment", () => {
+  const exam = draft();
+  exam.questions[0].image = {
+    uploadId: "6a0193a2-d709-4458-a2c1-daebd6245806",
+    alt: "A diagram with four numbered nodes",
+  };
+  assert.deepEqual(validateExamDraft(exam), []);
+  const payload = examDraftFrom(exam);
+  assert.deepEqual(payload.questions[0].image, exam.questions[0].image);
+  payload.questions[0].image.alt = "Updated accessible description";
+  assert.equal(exam.questions[0].image.alt, "A diagram with four numbered nodes");
+  payload.questions[0].image = undefined;
+  assert.ok(exam.questions[0].image);
+  assert.deepEqual(validateExamDraft(payload), []);
+});
+test("question images require bounded descriptions while text-only MCQs remain valid", () => {
+  const exam = draft();
+  for (const alt of [" ", "x".repeat(501)]) {
+    exam.questions[0].image = { uploadId: "image-id", alt };
+    assert.ok(validateExamDraft(exam).some((error) => /image description/.test(error)));
+  }
+  exam.questions[0].image = { uploadId: "image-id", alt: "Four nodes labelled A to D" };
+  exam.questions[0].prompt = "";
+  assert.ok(validateExamDraft(exam).some((error) => /add a prompt/.test(error)));
+  exam.questions[0].prompt = "Which node has the highest degree?";
+  delete exam.questions[0].image;
+  assert.deepEqual(validateExamDraft(exam), []);
+});
 test("invalid MCQ answer, empty options, fractional points and date window are rejected", () => {
   const exam = draft();
   exam.questions[0].correctOption = 8;

@@ -1,7 +1,9 @@
 export * from "./access.js";
 export * from "./lesson-media.js";
 export * from "./exams.js";
+export * from "./question-image.js";
 import type { EffectiveAccess } from "./access.js";
+import type { QuestionImage } from "./question-image.js";
 export type Portal = "student" | "platform" | "organization";
 export type Role = "student" | "platform_admin" | "organization_viewer";
 export type OnboardingStep = "password" | "phone" | "mfa" | null;
@@ -57,6 +59,7 @@ export interface Lesson {
 export interface LessonQuestion {
   id: string;
   prompt: string;
+  image?: QuestionImage;
   options: string[];
   /** Only returned to Platform Admin; students receive answers after submitting. */
   correctOption?: number;
@@ -87,7 +90,7 @@ export interface LessonSubmission {
   organizationName?: string;
   lessonTitle?: string;
   versionNumber?: number;
-  quizQuestions?: { id: string; prompt: string; options: string[] }[];
+  quizQuestions?: { id: string; prompt: string; options: string[]; image?: QuestionImage }[];
 }
 export interface Course {
   id: string;

@@ -13,6 +13,7 @@ export interface LessonStorage {
   configured(): boolean;
   upload(key: string, contentType: string, size: number): Promise<string>;
   head(key: string): Promise<{ size: number; contentType: string }>;
+  readPrefix?(key: string, length: number): Promise<Uint8Array>;
   finalize(stagingKey: string, immutableKey: string): Promise<void>;
   download(key: string, fileName: string, attachment: boolean): Promise<string>;
 }
@@ -73,6 +74,18 @@ export const r2LessonStorage: LessonStorage = {
         { abortSignal: AbortSignal.timeout(10_000) },
       )
       .catch(() => undefined);
+  },
+  async readPrefix(key, length) {
+    const object = await client().send(
+      new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET,
+        Key: key,
+        Range: `bytes=0-${length - 1}`,
+      }),
+      { abortSignal: AbortSignal.timeout(10_000) },
+    );
+    if (!object.Body) throw new Error("Image object is empty.");
+    return object.Body.transformToByteArray();
   },
   async download(key, fileName, attachment) {
     return getSignedUrl(

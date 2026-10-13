@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Lesson, LessonFile, LessonSubmission } from "@slate/contracts";
 import { getLessonVideoSource } from "@slate/contracts";
-import { api, LessonContent, uploadLessonFile } from "@slate/ui";
+import { api, LessonContent, QuestionImageView, uploadLessonFile } from "@slate/ui";
 import { useStudentData } from "./access";
 import { Status, StudentIcon } from "./design";
 
@@ -515,6 +515,7 @@ function QuizForm({
                   </span>
                 </div>
                 <p className="lesson-question-prompt">{question.prompt}</p>
+                {question.image && <QuestionImageView image={question.image} source={`${activityPath(courseId, lesson.id)}/images/${question.image.uploadId}`} label={`Question ${index + 1} image`} />}
                 <p>
                   <b>Your answer:</b>{" "}
                   {question.options[result.selectedOption] ?? "No answer"}
@@ -570,6 +571,7 @@ function QuizForm({
               </span>
               {question.prompt}
             </legend>
+            {question.image && <QuestionImageView image={question.image} source={`${activityPath(courseId, lesson.id)}/images/${question.image.uploadId}`} label={`Question ${index + 1} image`} />}
             <div className="lesson-options">
               {question.options.map((option, optionIndex) => (
                 <label

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getLessonVideoSource } from "@slate/contracts";
 import type { Lesson } from "@slate/contracts";
+import { questionImageInput } from "./question-images.js";
 
 const nonempty = (max: number) => z.string().trim().min(1).max(max);
 export const secureUrl = z
@@ -16,6 +17,7 @@ const question = z
   .object({
     id: nonempty(100),
     prompt: nonempty(5000),
+    image: questionImageInput.optional(),
     options: z.array(nonempty(2000)).min(2).max(6),
     correctOption: z.number().int().min(0).max(5),
     explanation: z.string().trim().max(5000).optional(),
@@ -114,7 +116,7 @@ export function redactLesson(lesson: Lesson): Lesson {
 }
 export const uploadInput = z
   .object({
-    purpose: z.enum(["video", "assignment"]),
+    purpose: z.enum(["video", "assignment", "question_image"]),
     fileName: nonempty(180).refine(
       (value) => !/[\x00-\x1f/\\]/.test(value),
       "Choose a valid file name.",

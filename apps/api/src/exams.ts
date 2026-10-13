@@ -29,6 +29,11 @@ import type { Transaction } from "./database.js";
 import { lockOrganizationBranches, branchCodeInput } from "./branches.js";
 import { resolvePolicies } from "./access.js";
 import * as s from "./schema.js";
+import {
+  questionImageInput,
+  validateQuestionImages,
+} from "./question-images.js";
+import { LessonService } from "./lessons.js";
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 const key = z
@@ -52,6 +57,7 @@ const question = z.discriminatedUnion("kind", [
     .object({
       ...baseQuestion,
       kind: z.literal("mcq"),
+      image: questionImageInput.optional(),
       options: z.array(text(2000)).min(2).max(8),
       correctOption: z.number().int().min(0).max(7),
       explanation: z.string().max(5000),
@@ -232,6 +238,7 @@ export function redactExamQuestions(
           prompt: q.prompt,
           points: q.points,
           options: q.options,
+          ...(q.image ? { image: q.image } : {}),
         }
       : { ...q, testCases: q.testCases.filter((t) => !t.hidden) },
   );
@@ -602,6 +609,10 @@ export class ExamService {
       const org = await this.organization(tx, input.organizationId, true);
       this.active(org);
       await this.recipients(tx, org, input.audience);
+      await validateQuestionImages(
+        tx,
+        input.questions.filter((q) => q.kind === "mcq"),
+      );
       const [row] = await tx
         .insert(s.liveExams)
         .values({
@@ -649,6 +660,10 @@ export class ExamService {
           "Published exam questions, timing and audience cannot be edited. Create a new draft instead.",
         );
       await this.recipients(tx, org, input.audience);
+      await validateQuestionImages(
+        tx,
+        input.questions.filter((q) => q.kind === "mcq"),
+      );
       const [row] = await tx
         .update(s.liveExams)
         .set({
@@ -694,6 +709,10 @@ export class ExamService {
         .from(s.liveExamQuestions)
         .where(eq(s.liveExamQuestions.examId, id));
       if (!key) throw new BadRequestException("Add exam questions first.");
+      await validateQuestionImages(
+        tx,
+        key.questions.filter((q) => q.kind === "mcq"),
+      );
       const recipients = await this.recipients(tx, org, current.audience);
       if (!recipients.length)
         throw new BadRequestException(
@@ -974,6 +993,27 @@ export class ExamService {
       const attempt = await this.ownedAttempt(tx, actor, id);
       return this.view(tx, await this.row(tx, attempt.examId), attempt);
     });
+  }
+  async questionImage(actor: Actor, attemptId: string, uploadId: string) {
+    this.student(actor);
+    await this.service.scope(actor, async (tx) => {
+      await this.currentStudent(tx, actor);
+      const attempt = await this.ownedAttempt(tx, actor, attemptId);
+      const exam = await this.row(tx, attempt.examId);
+      if (
+        exam.status !== "published" ||
+        !exam.publicQuestions.some(
+          (q) => q.kind === "mcq" && q.image?.uploadId === uploadId,
+        )
+      )
+        throw new NotFoundException(
+          "This attempt has no matching question image.",
+        );
+    });
+    return new LessonService(
+      this.service,
+      this.service.lessonStorage,
+    ).authorizedQuestionImage(actor, uploadId);
   }
   async save(
     actor: Actor,

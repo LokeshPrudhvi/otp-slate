@@ -464,6 +464,20 @@ export class ApiController {
       id.parse(upload),
     );
   }
+  @Get("student/courses/:id/lessons/:lesson/images/:upload")
+  async lessonQuestionImage(
+    @Req() req: Request,
+    @Param("id") course: string,
+    @Param("lesson") lesson: string,
+    @Param("upload") upload: string,
+  ) {
+    return this.lessons.questionImage(
+      await this.service.actor(req, "student"),
+      id.parse(course),
+      id.parse(lesson),
+      id.parse(upload),
+    );
+  }
   @Get("student/courses/:id/lessons/:lesson/video") async lessonVideo(
     @Req() req: Request,
     @Param("id") course: string,
