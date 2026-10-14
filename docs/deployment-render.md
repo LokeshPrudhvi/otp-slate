@@ -2,6 +2,20 @@
 
 The root `render.yaml` defines one **Free** Node web service in Ohio, close to the existing Neon database in AWS us-east-2. Cloudflare hosts the portals separately. The Blueprint does not create a database, paid worker or persistent disk. Automatic deploys and previews are disabled so releases are deliberate.
 
+## CRT and single-branch exam release — 14 October 2026
+
+Source `93a4896` is live on the existing Free / Ohio service as `dep-db7q41uisbdc73bm3j60`. Matching Cloudflare Pages releases are Admin `2b046378` and Student `2f609b9f`; Organization remains unchanged. No service, paid plan or secret was added.
+
+Admin and Student now have a CRT section with four fixed subjects and separate practice. Admin authors PDF topics with image-capable MCQs and a passing percentage, publishes immutable versions, assigns versions to one organization and one stable branch identity, and manages extra practice-bank questions. Students read PDFs beside assessments, enlarge the PDF, retry assessments, earn completion checkmarks and practise from assigned topics plus extra questions. Existing assignments remain pinned when content is republished; practice completion does not mark topics complete. Custom portal access policies must explicitly enable CRT.
+
+Live-exam creation, editing and publication require one organization and exactly one branch. Optional selected students must belong to both. Existing published exams retain their frozen recipients, attempts and results; older broad drafts must choose a branch before saving or publishing. Regression checks verified that CSE in two different organizations remains isolated for exams, course/practice access and CRT assignments.
+
+The additive `012-crt-curriculum` migration was rehearsed twice on an auto-expiring Neon clone with actual PostgreSQL role checks before application to production. Five new tables use forced row-level security. Counts and digests of all **32 pre-existing application/auth tables** were unchanged, including 5 organizations, 11 members, 24 enrollments, 21 course versions, 58 progress rows and the existing exam/attempt. The earlier image migration now tolerates `crt_pdf` during full local migration reruns.
+
+Verification: **216 API checks passed**, one existing optional check skipped, **30 focused frontend checks passed**, **9 deployment-proxy checks passed**, and all three portals built. Real R2 PDF verification used synthetic identities and an isolated database: upload/finalization, exact bytes, inline PDF headers, HTTP range reads and denial for another organization's CSE student passed. Both generated objects were removed and absence verified. Isolated browser checks covered topic listing/pagination, failed/passing assessments, enlarged PDF reading, mixed practice-bank questions, persisted practice results, admin draft/version publication, and an excluded same-code branch. Browser file selection itself was blocked by the extension's file-URL permission; the real storage flow was tested separately.
+
+Production CRT/exam deep links, JavaScript/CSS hashes, health responses and anonymous CRT read/write denial were verified on both updated portals. No real test accounts, curriculum topics, assignments or emails were created. Test preview servers were stopped. See [CRT usage](application-setup.md#crt-curriculum-and-branch-specific-exams).
+
 ## MCQ image release — 13 October 2026
 
 Release source `ad124a6` adds one optional private image to each question in the existing course MCQ and live-exam editors. Admins can upload, replace or remove PNG, JPEG or WebP images up to **5 MiB**, with a required accessible description. Students can enlarge images in place while answering and reviewing results. Practice test authoring is unchanged. Question text and answer options remain required.

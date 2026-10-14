@@ -2,9 +2,17 @@
 
 Each React portal is a separate Pages project. The browser keeps using its existing same-origin `/api` paths; a small Pages Function proxies them to the Render API. Pages receives only the API origin and a dedicated server-to-server proxy secret. The separate private R2 bucket is accessed through short-lived URLs signed by Render; the four R2 credentials/settings remain server-only on Render. No database URL, email key, or Better Auth secret belongs in Cloudflare. No secret belongs in a `VITE_*` variable or browser build.
 
-## Live portals — 13 October 2026
+## Live portals — 14 October 2026
 
-The current MCQ image release uses source `ad124a6`, with Admin Pages deployment `8684478b` and Student `1a8db42e`. In **Admin → Courses → MCQ lesson** or **Admin → Live exams → Multiple choice**, use **Add image**, enter its accessible description, then publish the course version or save/review the exam. One optional PNG, JPEG or WebP image up to 5 MiB is supported per question, with replace/remove controls. Student questions and feedback show the image with an in-page enlargement. Practice authoring is unchanged. The Organization bundle remains `50c314db`. See the [current API and migration verification](deployment-render.md#mcq-image-release--13-october-2026).
+The CRT and single-branch exam release uses source `93a4896`, Admin deployment `2b046378` and Student deployment `2f609b9f`. Open **Admin → CRT** to create PDF/MCQ topics, publish versions, assign them to one organization and one branch, and add extra practice questions. Students use **CRT** for the four fixed subjects and Practice. Existing published topics remain pinned until an admin explicitly updates a branch assignment.
+
+New live exams require one organization and one branch, optionally narrowed to selected students in that branch. Existing published rosters/results remain intact. The Organization portal bundle remains `50c314db`; API compatibility and all three portal builds were checked.
+
+Both updated production portals serve the exact tested JavaScript/CSS bytes on CRT and exam deep links. API/proxy health returned 200; anonymous CRT reads and writes returned 401. See [migration and acceptance verification](deployment-render.md#crt-and-single-branch-exam-release--14-october-2026). Earlier releases below are historical.
+
+## Previous portals — 13 October 2026
+
+The previous MCQ image release uses source `ad124a6`, with Admin Pages deployment `8684478b` and Student `1a8db42e`. In **Admin → Courses → MCQ lesson** or **Admin → Live exams → Multiple choice**, use **Add image**, enter its accessible description, then publish the course version or save/review the exam. One optional PNG, JPEG or WebP image up to 5 MiB is supported per question, with replace/remove controls. Student questions and feedback show the image with an in-page enlargement. Practice authoring is unchanged. The Organization bundle remains `50c314db`. See the [current API and migration verification](deployment-render.md#mcq-image-release--13-october-2026).
 
 Production course/exam deep links serve the exact tested JavaScript and CSS bytes. Both portal health checks returned 200, and unauthenticated question-image reads/uploads returned 401. Authenticated browser tests used an isolated database with synthetic accounts and the real private R2 storage; all temporary image objects were removed afterward.
 
@@ -24,7 +32,7 @@ Announcements remain available under **Admin → Announcements**. Choose an orga
 | Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
 | Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
 
-All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#mcq-image-release--13-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#crt-and-single-branch-exam-release--14-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
 
 ## Build configuration
 
