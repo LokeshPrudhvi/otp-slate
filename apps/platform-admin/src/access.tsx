@@ -43,6 +43,7 @@ const scopeLabels = {
 };
 const featureIcons: Partial<Record<FeatureKey, string>> = {
   courses: "book",
+  crt: "book",
   toolkit: "toolkit",
   compiler: "code",
   practice: "exam",

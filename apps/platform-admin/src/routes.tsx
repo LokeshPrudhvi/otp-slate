@@ -39,6 +39,8 @@ import { AdminSelect } from "./select";
 import { BranchFields, selectedOrganizationBranch, useOrganizationBranches } from "./student-branches";
 import { AdminPage } from "./page";
 import { CourseLessonBuilder, CourseSubmissions, lessonValidation } from "./lesson-editor";
+import { CrtAdmin } from "./crt";
+import { CrtTopicEditor } from "./crt-editor";
 
 async function updateCachedList<T>(
   client: QueryClient,
@@ -62,6 +64,7 @@ const navigation = [
   { to: "/members", label: "People", icon: "users" },
   { to: "/access", label: "Access", icon: "toolkit" },
   { to: "/courses", label: "Courses", icon: "book" },
+  { to: "/crt", label: "CRT", icon: "toolkit" },
   { to: "/exams", label: "Live exams", icon: "exam" },
   { to: "/jobs", label: "Jobs", icon: "jobs" },
   { to: "/announcements", label: "Announcements", icon: "resume" },
@@ -1109,6 +1112,9 @@ export function PlatformRoutes() {
           <Route path="access" element={<LearningAccess />} />
           <Route path="courses" element={<Courses />} />
           <Route path="courses/:id" element={<CourseEditor />} />
+          <Route path="crt" element={<CrtAdmin />} />
+          <Route path="crt/new" element={<CrtTopicEditor key="new" />} />
+          <Route path="crt/topics/:id" element={<CrtTopicEditor />} />
           <Route path="exams" element={<Exams />} />
           <Route path="exams/new" element={<ExamEditor />} />
           <Route path="exams/:id" element={<ExamEditor />} />

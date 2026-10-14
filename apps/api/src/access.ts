@@ -108,6 +108,7 @@ export const defaultDisplay: PortalDisplay = {
 const coreFeatures: FeatureKey[] = [
   "courses",
   "toolkit",
+  "crt",
   "compiler",
   "practice",
   "live-exams",
@@ -132,6 +133,7 @@ export function practiceModule(
 }
 const features: AccessWorkspace["catalog"]["features"] = [
   ["courses", "Courses", "Published courses selected for this audience."],
+  ["crt", "CRT", "PDF lessons and practice assigned to this organization and branch."],
   [
     "toolkit",
     "Learning toolkit",

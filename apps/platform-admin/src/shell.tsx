@@ -17,7 +17,7 @@ export function AdminShell({ navigation }: { navigation: NavigationItem[] }) {
   });
   const groups = [
     { name: "Workspace", paths: ["/", "/organizations", "/members", "/registrations"] },
-    { name: "Learning", paths: ["/access", "/courses", "/exams"] },
+    { name: "Learning", paths: ["/access", "/courses", "/crt", "/exams"] },
     { name: "Platform", paths: ["/jobs", "/announcements", "/integrations"] },
   ];
   return <div className="platform-admin">

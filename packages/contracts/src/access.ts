@@ -1,6 +1,7 @@
 export const featureKeys = [
   "courses",
   "toolkit",
+  "crt",
   "compiler",
   "practice",
   "live-exams",

@@ -28,8 +28,11 @@ export const examLanguages: ExamLanguage[] = [
   "Kotlin",
 ];
 export type ExamAudienceSelection = {
+  /** Organization-wide audiences remain readable for historical published exams only. */
   mode: "organization" | "branches" | "students";
+  /** New and edited drafts require exactly one code from the exam's organization. */
   branchCodes: string[];
+  /** When mode is students, every selected student must belong to that branch. */
   studentIds: string[];
 };
 export type ExamMonitoring = {

@@ -77,7 +77,11 @@ export class LessonService {
   async createUpload(actor: Actor, raw: z.infer<typeof uploadInput>) {
     const input = uploadInput.parse(raw);
     let versionId: string | undefined;
-    if (input.purpose === "video" || input.purpose === "question_image") {
+    if (
+      input.purpose === "video" ||
+      input.purpose === "question_image" ||
+      input.purpose === "crt_pdf"
+    ) {
       if (actor.role !== "platform_admin") throw new ForbiddenException();
       if (input.courseId || input.lessonId)
         throw new BadRequestException(
@@ -101,13 +105,16 @@ export class LessonService {
     }
     const isVideo = input.purpose === "video";
     const isImage = input.purpose === "question_image";
+    const isPdf = input.purpose === "crt_pdf";
     const allowedType = isVideo
       ? ["video/mp4", "video/webm"].includes(input.contentType)
       : isImage
         ? questionImageTypes.includes(input.contentType)
-        : Object.keys(types)
-            .filter((type) => !type.startsWith("video/"))
-            .includes(input.contentType);
+        : isPdf
+          ? input.contentType === "application/pdf"
+          : Object.keys(types)
+              .filter((type) => !type.startsWith("video/"))
+              .includes(input.contentType);
     if (
       !allowedType ||
       !types[input.contentType]?.includes(
@@ -119,11 +126,16 @@ export class LessonService {
           ? "Upload an MP4 or WebM video."
           : isImage
             ? "Upload a PNG, JPG or WebP image."
-            : "Upload a PDF, TXT, ZIP, PNG, JPG or DOCX file.",
+            : isPdf
+              ? "Upload a PDF document."
+              : "Upload a PDF, TXT, ZIP, PNG, JPG or DOCX file.",
       );
-    if (input.size > (isVideo ? 250 : isImage ? 5 : 10) * 1024 * 1024)
+    if (
+      input.size >
+      (isVideo ? 250 : isImage ? 5 : isPdf ? 20 : 10) * 1024 * 1024
+    )
       throw new BadRequestException(
-        `The file must be ${isVideo ? 250 : isImage ? 5 : 10} MB or smaller.`,
+        `The file must be ${isVideo ? 250 : isImage ? 5 : isPdf ? 20 : 10} MB or smaller.`,
       );
     this.requireStorage();
     const uploadId = randomUUID();
@@ -139,7 +151,8 @@ export class LessonService {
         .values({
           id: uploadId,
           ownerId: actor.id,
-          organizationId: isVideo || isImage ? null : actor.organizationId,
+          organizationId:
+            isVideo || isImage || isPdf ? null : actor.organizationId,
           purpose: input.purpose,
           fileName: input.fileName,
           contentType: input.contentType,
@@ -227,6 +240,17 @@ export class LessonService {
         if (!matchesQuestionImageType(prefix, upload.contentType))
           throw new BadRequestException(
             "This file is not a valid PNG, JPG or WebP image matching its selected type. Upload the original image again.",
+          );
+      }
+      if (upload.purpose === "crt_pdf") {
+        if (!this.storage.readPrefix)
+          throw new ServiceUnavailableException(
+            "PDF validation is not available. Try again later.",
+          );
+        const prefix = await this.storage.readPrefix(objectKey, 5);
+        if (new TextDecoder().decode(prefix) !== "%PDF-")
+          throw new BadRequestException(
+            "This file is not a valid PDF. Upload the original PDF document.",
           );
       }
       await tx

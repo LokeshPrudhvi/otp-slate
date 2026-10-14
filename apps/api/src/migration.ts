@@ -7,6 +7,7 @@ import { lessonMigration } from "./lesson-migration.js";
 import { announcementMigration } from "./announcement-migration.js";
 import { branchMigration } from "./branch-migration.js";
 import { examMigration } from "./exam-migration.js";
+import { crtMigration } from "./crt-migration.js";
 import { questionImageMigration } from "./question-image-migration.js";
 import { branchEditMigration } from "./branch-edit-migration.js";
 import { courseLifecycleMigration } from "./course-lifecycle-migration.js";
@@ -82,4 +83,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS member_student_identity ON members(org_id, low
   branchMigration +
   branchEditMigration +
   examMigration +
-  questionImageMigration;
+  questionImageMigration +
+  crtMigration;

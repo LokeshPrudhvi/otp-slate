@@ -49,7 +49,13 @@ test("organization, branch and student policies enforce live HTTP access without
       .values([{ name: "Access College" }, { name: "Other College" }])
       .returning(),
   );
-  await scoped(connection.db, { platform: true }, tx => tx.insert(s.organizationBranches).values([{ organizationId: org.id, code: "CSE", name: "Computer Science" }, { organizationId: org.id, code: "ME", name: "Mechanical Engineering" }]));
+  await scoped(connection.db, { platform: true }, (tx) =>
+    tx.insert(s.organizationBranches).values([
+      { organizationId: org.id, code: "CSE", name: "Computer Science" },
+      { organizationId: org.id, code: "ME", name: "Mechanical Engineering" },
+      { organizationId: other.id, code: "CSE", name: "Computer Science" },
+    ]),
+  );
   async function person(
     name: string,
     role: "platform_admin" | "student" | "organization_viewer",
@@ -380,6 +386,20 @@ test("organization, branch and student policies enforce live HTTP access without
         );
         assert.deepEqual(
           (await request("student/courses", foreign.cookie)).body,
+          [],
+        );
+        assert.deepEqual(
+          (await request("student/practice", foreign.cookie)).body,
+          [],
+        );
+        const otherWorkspace = await request(
+          `platform/organizations/${other.id}/access`,
+          admin.cookie,
+        );
+        assert.equal(otherWorkspace.status, 200);
+        assert.deepEqual(
+          otherWorkspace.body.students.find((student: any) => student.id === foreign.id)
+            .effective.courseIds,
           [],
         );
       },

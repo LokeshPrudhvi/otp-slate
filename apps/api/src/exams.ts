@@ -85,6 +85,31 @@ const question = z.discriminatedUnion("kind", [
     })
     .strict(),
 ]);
+const branchAudienceInput = z
+  .object({
+    mode: z.enum(["branches", "students"]),
+    branchCodes: z
+      .array(branchCodeInput)
+      .length(1, "Choose exactly one branch in the selected organization."),
+    studentIds: z.array(z.uuid()).max(10000),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (
+      (value.mode === "branches" && value.studentIds.length > 0) ||
+      (value.mode === "students" && value.studentIds.length === 0)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Choose all students in the branch or select specific students.",
+      });
+    if (new Set(value.studentIds).size !== value.studentIds.length)
+      ctx.addIssue({
+        code: "custom",
+        message: "Remove duplicate student selections.",
+      });
+  });
 export const examDraftInput = z
   .object({
     codingGrading: z.literal("manual"),
@@ -92,13 +117,7 @@ export const examDraftInput = z
     title: text(150),
     description: z.string().max(2000),
     instructions: z.string().max(10000),
-    audience: z
-      .object({
-        mode: z.enum(["organization", "branches", "students"]),
-        branchCodes: z.array(branchCodeInput).max(500),
-        studentIds: z.array(z.uuid()).max(10000),
-      })
-      .strict(),
+    audience: branchAudienceInput,
     startsAt: z.iso.datetime({ offset: true }),
     endsAt: z.iso.datetime({ offset: true }),
     durationMinutes: z.number().int().min(1).max(480),
@@ -141,20 +160,6 @@ export const examDraftInput = z
           issue("Test case IDs must be unique within each question.");
       }
     }
-    const a = value.audience;
-    if (
-      new Set(a.branchCodes).size !== a.branchCodes.length ||
-      new Set(a.studentIds).size !== a.studentIds.length
-    )
-      issue("Remove duplicate audience selections.");
-    if (
-      (a.mode === "organization" &&
-        (a.branchCodes.length || a.studentIds.length)) ||
-      (a.mode === "branches" &&
-        (!a.branchCodes.length || a.studentIds.length)) ||
-      (a.mode === "students" && (!a.studentIds.length || a.branchCodes.length))
-    )
-      issue("Choose one audience type and its required selections.");
   });
 export const createExamInput = examDraftInput.safeExtend({
   clientId: z.uuid(),
@@ -423,15 +428,22 @@ export class ExamService {
     org: typeof s.organizations.$inferSelect,
     input: ExamDraft["audience"],
   ) {
+    // Legacy published exams retain their frozen rosters. Draft creation,
+    // editing and publication always require a single organization branch.
+    const parsed = branchAudienceInput.safeParse(input);
+    if (!parsed.success)
+      throw new BadRequestException(
+        "Choose exactly one branch in this organization before saving or publishing the exam.",
+      );
+    const selection = parsed.data;
+    const branchCode = selection.branchCodes[0];
     const branches = await tx
       .select()
       .from(s.organizationBranches)
       .where(eq(s.organizationBranches.organizationId, org.id));
-    if (
-      input.branchCodes.some((code) => !branches.some((b) => b.code === code))
-    )
+    if (!branches.some((branch) => branch.code === branchCode))
       throw new BadRequestException(
-        "Choose branches belonging to this organization.",
+        "Choose a branch belonging to this organization.",
       );
     const people = await tx
       .select({ member: s.members, name: s.user.name, email: s.user.email })
@@ -440,13 +452,16 @@ export class ExamService {
       .where(
         and(
           eq(s.members.organizationId, org.id),
+          eq(s.members.branchCode, branchCode),
           eq(s.members.role, "student"),
           eq(s.members.status, "active"),
         ),
       );
-    if (input.studentIds.some((id) => !people.some((p) => p.member.id === id)))
+    if (
+      selection.studentIds.some((id) => !people.some((p) => p.member.id === id))
+    )
       throw new BadRequestException(
-        "Choose active students belonging to this organization.",
+        "Choose active students belonging to this organization and selected branch.",
       );
     const policies = await tx
       .select()
@@ -454,10 +469,8 @@ export class ExamService {
       .where(eq(s.accessPolicies.organizationId, org.id));
     return people.filter(
       (p) =>
-        (input.mode === "organization" ||
-          (input.mode === "branches"
-            ? input.branchCodes.includes(p.member.branchCode || "")
-            : input.studentIds.includes(p.member.id))) &&
+        (selection.mode === "branches" ||
+          selection.studentIds.includes(p.member.id)) &&
         resolvePolicies(
           org,
           p.member,

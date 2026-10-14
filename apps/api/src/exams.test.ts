@@ -48,6 +48,8 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
     tx.insert(s.organizationBranches).values([
       { organizationId: org.id, code: "CSE", name: "Computer Science" },
       { organizationId: org.id, code: "ME", name: "Mechanical" },
+      { organizationId: other.id, code: "CSE", name: "Computer Science" },
+      { organizationId: other.id, code: "ECE", name: "Electronics" },
     ]),
   );
   async function person(
@@ -172,7 +174,7 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
               ...draft({
                 audience: {
                   mode: "students",
-                  branchCodes: [],
+                  branchCodes: ["CSE"],
                   studentIds: [outsider.id],
                 },
               }),
@@ -189,6 +191,99 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
         const duplicate = await exams.create(admin, input);
         assert.equal(duplicate.id, exam.id);
         assert.equal((await exams.audience(admin, org.id)).students.length, 3);
+        const orgAudience = await exams.audience(admin, org.id);
+        assert.deepEqual(
+          orgAudience.branches.map((branch) => branch.code).sort(),
+          ["CSE", "ME"],
+        );
+        assert.ok(
+          !orgAudience.students.some((person) => person.id === outsider.id),
+        );
+        const otherAudience = await exams.audience(admin, other.id);
+        assert.deepEqual(
+          otherAudience.students.map((person) => person.id),
+          [outsider.id],
+        );
+        for (const selection of [
+          { mode: "organization" as const, branchCodes: [], studentIds: [] },
+          {
+            mode: "branches" as const,
+            branchCodes: ["CSE", "ME"],
+            studentIds: [],
+          },
+          {
+            mode: "students" as const,
+            branchCodes: [],
+            studentIds: [student.id],
+          },
+        ]) {
+          assert.equal(
+            examDraftInput.safeParse(draft({ audience: selection })).success,
+            false,
+          );
+          await assert.rejects(() =>
+            exams.create(admin, {
+              ...draft({ audience: selection }),
+              clientId: randomUUID(),
+            }),
+          );
+        }
+        await assert.rejects(
+          () =>
+            exams.create(admin, {
+              ...draft({
+                audience: {
+                  mode: "branches",
+                  branchCodes: ["ECE"],
+                  studentIds: [],
+                },
+              }),
+              clientId: randomUUID(),
+            }),
+          /belonging to this organization/,
+        );
+        await assert.rejects(
+          () =>
+            exams.create(admin, {
+              ...draft({
+                audience: {
+                  mode: "students",
+                  branchCodes: ["CSE"],
+                  studentIds: [mechanical.id],
+                },
+              }),
+              clientId: randomUUID(),
+            }),
+          /selected branch/,
+        );
+        const oldDraft = await exams.create(admin, {
+          ...draft({ title: "Historical broad draft" }),
+          clientId: randomUUID(),
+        });
+        await scoped(connection.db, { platform: true }, (tx) =>
+          tx
+            .update(s.liveExams)
+            .set({
+              audience: {
+                mode: "organization",
+                branchCodes: [],
+                studentIds: [],
+              },
+            })
+            .where(eq(s.liveExams.id, oldDraft.id)),
+        );
+        assert.equal(
+          (await exams.detail(admin, oldDraft.id)).audience.mode,
+          "organization",
+        );
+        await assert.rejects(
+          () => exams.publish(admin, oldDraft.id, oldDraft.revision),
+          /exactly one branch/,
+        );
+        await exams.update(admin, oldDraft.id, {
+          ...draft(),
+          revision: oldDraft.revision,
+        });
         await assert.rejects(
           () => exams.update(admin, exam.id, { ...draft(), revision: 99 }),
           /another session/,
@@ -201,6 +296,22 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
         assert.deepEqual(await exams.studentList(student), []);
         exam = await exams.publish(admin, exam.id, exam.revision);
         assert.equal(exam.audienceCount, 2);
+        const roster = await scoped(connection.db, { platform: true }, (tx) =>
+          tx
+            .select()
+            .from(s.liveExamRoster)
+            .where(eq(s.liveExamRoster.examId, exam.id)),
+        );
+        assert.deepEqual(
+          roster.map((person) => person.memberId).sort(),
+          [student.id, peer.id].sort(),
+        );
+        assert.ok(
+          roster.every(
+            (person) =>
+              person.organizationId === org.id && person.branchCode === "CSE",
+          ),
+        );
         await assert.rejects(
           () =>
             exams.update(admin, exam.id, {
@@ -216,6 +327,36 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
         await assert.rejects(
           () => exams.studentExam(outsider, exam.id),
           /not found/,
+        );
+        // Existing published exams are read from their immutable member roster,
+        // even when their historical audience uses an older, broader shape.
+        for (const legacy of [
+          { mode: "organization" as const, branchCodes: [], studentIds: [] },
+          {
+            mode: "branches" as const,
+            branchCodes: ["CSE", "ME"],
+            studentIds: [],
+          },
+        ]) {
+          await scoped(connection.db, { platform: true }, (tx) =>
+            tx
+              .update(s.liveExams)
+              .set({ audience: legacy })
+              .where(eq(s.liveExams.id, exam.id)),
+          );
+          assert.deepEqual(
+            (await exams.detail(admin, exam.id)).audience,
+            legacy,
+          );
+          assert.equal((await exams.studentExam(student, exam.id)).id, exam.id);
+          assert.deepEqual(await exams.studentList(mechanical), []);
+          assert.deepEqual(await exams.studentList(outsider), []);
+        }
+        await scoped(connection.db, { platform: true }, (tx) =>
+          tx
+            .update(s.liveExams)
+            .set({ audience: exam.audience })
+            .where(eq(s.liveExams.id, exam.id)),
         );
       },
     );
@@ -394,7 +535,7 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
         const input = draft({
           audience: {
             mode: "students",
-            branchCodes: [],
+            branchCodes: ["CSE-NEW"],
             studentIds: [student.id],
           },
           startsAt: new Date(Date.now() + 60000).toISOString(),
@@ -403,7 +544,37 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
           ...input,
           clientId: randomUUID(),
         });
+        await scoped(connection.db, { platform: true }, (tx) =>
+          tx
+            .update(s.members)
+            .set({ branchCode: "ME", branchName: "Mechanical" })
+            .where(eq(s.members.id, student.id)),
+        );
+        await assert.rejects(
+          () => exams.publish(admin, timed.id, timed.revision),
+          /selected branch/,
+        );
+        await scoped(connection.db, { platform: true }, (tx) =>
+          tx
+            .update(s.members)
+            .set({ branchCode: "CSE-NEW", branchName: "Computer Engineering" })
+            .where(eq(s.members.id, student.id)),
+        );
         timed = await exams.publish(admin, timed.id, timed.revision);
+        assert.equal(timed.audienceCount, 1);
+        const selectedRoster = await scoped(
+          connection.db,
+          { platform: true },
+          (tx) =>
+            tx
+              .select()
+              .from(s.liveExamRoster)
+              .where(eq(s.liveExamRoster.examId, timed.id)),
+        );
+        assert.deepEqual(
+          selectedRoster.map((person) => person.memberId),
+          [student.id],
+        );
         await open(timed);
         const attempt = await exams.start(student, timed.id);
         await scoped(connection.db, { platform: true }, (tx) =>
@@ -474,7 +645,7 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
         const input = draft({
           audience: {
             mode: "students",
-            branchCodes: [],
+            branchCodes: ["CSE-NEW"],
             studentIds: [student.id],
           },
           questions: [...draft().questions, coding],
@@ -574,7 +745,7 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
         const input = draft({
           audience: {
             mode: "students",
-            branchCodes: [],
+            branchCodes: ["CSE-NEW"],
             studentIds: [student.id],
           },
           questions: [...draft().questions, coding],
@@ -647,7 +818,7 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
           ...draft({
             audience: {
               mode: "students",
-              branchCodes: [],
+              branchCodes: ["CSE-NEW"],
               studentIds: [student.id],
             },
           }),
@@ -780,7 +951,7 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
             ...draft({
               audience: {
                 mode: "students",
-                branchCodes: [],
+                branchCodes: ["CSE-NEW"],
                 studentIds: [student.id],
               },
               questions,

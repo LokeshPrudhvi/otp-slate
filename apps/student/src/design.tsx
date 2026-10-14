@@ -187,6 +187,7 @@ export const tracks = [
 const navigation = [
   { to: "/", label: "Dashboard", icon: "dashboard" },
   { to: "/courses", label: "Courses", icon: "courses", feature: "courses" },
+  { to: "/crt", label: "CRT", icon: "practice", feature: "crt" },
   { to: "/toolkit", label: "Toolkit", icon: "toolkit", feature: "toolkit" },
   { to: "/compiler", label: "Compiler", icon: "compiler", feature: "compiler" },
   { to: "/practice", label: "Practice", icon: "practice", feature: "practice" },

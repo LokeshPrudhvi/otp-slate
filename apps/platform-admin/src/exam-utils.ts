@@ -17,7 +17,7 @@ export function newExamDraft(
     title: "",
     description: "",
     instructions: "",
-    audience: { mode: "organization", branchCodes: [], studentIds: [] },
+    audience: { mode: "branches", branchCodes: [], studentIds: [] },
     startsAt: start.toISOString(),
     endsAt: new Date(start.getTime() + 120 * 60_000).toISOString(),
     durationMinutes: 60,
@@ -106,10 +106,17 @@ export function validateExamDraft(draft: ExamDraft): string[] {
     draft.passingPercentage > 100
   )
     issues.push("Passing score must be 0–100%.");
-  if (draft.audience.mode === "branches" && !draft.audience.branchCodes.length)
-    issues.push("Select at least one branch.");
+  if (
+    draft.audience.mode === "organization" ||
+    draft.audience.branchCodes.length !== 1
+  )
+    issues.push("Choose exactly one branch in the selected organization.");
   if (draft.audience.mode === "students" && !draft.audience.studentIds.length)
     issues.push("Select at least one student.");
+  if (draft.audience.mode === "branches" && draft.audience.studentIds.length)
+    issues.push("Choose all students in the branch or select specific students.");
+  if (new Set(draft.audience.studentIds).size !== draft.audience.studentIds.length)
+    issues.push("Remove duplicate student selections.");
   if (!draft.questions.length || draft.questions.length > examLimits.questions)
     issues.push("Add 1–50 questions.");
   if (

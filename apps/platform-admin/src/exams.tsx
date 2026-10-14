@@ -304,8 +304,8 @@ function ExamPreview({ exam }: { exam: ExamDraft }) {
         {exam.audience.mode === "organization"
           ? "Entire organization"
           : exam.audience.mode === "branches"
-            ? `${exam.audience.branchCodes.length} selected branches (${exam.audience.branchCodes.join(", ")})`
-            : `${exam.audience.studentIds.length} selected students`}
+            ? `${exam.audience.branchCodes.join(", ")} · eligible students in the selected branch${exam.audience.branchCodes.length === 1 ? "" : "es"}`
+            : `${exam.audience.studentIds.length} selected students${exam.audience.branchCodes.length ? ` · ${exam.audience.branchCodes.join(", ")}` : ""}`}
       </p>
       <p>
         <strong>Coding grading:</strong> Manual review by admin ·{" "}
@@ -564,8 +564,29 @@ function ExamEditorState({
   }, [busy]);
   function saveDraft() {
     const issues = validateExamDraft(draft);
-    if (!audience.data || audience.isError)
+    const options = audience.data;
+    if (
+      !options ||
+      audience.isError ||
+      options.organizationId !== draft.organizationId
+    )
       issues.push("Load the organization’s current audience before saving.");
+    else if (draft.audience.branchCodes.length === 1) {
+      const code = draft.audience.branchCodes[0];
+      if (!options.branches.some((branch) => branch.code === code))
+        issues.push("Choose a current branch in this organization.");
+      if (
+        draft.audience.mode === "students" &&
+        draft.audience.studentIds.some((id) =>
+          !options.students.some(
+            (student) => student.id === id && student.branchCode === code,
+          ),
+        )
+      )
+        issues.push(
+          "Reselect students from the selected organization and branch.",
+        );
+    }
     if (archived)
       issues.push("Restore this organization before updating exams.");
     setErrors(issues);
@@ -720,7 +741,7 @@ function ExamEditorState({
                     ...current,
                     organizationId,
                     audience: {
-                      mode: "organization",
+                      mode: "branches",
                       branchCodes: [],
                       studentIds: [],
                     },

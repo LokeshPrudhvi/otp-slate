@@ -29,6 +29,7 @@ import { ResumePage } from "./resume";
 import { AssessmentPlayer, PracticeCatalogue } from "./assessments";
 import { CodingLibrary } from "./coding";
 import { CompilerPage } from "./compiler";
+import { CrtPage } from "./crt";
 import { SelfAssessment } from "./self-assessment";
 import { StudentLessonActivity, lessonPresentation } from "./lessons";
 import {
@@ -392,6 +393,24 @@ function Dashboard() {
             </div>
           )}
           {allowed("toolkit") && <ToolkitShortcuts />}
+          {allowed("crt") && (
+            <section
+              className="live-dash"
+              aria-label="Campus recruitment training"
+            >
+              <div>
+                <span className="hub-eyebrow">CAMPUS RECRUITMENT TRAINING</span>
+                <h2>Read. Solve. Build confidence.</h2>
+                <p>
+                  Explore your assigned PDF topics and practise aptitude,
+                  reasoning, English and interview skills.
+                </p>
+              </div>
+              <Link className="a-btn" to="/crt">
+                Open CRT →
+              </Link>
+            </section>
+          )}
           {allowed("live-exams") && <LiveExamShortcut />}
           {allowed("courses") && (
             <>
@@ -1175,6 +1194,14 @@ export function StudentRoutes() {
             element={
               <AccessRoute feature="courses">
                 <LessonPage />
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="crt"
+            element={
+              <AccessRoute feature="crt">
+                <CrtPage />
               </AccessRoute>
             }
           />

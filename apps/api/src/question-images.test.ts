@@ -84,6 +84,13 @@ test("MCQ images stay private, validated and bound to assigned versions and atte
       .values([{ name: "Image College" }, { name: "Other College" }])
       .returning(),
   );
+  await scoped(connection.db, { platform: true }, (tx) =>
+    tx.insert(s.organizationBranches).values({
+      organizationId: org.id,
+      code: "CSE",
+      name: "Computer Science",
+    }),
+  );
   async function person(
     name: string,
     role: Actor["role"],
@@ -105,6 +112,8 @@ test("MCQ images stay private, validated and bound to assigned versions and atte
           authUserId: identity.user.id,
           organizationId: orgId,
           role,
+          branchCode: orgId ? "CSE" : null,
+          branchName: orgId ? "Computer Science" : null,
           passwordSetupComplete: true,
           phoneVerifiedAt: new Date(),
         })
@@ -415,7 +424,7 @@ test("MCQ images stay private, validated and bound to assigned versions and atte
           audience: {
             mode: "students",
             studentIds: [student.actor.id],
-            branchCodes: [],
+            branchCodes: ["CSE"],
           },
           startsAt: new Date(Date.now() + 60000).toISOString(),
           endsAt: new Date(Date.now() + 3600000).toISOString(),

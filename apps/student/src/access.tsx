@@ -32,6 +32,7 @@ const pathFeatures: Record<string, FeatureKey> = {
   rankings: "rankings",
   announcements: "announcements",
   compiler: "compiler",
+  crt: "crt",
 };
 
 function resourceAccessKey(
@@ -40,6 +41,8 @@ function resourceAccessKey(
   path: string,
 ) {
   const allowed = feature ? hasAccess(identity, feature) : false;
+  if (feature === "crt")
+    return [allowed, identity?.organizationId, identity?.access?.revision];
   if (feature === "courses") {
     const courseId = path.split("/")[2];
     return [

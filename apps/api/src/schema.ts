@@ -522,3 +522,76 @@ export const lessonSubmissions = pgTable(
     ),
   ],
 );
+
+// CRT versions and submitted attempts are retained when branch assignments change.
+export const crtTopics = pgTable("crt_topics", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  draft: jsonb("draft")
+    .$type<import("@slate/contracts").CrtTopicDraft>()
+    .notNull(),
+  status: text("status").notNull().default("draft"),
+  revision: integer("revision").notNull().default(1),
+  createdBy: uuid("created_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+export const crtVersions = pgTable("crt_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  topicId: uuid("topic_id").notNull(),
+  number: integer("number").notNull(),
+  content: jsonb("content")
+    .$type<import("@slate/contracts").CrtTopicDraft & { pdf: LessonFile }>()
+    .notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+export const crtAssignments = pgTable("crt_assignments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("org_id").notNull(),
+  branchId: uuid("branch_id").notNull(),
+  topicId: uuid("topic_id").notNull(),
+  versionId: uuid("version_id").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+export const crtBank = pgTable("crt_bank", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  topicId: uuid("topic_id").notNull(),
+  question: jsonb("question")
+    .$type<import("@slate/contracts").LessonQuestion>()
+    .notNull(),
+  active: boolean("active").notNull().default(true),
+  revision: integer("revision").notNull().default(1),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+export const crtAttempts = pgTable("crt_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("client_id").notNull(),
+  organizationId: uuid("org_id").notNull(),
+  memberId: uuid("member_id").notNull(),
+  kind: text("kind").notNull(),
+  topicId: uuid("topic_id"),
+  versionId: uuid("version_id"),
+  questions: jsonb("questions")
+    .$type<import("@slate/contracts").CrtPracticeSession["questions"]>()
+    .notNull(),
+  answers: jsonb("answers").$type<Record<string, number>>(),
+  passingScore: integer("passing_score").notNull(),
+  readAcknowledged: boolean("read_acknowledged").notNull().default(false),
+  result: jsonb("result").$type<import("@slate/contracts").CrtResult>(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+});

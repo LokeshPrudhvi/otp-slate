@@ -43,15 +43,22 @@ export function ExamBuilder({
     });
   const toggle = (items: string[], id: string) =>
     items.includes(id) ? items.filter((item) => item !== id) : [...items, id];
-  const students = (audience?.students || []).filter((student) =>
-    `${student.name} ${student.email} ${student.studentId || ""} ${student.branchName || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
+  const scopedAudience =
+    audience?.organizationId === value.organizationId ? audience : undefined;
+  const branchCode =
+    value.audience.branchCodes.length === 1
+      ? value.audience.branchCodes[0]
+      : "";
+  const selectedBranch = scopedAudience?.branches.find(
+    (branch) => branch.code === branchCode,
   );
-  const branches = (audience?.branches || []).filter((branch) =>
-    `${branch.name} ${branch.code}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
+  const students = (scopedAudience?.students || []).filter(
+    (student) =>
+      selectedBranch &&
+      student.branchCode === selectedBranch.code &&
+      `${student.name} ${student.email} ${student.studentId || ""}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
   );
   const visibleStudents = students.slice(0, 100);
   const add = (kind: "mcq" | "coding") => {
@@ -159,53 +166,100 @@ export function ExamBuilder({
           <span className="eyebrow">02 / AUDIENCE</span>
           <h2>Who should receive this exam?</h2>
         </header>
-        <Field label="Assign to">
-          <AdminSelect
-            aria-label="Exam audience"
-            value={value.audience.mode}
-            onChange={(mode) => {
-              patch({
-                audience: {
-                  mode: mode as ExamDraft["audience"]["mode"],
-                  branchCodes: [],
-                  studentIds: [],
-                },
-              });
-              setSearch("");
-            }}
-            options={[
-              { value: "organization", label: "Entire organization" },
-              { value: "branches", label: "Selected branches" },
-              { value: "students", label: "Selected students" },
-            ]}
-          />
-        </Field>
-        {value.audience.mode === "organization" ? (
-          <p className="exam-info">
-            All eligible active students in{" "}
-            {audience?.organizationName || "this organization"} will receive
-            this exam.
+        <p className="exam-info">
+          {scopedAudience?.organizationName || "Select an organization above"} ·
+          one branch per exam. Students in other organizations or branches will
+          not receive it.
+        </p>
+        {(value.audience.mode === "organization" ||
+          value.audience.branchCodes.length > 1) && (
+          <p className="exam-info" role="status">
+            This draft uses an older audience selection. Choose one branch
+            before saving or publishing.
           </p>
-        ) : (
+        )}
+        <div className="form-grid">
+          <Field label="Branch">
+            <AdminSelect
+              aria-label="Exam branch"
+              searchable
+              disabled={disabled || !scopedAudience}
+              value={selectedBranch?.code || ""}
+              onChange={(code) => {
+                patch({
+                  audience: {
+                    mode:
+                      value.audience.mode === "students"
+                        ? "students"
+                        : "branches",
+                    branchCodes: code ? [code] : [],
+                    studentIds: [],
+                  },
+                });
+                setSearch("");
+              }}
+              options={[
+                { value: "", label: "Choose a branch in this organization" },
+                ...(scopedAudience?.branches || []).map((branch) => ({
+                  value: branch.code,
+                  label: `${branch.name} (${branch.code}) · ${branch.studentCount} students`,
+                })),
+              ]}
+            />
+          </Field>
+          <Field label="Assign to">
+            <AdminSelect
+              aria-label="Exam audience"
+              disabled={disabled || !selectedBranch}
+              value={
+                value.audience.mode === "students" ? "students" : "branches"
+              }
+              onChange={(mode) => {
+                patch({
+                  audience: {
+                    mode: mode as "branches" | "students",
+                    branchCodes: selectedBranch ? [selectedBranch.code] : [],
+                    studentIds: [],
+                  },
+                });
+                setSearch("");
+              }}
+              options={[
+                {
+                  value: "branches",
+                  label: "All eligible students in this branch",
+                },
+                {
+                  value: "students",
+                  label: "Selected students in this branch",
+                },
+              ]}
+            />
+          </Field>
+        </div>
+        {scopedAudience && !scopedAudience.branches.length && (
+          <p className="muted">
+            Create a branch under this organization before scheduling an exam.
+          </p>
+        )}
+        {selectedBranch && value.audience.mode !== "students" && (
+          <p className="muted">
+            {selectedBranch.studentCount} active students in{" "}
+            {selectedBranch.name}. Only students with live-exam access are
+            included when you publish.
+          </p>
+        )}
+        {selectedBranch && value.audience.mode === "students" && (
           <>
             <input
               type="search"
               aria-label="Search exam audience"
-              placeholder={
-                value.audience.mode === "branches"
-                  ? "Search branch name or code"
-                  : "Search student name, email, ID or branch"
-              }
+              placeholder="Search this branch by student name, email or ID"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
             <div className="exam-audience-tools">
-              <span>
-                {value.audience.mode === "branches"
-                  ? value.audience.branchCodes.length
-                  : value.audience.studentIds.length}{" "}
-                selected
-              </span>
+              <span>{value.audience.studentIds.length} selected</span>
               <button
                 type="button"
                 className="link"
@@ -213,23 +267,12 @@ export function ExamBuilder({
                   patch({
                     audience: {
                       ...value.audience,
-                      ...(value.audience.mode === "branches"
-                        ? {
-                            branchCodes: [
-                              ...new Set([
-                                ...value.audience.branchCodes,
-                                ...branches.map((branch) => branch.code),
-                              ]),
-                            ],
-                          }
-                        : {
-                            studentIds: [
-                              ...new Set([
-                                ...value.audience.studentIds,
-                                ...visibleStudents.map((student) => student.id),
-                              ]),
-                            ],
-                          }),
+                      studentIds: [
+                        ...new Set([
+                          ...value.audience.studentIds,
+                          ...visibleStudents.map((student) => student.id),
+                        ]),
+                      ],
                     },
                   })
                 }
@@ -240,84 +283,44 @@ export function ExamBuilder({
                 type="button"
                 className="link"
                 onClick={() =>
-                  patch({
-                    audience: {
-                      ...value.audience,
-                      branchCodes: [],
-                      studentIds: [],
-                    },
-                  })
+                  patch({ audience: { ...value.audience, studentIds: [] } })
                 }
               >
                 Clear selection
               </button>
             </div>
             <div className="exam-audience-list">
-              {value.audience.mode === "branches"
-                ? branches.map((branch) => (
-                    <label key={branch.code}>
-                      <input
-                        type="checkbox"
-                        checked={value.audience.branchCodes.includes(
-                          branch.code,
-                        )}
-                        onChange={() =>
-                          patch({
-                            audience: {
-                              ...value.audience,
-                              branchCodes: toggle(
-                                value.audience.branchCodes,
-                                branch.code,
-                              ),
-                            },
-                          })
-                        }
-                      />
-                      <span>
-                        <strong>{branch.name}</strong>
-                        <small>
-                          {branch.code} · {branch.studentCount} students
-                        </small>
-                      </span>
-                    </label>
-                  ))
-                : visibleStudents.map((student) => (
-                    <label key={student.id}>
-                      <input
-                        type="checkbox"
-                        checked={value.audience.studentIds.includes(student.id)}
-                        onChange={() =>
-                          patch({
-                            audience: {
-                              ...value.audience,
-                              studentIds: toggle(
-                                value.audience.studentIds,
-                                student.id,
-                              ),
-                            },
-                          })
-                        }
-                      />
-                      <span>
-                        <strong>{student.name}</strong>
-                        <small>
-                          {student.email} ·{" "}
-                          {student.studentId || "No student ID"} ·{" "}
-                          {student.branchCode || "No branch"}
-                        </small>
-                      </span>
-                    </label>
-                  ))}
+              {visibleStudents.map((student) => (
+                <label key={student.id}>
+                  <input
+                    type="checkbox"
+                    checked={value.audience.studentIds.includes(student.id)}
+                    onChange={() =>
+                      patch({
+                        audience: {
+                          ...value.audience,
+                          studentIds: toggle(
+                            value.audience.studentIds,
+                            student.id,
+                          ),
+                        },
+                      })
+                    }
+                  />
+                  <span>
+                    <strong>{student.name}</strong>
+                    <small>
+                      {student.email} · {student.studentId || "No student ID"} ·{" "}
+                      {student.branchCode}
+                    </small>
+                  </span>
+                </label>
+              ))}
             </div>
-            {(value.audience.mode === "branches"
-              ? !branches.length
-              : !students.length) && (
-              <p className="muted">
-                No matching {value.audience.mode}. Branches and students must be
-                created under this organization first.
-              </p>
+            {!students.length && (
+              <p className="muted">No matching students in this branch.</p>
             )}
-            {value.audience.mode === "students" && students.length > 100 && (
+            {students.length > 100 && (
               <p className="muted">
                 Showing the first 100 matches. Refine your search to find more
                 students.

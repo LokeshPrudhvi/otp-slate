@@ -17,6 +17,7 @@ function draft() {
     Date.parse("2027-01-01T09:00:00Z"),
   );
   exam.title = "Placement assessment";
+  exam.audience.branchCodes = ["CSE"];
   const question = newExamQuestion("mcq", "question-one");
   Object.assign(question, {
     title: "Choose a value",
@@ -50,16 +51,23 @@ test("update payload excludes server-managed metadata and does not alias saved q
   payload.questions[0].title = "Changed draft";
   assert.equal(server.questions[0].title, "Choose a value");
 });
-test("selected branches/students must have an explicit audience", () => {
-  for (const mode of ["branches", "students"]) {
-    const exam = draft();
-    exam.audience.mode = mode;
-    assert.ok(
-      validateExamDraft(exam).some((error) =>
-        /Select at least one/.test(error),
-      ),
-    );
+test("new exams require one explicit branch and do not default to an organization-wide audience", () => {
+  const exam = newExamDraft("organization-a");
+  assert.equal(exam.audience.mode, "branches");
+  assert.deepEqual(exam.audience.branchCodes, []);
+  assert.ok(validateExamDraft(exam).some((error) => /exactly one branch/.test(error)));
+  for (const audience of [
+    { mode: "organization", branchCodes: [], studentIds: [] },
+    { mode: "branches", branchCodes: ["CSE", "ME"], studentIds: [] },
+    { mode: "students", branchCodes: [], studentIds: ["student-a"] },
+  ]) {
+    assert.ok(validateExamDraft({ ...draft(), audience }).some((error) => /exactly one branch/.test(error)));
   }
+  const subset = draft();
+  subset.audience.mode = "students";
+  assert.ok(validateExamDraft(subset).some((error) => /Select at least one student/.test(error)));
+  subset.audience.studentIds = ["student-a"];
+  assert.deepEqual(validateExamDraft(subset), []);
 });
 test("MCQ images survive draft editing without aliasing the saved assessment", () => {
   const exam = draft();

@@ -15,6 +15,7 @@ import { RegistrationController } from "./registration-controller.js";
 import { ApiController } from "./controller.js";
 import { AccessController } from "./access-controller.js";
 import { AnnouncementController } from "./announcement-controller.js";
+import { CrtController } from "./crt-controller.js";
 import { ExamController } from "./exam-controller.js";
 import { BranchController } from "./branch-controller.js";
 import { SlateService } from "./service.js";
@@ -69,6 +70,7 @@ export async function createApplication(service: SlateService) {
       AnnouncementController,
       BranchController,
       ExamController,
+      CrtController,
     ],
     providers: [{ provide: SlateService, useValue: service }],
   })
@@ -126,6 +128,7 @@ export async function createApplication(service: SlateService) {
     "/api/v1/platform/courses/:id/publish",
     express.json({ limit: "2mb" }),
   );
+  app.use("/api/v1/platform/crt", express.json({ limit: "2mb" }));
   app.use("/api/v1/platform/exams", express.json({ limit: "2mb" }));
   // Ten coding answers may each contain 30,000 Unicode characters. Keep the
   // transport bound compatible with those validated per-answer limits.

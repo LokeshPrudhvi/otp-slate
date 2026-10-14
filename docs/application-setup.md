@@ -404,3 +404,20 @@ This audit covers the current React portals and API, not the older standalone HT
 | High · preview only | Durable practice, projects and coding results | Practice/coding history is browser-local; practice-area project submissions remain in-page previews. Browser execution and the compiler embed do not create authoritative server submissions, and the coding submissions API remains unavailable. This limitation does not apply to the new course-lesson assignment/MCQ submission endpoints. Add durable attempts, server-owned judging and reviewed project submissions before using these results in organization analytics; see [practice](../apps/student/src/assessments.tsx), [coding](../apps/student/src/coding.tsx) and [submission endpoint](../apps/api/src/controller.ts). |
 
 Already available: direct individual/bulk student creation, student-profile editing, self-registration approval and welcome-email retry/status; organization-viewer creation; member suspend/disable/reactivate; organization/branch/student access controls; branch management; course creation/publication; job creation; password reset; MFA enrollment; WhatsApp onboarding; and provider-configuration status. Provider configuration indicators do not verify external delivery. Better Auth session-management/admin endpoints outside the application allowlist are not exposed product features.
+
+## CRT curriculum and branch-specific exams
+
+Platform Admin manages CRT at `/crt`. The four subjects are fixed: Quantitative aptitude, Logical and analytical reasoning, Verbal ability and English, and Soft skills and interview preparation.
+
+1. Create a topic, add a PDF (up to 20 MiB), add MCQs and choose the passing percentage (1–100%). Question images are supported.
+2. Save a draft or publish a version. Publishing preserves existing versions and attempts.
+3. In **CRT → Branch assignments**, choose one organization and one of its branches. Select published topics and click **Update assignments**. The branch must also have the CRT feature enabled in **Learning access** when using a custom portal policy.
+4. Add extra MCQs in **CRT → Practice bank**. These become available to students whose branch is assigned the associated topic; disabling a bank question does not rewrite existing practice attempts.
+
+Students use `/crt`: four subject tabs list assigned topics with search, progress filters and pagination, and a fifth tab provides practice. A topic pairs its PDF with its assessment. Students acknowledge reading and meet the topic's passing score to earn a checkmark. Retries are allowed. Practice mixes assigned topic MCQs and active extra bank questions; practice results do not complete the topic assessment.
+
+Assignments reference an organization ID and a stable branch ID, so identical codes such as `CSE` in different organizations are independent. Branch name/code edits preserve those assignments. Publishing an updated topic does not switch existing assignments; **Use latest version** is explicit. Switching versions preserves historical attempts but the new version has its own completion status.
+
+New or edited live exam drafts require one organization and exactly one branch. The audience can include all eligible students in that branch or selected students within it. Existing published exams keep their frozen rosters and results; legacy broad drafts must select a branch before they can be saved or published.
+
+The additive `012-crt-curriculum` migration creates versioned curriculum, branch assignments, extra questions and attempt storage with forced row-level security. Apply this migration separately before deploying the API; the Render service must not run migrations at startup.
