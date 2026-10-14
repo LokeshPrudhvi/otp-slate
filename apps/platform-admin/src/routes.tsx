@@ -660,8 +660,8 @@ function CourseActions({ course, onChanged, onDeleted, disabled = false, unsaved
     {confirming && <div className="note" id={`course-confirm-${course.id}`} role="group" aria-label={`${action} ${course.title}`} aria-busy={update.isPending}>
       <strong>{action} “{course.title}”?</strong>
       <p>{removing ? "Permanently remove this unpublished draft. This cannot be undone. Published courses must be archived to preserve their learning records."
-        : restoring ? "Make this course available for new learning selections again. Existing course versions and student progress stay unchanged."
-          : "Remove this course from new learning selections. Existing student assignments, course versions and progress stay available. You can restore the course later."}</p>
+        : restoring ? "Make this course available for new learning selections again. Existing course content and student progress stay unchanged."
+          : "Remove this course from new learning selections. Existing student assignments, course content and progress stay available. You can restore the course later."}</p>
       {unsaved && <p>Unsaved editor changes will be discarded.</p>}
       <ErrorMessage error={update.error} />
       <div className="actions">
@@ -721,13 +721,13 @@ function Courses() {
             <tbody>{visibleCourses.slice((currentPage - 1) * 12, currentPage * 12).map(course => <tr key={course.id}>
               <td><Link className="admin-course-title" to={`/courses/${course.id}`}>{course.title}</Link><span className="admin-course-description">{course.description}</span></td>
               <td>{tracks[course.track] || course.track}</td>
-              <td><span className={`badge ${course.status === "published" ? "green" : course.status === "draft" ? "amber" : ""}`}>{course.status}</span>{Boolean(course.version) && <small>Version {course.version}</small>}</td>
+              <td><span className={`badge ${course.status === "published" ? "green" : course.status === "draft" ? "amber" : ""}`}>{course.status}</span></td>
               <td><Link className="btn" to={`/courses/${course.id}`}>{course.status === "archived" ? "View course" : "Edit course"} →</Link><CourseActions course={course} onChanged={setNotice} /></td>
             </tr>)}</tbody>
           </table></div>
           <AdminPagination page={currentPage} total={visibleCourses.length} size={12} onChange={setPage} />
         </> : <Empty title={courses.length ? "No matching courses" : "Build your course catalog"} action={<button className="btn" onClick={() => { if (courses.length) { setSearch(""); setStatusFilter("all"); setPage(1); } else setShowCreate(true); }}>{courses.length ? "Clear filters" : "New course"}</button>}>
-          {courses.length ? "Try another search or choose a different status." : "Create a course, add its lessons and publish a version before assigning students."}
+          {courses.length ? "Try another search or choose a different status." : "Create a course, add its lessons and publish it before assigning students."}
         </Empty>}
       </DataState>
     </Panel>
@@ -807,7 +807,7 @@ function CourseEditor() {
         } : course).sort((a, b) => a.title.localeCompare(b.title)),
       );
       setNotice(
-        `Version ${result.number} published. Existing assignments keep their previous version.`,
+        "Course published. Existing students keep their assigned content and progress.",
       );
       void client.invalidateQueries({ queryKey: ["platform", "access"] });
       void client.invalidateQueries({ queryKey: ["platform", "summary"] });
@@ -839,8 +839,8 @@ function CourseEditor() {
       action={<Link to="/courses" className="btn">Back to courses</Link>}
     >
       <DataState pending={data.isPending} error={data.error}>
-        {archived && <div className="access-archived-notice" role="status"><div><strong>Archived course · view only</strong><p>Existing assignments and progress are preserved. Restore this course to edit, publish a new version or make it available for new learning selections.</p></div></div>}
-        {data.data && <Panel title={data.data.title || "Course status"} action={<span className={`badge ${data.data.status === "published" ? "green" : "amber"}`}>{data.data.status}{data.data.version ? ` · Version ${data.data.version}` : ""}</span>}>
+        {archived && <div className="access-archived-notice" role="status"><div><strong>Archived course · view only</strong><p>Existing assignments and progress are preserved. Restore this course to edit, publish changes or make it available for new learning selections.</p></div></div>}
+        {data.data && <Panel title={data.data.title || "Course status"} action={<span className={`badge ${data.data.status === "published" ? "green" : "amber"}`}>{data.data.status}</span>}>
           <CourseActions course={data.data} onChanged={setNotice} onDeleted={() => navigate("/courses")} disabled={publish.isPending || uploading} unsaved={unsaved && !archived} onPending={setLifecyclePending} />
         </Panel>}
         <div className="course-editor-tabs" role="group" aria-label="Course workspace">
@@ -860,7 +860,7 @@ function CourseEditor() {
           <CourseLessonBuilder courseId={id!} lessons={lessons} onChange={setLessons} disabled={publish.isPending || lifecyclePending} readOnly={archived} onUploadStateChange={setUploading} />
           {!archived && <>
             {issues.length > 0 && <div className="course-validation-summary"><strong>{issues.length} {issues.length === 1 ? "lesson needs" : "lessons need"} a little more detail before publishing</strong><ul>{issues.slice(0, 5).map(issue => <li key={issue}>{issue}</li>)}</ul>{issues.length > 5 && <p>And {issues.length - 5} more. Select a lesson in the outline to finish it.</p>}</div>}
-            <div className="course-publish-bar"><div><strong>{uploading ? "Uploading lesson media…" : unsaved ? "Your next course version" : "Published content is up to date"}</strong><p>{uploading ? "Keep this page open until the upload finishes." : "Publishing preserves existing students’ assigned versions and progress."}</p></div><button className="btn primary" disabled={publish.isPending || lifecyclePending || uploading || Boolean(issues.length) || !lessons.length || !title.trim() || !description.trim()}>{publish.isPending ? "Publishing…" : "Publish new version"}</button></div>
+            <div className="course-publish-bar"><div><strong>{uploading ? "Uploading lesson media…" : unsaved ? "You have unpublished changes" : "Published content is up to date"}</strong><p>{uploading ? "Keep this page open until the upload finishes." : "Publishing preserves existing students’ assigned content and progress."}</p></div><button className="btn primary" disabled={publish.isPending || lifecyclePending || uploading || Boolean(issues.length) || !lessons.length || !title.trim() || !description.trim()}>{publish.isPending ? "Publishing…" : "Publish changes"}</button></div>
           </>}
           <ErrorMessage error={publish.error} />
         </form> : <CourseSubmissions courseId={id!} lessons={data.data?.lessons || []} />}

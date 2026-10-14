@@ -231,7 +231,7 @@ export function ResumePage() {
             {paused && (
               <div className="resume-save-actions">
                 <p className="hub-note">
-                  Your edits remain here. If another tab saved a newer version,
+                  Your edits remain here. If another tab saved more recent changes,
                   copy your changes before reloading.
                 </p>
                 <button

@@ -1012,7 +1012,7 @@ export class SlateService {
       if (!course) throw new NotFoundException();
       if (course.status === "archived")
         throw new ConflictException(
-          "Restore this course before publishing a new version.",
+          "Restore this course before publishing changes.",
         );
       const [previous] = await tx
         .select()
@@ -1085,7 +1085,7 @@ export class SlateService {
         .limit(1);
       if (!version)
         throw new BadRequestException(
-          "Publish a course version before assigning it.",
+          "Publish the course before assigning it.",
         );
       const [grant] = await tx
         .insert(s.grants)

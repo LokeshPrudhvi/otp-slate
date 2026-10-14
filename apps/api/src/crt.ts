@@ -552,7 +552,7 @@ export class CrtService {
         )
       )
         throw new BadRequestException(
-          "Assign a published version of each selected topic.",
+          "Only published topic content can be assigned.",
         );
       await tx
         .delete(s.crtAssignments)
@@ -804,7 +804,7 @@ export class CrtService {
       const v = await this.assigned(tx, actor, topicId);
       if (v.id !== input.versionId)
         throw new ConflictException(
-          "Your assigned topic version changed. Reload it before submitting.",
+          "Your assigned topic content changed. Reload it before submitting.",
         );
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`slate:crt-attempt:${actor.id}:${input.clientId}`},0))`,

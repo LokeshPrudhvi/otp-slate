@@ -70,7 +70,7 @@ export class LessonService {
     const lesson = course.lessons.find((item) => item.id === lessonId);
     if (!course.versionId || !lesson)
       throw new NotFoundException(
-        "Lesson not found in your assigned course version.",
+        "Lesson not found in your assigned course.",
       );
     return { course, lesson };
   }
@@ -391,7 +391,7 @@ export class LessonService {
     const { course, lesson } = await this.assigned(actor, courseId, lessonId);
     if (input.versionId && input.versionId !== course.versionId)
       throw new ConflictException(
-        "Your assigned course version changed. Reload the lesson before submitting.",
+        "Your assigned course content changed. Reload the lesson before submitting.",
       );
     if (lesson.kind !== "assignment" && lesson.kind !== "quiz")
       throw new BadRequestException("This lesson does not accept submissions.");

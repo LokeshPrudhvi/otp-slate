@@ -364,9 +364,7 @@ function TopicActivity({
     <>
       <div className="crt-section-head">
         <div>
-          <span className="crt-eyebrow">
-            READ & APPLY · VERSION {topic.version}
-          </span>
+          <span className="crt-eyebrow">READ & APPLY</span>
           <h2>{topic.title}</h2>
           {topic.description && <p>{topic.description}</p>}
         </div>

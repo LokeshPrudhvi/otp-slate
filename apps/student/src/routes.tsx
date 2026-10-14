@@ -78,7 +78,6 @@ function CourseCard({ course, index }: { course: Course; index: number }) {
                 ? "Foundation courses"
                 : "Learning courses")}
           </div>
-          <div className="a-cterm">Assigned version {course.version}</div>
         </div>
         <div className="a-cicons" aria-hidden="true">
           <span>
@@ -121,7 +120,7 @@ function CourseRow({ course }: { course: Course }) {
         <small>{course.description}</small>
         <span className="a-tags">
           <span className="a-tag ide">Self-paced learning</span>
-          <span className="a-tag en">Enrolled · version {course.version}</span>
+          <span className="a-tag en">Enrolled</span>
         </span>
       </span>
     </Link>
@@ -630,7 +629,6 @@ function CoursePage() {
           <span className="learn-divider" />
           <span>{course.lessons.length} modules</span>
           <span>Self-paced learning</span>
-          <span>Assigned version {course.version}</span>
         </div>
       </header>
       <div className="learn-layout">
@@ -802,8 +800,7 @@ function LessonPage() {
         </span>
         <h1>{lesson.title}</h1>
         <p className="a-meta">
-          Module {index + 1} of {course.lessons.length} · Assigned version{" "}
-          {course.version}
+          Module {index + 1} of {course.lessons.length}
         </p>
         <StudentLessonActivity
           key={`${course.versionId ?? course.version}-${lesson.id}`}
@@ -925,7 +922,6 @@ function Toolkit() {
                         >
                           {appearance.glyph}
                         </span>
-                        <span className="a-tag">Version {course.version}</span>
                       </div>
                       <h2>{course.title}</h2>
                       <p>{course.description}</p>

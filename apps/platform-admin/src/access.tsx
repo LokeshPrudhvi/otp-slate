@@ -410,7 +410,7 @@ function AccessEditor({
   const courseOptions = currentWorkspace.catalog.courses.map((course) => ({
     id: course.id,
     label: course.title,
-    detail: `${course.track === "general" ? "General learning" : course.track} · ${course.status === "archived" ? "Archived" : "Published"} v${course.version}`,
+    detail: `${course.track === "general" ? "General learning" : course.track} · ${course.status === "archived" ? "Archived" : "Published"}`,
     blocked:
       course.status === "archived" && !initialPolicy.courseIds?.includes(course.id)
         ? "Archived · unavailable for new selections"
@@ -799,8 +799,8 @@ function AccessEditor({
           ))}
           <p className="access-footnote">
             Course progress is retained when access changes. Existing students
-            keep their assigned course version; new assignments use the latest
-            published version.
+            keep their assigned course content; new assignments use the latest
+            published content.
           </p>
         </section>
 
