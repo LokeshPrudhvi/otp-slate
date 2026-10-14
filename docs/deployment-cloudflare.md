@@ -4,6 +4,10 @@ Each React portal is a separate Pages project. The browser keeps using its exist
 
 ## Live portals — 14 October 2026
 
+Source `2e7280d`: Admin `de4c5f75`, Student `d57bebdd`. Course and CRT version labels are removed, while assignment history and student progress remain intact. Organization is unchanged. See the [release record](deployment-render.md#portal-wording-cleanup--14-october-2026).
+
+## Earlier CRT release — 14 October 2026
+
 The CRT and single-branch exam release uses source `93a4896`, Admin deployment `2b046378` and Student deployment `2f609b9f`. Open **Admin → CRT** to create PDF/MCQ topics, publish versions, assign them to one organization and one branch, and add extra practice questions. Students use **CRT** for the four fixed subjects and Practice. Existing published topics remain pinned until an admin explicitly updates a branch assignment.
 
 New live exams require one organization and one branch, optionally narrowed to selected students in that branch. Existing published rosters/results remain intact. The Organization portal bundle remains `50c314db`; API compatibility and all three portal builds were checked.
@@ -32,7 +36,7 @@ Announcements remain available under **Admin → Announcements**. Choose an orga
 | Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
 | Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
 
-All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#crt-and-single-branch-exam-release--14-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#portal-wording-cleanup--14-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
 
 ## Build configuration
 

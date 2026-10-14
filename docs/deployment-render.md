@@ -2,6 +2,12 @@
 
 The root `render.yaml` defines one **Free** Node web service in Ohio, close to the existing Neon database in AWS us-east-2. Cloudflare hosts the portals separately. The Blueprint does not create a database, paid worker or persistent disk. Automatic deploys and previews are disabled so releases are deliberate.
 
+## Portal wording cleanup — 14 October 2026
+
+Source `2e7280d` removes visible content version labels and numbers from course catalogs, course/lesson pages, access selectors, submissions and CRT. Publishing controls use **Publish changes** and CRT assignment updates use **Apply update**. Internal publication history, assignment pins and student progress are unchanged. There is no database migration or plan change.
+
+Matching releases: Render `dep-db7qdvid0e5s73eq30mg`, Admin Pages `de4c5f75`, Student Pages `d57bebdd`. The Organization UI had no version labels and is unchanged. All three portal builds, 30 focused frontend checks and 26 course/CRT API checks passed. Isolated browser checks verified the admin course editor and student course page without version metadata. Production course/CRT/exam deep links served the exact tested JavaScript/CSS bytes; both portal health endpoints returned 200 and anonymous CRT reads/writes returned 401. Render confirmed the release live. The isolated preview was stopped.
+
 ## CRT and single-branch exam release — 14 October 2026
 
 Source `93a4896` is live on the existing Free / Ohio service as `dep-db7q41uisbdc73bm3j60`. Matching Cloudflare Pages releases are Admin `2b046378` and Student `2f609b9f`; Organization remains unchanged. No service, paid plan or secret was added.
