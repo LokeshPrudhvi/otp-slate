@@ -509,6 +509,383 @@ test("CRT curriculum stays branch scoped, versioned, private and persistently gr
     },
   );
   await t.test(
+    "all-branch grants cover current and future branches, stay tenant isolated, and preserve branch progress",
+    async () => {
+      let shared = await crt.create(admin, {
+        ...draft,
+        title: "Shared arithmetic",
+      });
+      shared = await crt.publish(admin, shared.id, shared.revision);
+      const firstShared = shared.versionId!;
+      const branchTopics = [
+        { topicId: topic.id, versionId: topic.versionId! },
+        { topicId: shared.id, versionId: firstShared },
+      ].sort((a, b) => a.topicId.localeCompare(b.topicId));
+      await crt.assign(admin, {
+        organizationId: org.id,
+        branchId: branches[0].id,
+        topics: branchTopics,
+      });
+      const branchRows = await service.scope(admin, (tx) =>
+        tx.select().from(s.crtAssignments).orderBy(s.crtAssignments.id),
+      );
+      // Rehearse the pre-013 constraint with populated branch assignments.
+      await connection.db.execute(
+        sql`ALTER TABLE crt_assignments ALTER COLUMN branch_id SET NOT NULL`,
+      );
+      await connection.db.execute(
+        sql`DROP INDEX crt_assignment_organization_topic`,
+      );
+      await migrateDatabase(connection.db);
+      assert.deepEqual(
+        await service.scope(admin, (tx) =>
+          tx.select().from(s.crtAssignments).orderBy(s.crtAssignments.id),
+        ),
+        branchRows,
+      );
+      assert.equal(
+        (await crt.studentDetail(student, topic.id)).completed,
+        true,
+      );
+
+      const inherited = [{ topicId: shared.id, versionId: firstShared }];
+      await assert.rejects(() =>
+        crt.assign(student, {
+          organizationId: org.id,
+          branchId: null,
+          topics: inherited,
+        }),
+      );
+      await assert.rejects(() =>
+        crt.assign(admin, {
+          organizationId: randomUUID(),
+          branchId: null,
+          topics: inherited,
+        }),
+      );
+      await crt.assign(admin, {
+        organizationId: org.id,
+        branchId: null,
+        topics: inherited,
+      });
+      assert.deepEqual(await crt.assignments(admin, org.id, null), {
+        organizationId: org.id,
+        branchId: null,
+        topics: inherited,
+      });
+      const branchAssignment = await crt.assignments(
+        admin,
+        org.id,
+        branches[0].id,
+      );
+      branchAssignment.topics.sort((a, b) =>
+        a.topicId.localeCompare(b.topicId),
+      );
+      assert.deepEqual(branchAssignment, {
+        organizationId: org.id,
+        branchId: branches[0].id,
+        topics: branchTopics,
+        inheritedTopics: inherited,
+      });
+      assert.equal((await crt.studentList(student)).length, 2);
+      assert.equal((await crt.studentList(mechanical)).length, 1);
+      assert.equal((await crt.studentList(otherStudent)).length, 0);
+      assert.equal(
+        (
+          await service.scope(otherStudent, (tx) =>
+            tx.select().from(s.crtAssignments),
+          )
+        ).length,
+        0,
+      );
+      assert.equal(
+        (
+          await service.scope(otherStudent, (tx) =>
+            tx.select().from(s.crtVersions),
+          )
+        ).length,
+        0,
+      );
+      const noBranch = await person(
+        "unassigned-branch",
+        "student",
+        org.id,
+        "UNKNOWN",
+      );
+      assert.equal((await crt.studentList(noBranch)).length, 0);
+      assert.equal(
+        (
+          await service.scope(noBranch, (tx) =>
+            tx.select().from(s.crtAssignments),
+          )
+        ).length,
+        0,
+      );
+      await assert.rejects(() => crt.studentDetail(noBranch, shared.id));
+      await assert.rejects(() => crt.pdf(otherStudent, shared.id));
+      await assert.rejects(() =>
+        crt.topicImage(otherStudent, shared.id, imageId),
+      );
+      await assert.rejects(() =>
+        crt.practice(otherStudent, { topicIds: [shared.id], count: 10 }),
+      );
+      await assert.rejects(() =>
+        crt.submit(otherStudent, shared.id, {
+          versionId: firstShared,
+          clientId: randomUUID(),
+          answers: { q1: 0, q2: 0, q3: 0 },
+          readAcknowledged: true,
+        }),
+      );
+
+      await scoped(connection.db, { platform: true }, (tx) =>
+        tx
+          .insert(s.organizationBranches)
+          .values({ organizationId: org.id, code: "CE", name: "Civil" }),
+      );
+      const future = await person("future-branch", "student", org.id, "CE");
+      assert.equal((await crt.studentList(future)).length, 1);
+      assert.match((await crt.pdf(future, shared.id)).url, /private.invalid/);
+      assert.match(
+        (await crt.topicImage(future, shared.id, imageId)).url,
+        /private.invalid/,
+      );
+      const practice = await crt.practice(future, {
+        topicIds: [shared.id],
+        count: 10,
+      });
+      assert.equal(practice.questions.length, 3);
+      assert.match(
+        (await crt.practiceImage(future, practice.id, imageId)).url,
+        /private.invalid/,
+      );
+      await crt.submitPractice(future, practice.id, {
+        answers: Object.fromEntries(practice.questions.map((q) => [q.id, 0])),
+      });
+      const passed = await crt.submit(future, shared.id, {
+        versionId: firstShared,
+        clientId: randomUUID(),
+        answers: { q1: 0, q2: 0, q3: 0 },
+        readAcknowledged: true,
+      });
+      assert.equal(passed.passed, true);
+
+      shared = await crt.update(admin, shared.id, {
+        ...draft,
+        title: "Shared logic",
+        subjectId: "reasoning",
+        revision: shared.revision,
+      });
+      shared = await crt.publish(admin, shared.id, shared.revision);
+      await crt.assign(admin, {
+        organizationId: org.id,
+        branchId: null,
+        topics: [{ topicId: shared.id, versionId: shared.versionId! }],
+      });
+      const current = await crt.studentList(student);
+      assert.equal(current.filter((item) => item.id === shared.id).length, 1);
+      assert.equal(
+        current.find((item) => item.id === shared.id)!.versionId,
+        shared.versionId,
+      );
+      assert.equal(
+        (await crt.studentDetail(student, shared.id)).title,
+        "Shared logic",
+      );
+      await assert.rejects(() =>
+        crt.practice(student, {
+          subjectId: "quantitative",
+          topicIds: [shared.id],
+          count: 10,
+        }),
+      );
+      assert.equal(
+        (
+          await crt.practice(student, {
+            subjectId: "reasoning",
+            topicIds: [shared.id],
+            count: 10,
+          })
+        ).questions.length,
+        3,
+      );
+      await assert.rejects(() =>
+        crt.submit(student, shared.id, {
+          versionId: firstShared,
+          clientId: randomUUID(),
+          answers: { q1: 0, q2: 0, q3: 0 },
+          readAcknowledged: true,
+        }),
+      );
+      assert.equal(
+        (
+          await crt.submit(student, shared.id, {
+            versionId: shared.versionId!,
+            clientId: randomUUID(),
+            answers: { q1: 0, q2: 0, q3: 0 },
+            readAcknowledged: true,
+          })
+        ).passed,
+        true,
+      );
+
+      const [policy] = await scoped(connection.db, { platform: true }, (tx) =>
+        tx
+          .insert(s.accessPolicies)
+          .values({
+            organizationId: org.id,
+            scope: "student",
+            targetKey: future.id,
+            policy: {
+              features: [],
+              courseIds: null,
+              practiceModuleIds: null,
+              toolkitTrackIds: null,
+            },
+          })
+          .returning(),
+      );
+      await assert.rejects(() => crt.studentList(future));
+      await assert.rejects(() => crt.pdf(future, shared.id));
+      await assert.rejects(() => crt.topicImage(future, shared.id, imageId));
+      await assert.rejects(() =>
+        crt.practice(future, { topicIds: [shared.id], count: 10 }),
+      );
+      await assert.rejects(() =>
+        crt.submit(future, shared.id, {
+          versionId: shared.versionId!,
+          clientId: randomUUID(),
+          answers: { q1: 0, q2: 0, q3: 0 },
+          readAcknowledged: true,
+        }),
+      );
+      await assert.rejects(() => crt.practiceSession(future, practice.id));
+      await assert.rejects(() =>
+        crt.practiceImage(future, practice.id, imageId),
+      );
+      await assert.rejects(() =>
+        crt.submitPractice(future, practice.id, { answers: {} }),
+      );
+      await scoped(connection.db, { platform: true }, (tx) =>
+        tx.delete(s.accessPolicies).where(eq(s.accessPolicies.id, policy.id)),
+      );
+      await scoped(connection.db, { platform: true }, (tx) =>
+        tx
+          .update(s.members)
+          .set({ branchCode: "CST", branchName: "Computing" })
+          .where(eq(s.members.id, future.id)),
+      );
+      assert.equal((await crt.studentList(future)).length, 2);
+      await scoped(connection.db, { platform: true }, (tx) =>
+        tx
+          .update(s.members)
+          .set({ branchCode: "UNKNOWN" })
+          .where(eq(s.members.id, future.id)),
+      );
+      assert.equal((await crt.studentList(future)).length, 0);
+      await assert.rejects(() => crt.practiceSession(future, practice.id));
+      await scoped(connection.db, { platform: true }, (tx) =>
+        tx
+          .update(s.members)
+          .set({ branchCode: "CE" })
+          .where(eq(s.members.id, future.id)),
+      );
+
+      await assert.rejects(() =>
+        service.scope(admin, (tx) =>
+          tx.insert(s.crtAssignments).values({
+            organizationId: org.id,
+            branchId: null,
+            topicId: shared.id,
+            versionId: shared.versionId!,
+          }),
+        ),
+      );
+      const savedRows = await service.scope(admin, async (tx) => ({
+        grants: await tx
+          .select()
+          .from(s.crtAssignments)
+          .orderBy(s.crtAssignments.id),
+        attempts: await tx
+          .select()
+          .from(s.crtAttempts)
+          .orderBy(s.crtAttempts.id),
+      }));
+      await migrateDatabase(connection.db);
+      await migrateDatabase(connection.db);
+      assert.deepEqual(
+        await service.scope(admin, async (tx) => ({
+          grants: await tx
+            .select()
+            .from(s.crtAssignments)
+            .orderBy(s.crtAssignments.id),
+          attempts: await tx
+            .select()
+            .from(s.crtAttempts)
+            .orderBy(s.crtAttempts.id),
+        })),
+        savedRows,
+      );
+      assert.equal(
+        (await crt.studentDetail(future, shared.id)).versionId,
+        shared.versionId,
+      );
+      assert.equal((await crt.studentList(otherStudent)).length, 0);
+      assert.equal(
+        (await crt.studentDetail(student, topic.id)).completed,
+        true,
+      );
+
+      await crt.assign(admin, {
+        organizationId: org.id,
+        branchId: null,
+        topics: [],
+      });
+      assert.equal((await crt.studentList(mechanical)).length, 0);
+      assert.equal((await crt.studentList(future)).length, 0);
+      assert.deepEqual(
+        (await crt.assignments(admin, org.id, branches[0].id)).topics.sort(
+          (a, b) => a.topicId.localeCompare(b.topicId),
+        ),
+        branchTopics,
+      );
+      assert.equal(
+        (await crt.studentDetail(student, shared.id)).versionId,
+        firstShared,
+      );
+      assert.equal(
+        (await crt.studentDetail(student, topic.id)).completed,
+        true,
+      );
+      await assert.rejects(() => crt.pdf(future, shared.id));
+      await assert.rejects(() => crt.practiceSession(future, practice.id));
+      await assert.rejects(() =>
+        crt.practiceImage(future, practice.id, imageId),
+      );
+      assert.deepEqual(
+        await service.scope(admin, (tx) =>
+          tx.select().from(s.crtAttempts).orderBy(s.crtAttempts.id),
+        ),
+        savedRows.attempts,
+      );
+      // Restoring the same assignment restores its already-earned completion.
+      await crt.assign(admin, {
+        organizationId: org.id,
+        branchId: null,
+        topics: inherited,
+      });
+      assert.equal(
+        (await crt.studentDetail(future, shared.id)).completed,
+        true,
+      );
+      await crt.assign(admin, {
+        organizationId: org.id,
+        branchId: null,
+        topics: [],
+      });
+    },
+  );
+  await t.test(
     "feature revocation is enforced against a stale identity and migrations rerun with PDF data",
     async () => {
       await crt.assign(admin, {

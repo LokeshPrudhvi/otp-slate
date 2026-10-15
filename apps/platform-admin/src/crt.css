@@ -101,6 +101,10 @@
 .crt-assignment-subject h3>span { color:#7a8fa8; font-size:11px; font-weight:500; }
 .crt-assignment-topic { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:14px 16px; border:1px solid #e0e8f1; border-radius:8px; margin:8px 0; }
 .crt-assignment-topic.selected { border-color:#c6d9ef; background:#f0f5fc; }
+.crt-assignment-topic.inherited { background:#f4f7fb; }
+.crt-assignment-topic.inherited>label { cursor:default; }
+.crt-assignment-topic.inherited small { color:#365f90; font-weight:600; }
+.crt-inherited-note { margin:0 0 22px; padding:13px 16px; border:1px solid #d7e3f1; border-radius:8px; background:#f3f7fc; color:#527184; font-size:12px; line-height:1.8; }
 .crt-assignment-topic>label { display:flex; gap:14px; align-items:center; cursor:pointer; flex:1; min-width:0; }
 .crt-assignment-topic input { width:17px!important; height:17px; margin:0; flex-shrink:0; accent-color:#365f90; }
 .crt-assignment-topic strong { display:block; color:var(--crt-ink); font-size:13px; line-height:1.5; }

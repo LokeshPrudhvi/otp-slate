@@ -21,7 +21,7 @@ export function CrtAdmin() {
   const rows = (topics.data || []).filter(topic => (!subject || topic.subjectId === subject) && (!status || topic.status === status) && `${topic.title} ${topic.description}`.toLowerCase().includes(search.toLowerCase()));
   const currentPage = Math.min(page, Math.max(1, Math.ceil(rows.length / 12)));
   useEffect(() => { setPage(1); }, [subject, search, status]);
-  return <AdminPage title="CRT curriculum" description="Four focused subjects. Shared lessons, purposeful practice and branch-specific learning." className="crt-admin" action={<Link className="btn primary" to="/crt/new">+ Create topic</Link>}>
+  return <AdminPage title="CRT curriculum" description="Four focused subjects. Shared lessons and practice, assigned across an organization or to individual branches." className="crt-admin" action={<Link className="btn primary" to="/crt/new">+ Create topic</Link>}>
     <nav className="crt-admin-tabs" aria-label="CRT management">
       {[["topics", "Topic library", "book"], ["assignments", "Branch assignments", "users"], ["practice", "Practice bank", "exam"]].map(([id, name, icon]) => <button type="button" key={id} aria-current={tab === id ? "page" : undefined} onClick={() => setParams(current => { const next = new URLSearchParams(current); next.set("tab", id); return next; })}><Icon name={icon} />{name}</button>)}
     </nav>

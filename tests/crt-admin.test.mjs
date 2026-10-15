@@ -152,3 +152,106 @@ test("branch switching protects unsaved selections and saves only to the exact s
   assert.equal(document.querySelector('[aria-label="CRT assignment branch"]').disabled, true);
   await act(async () => resolveWrite());
 });
+
+const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
+const buttonNamed = text => [...document.querySelectorAll("button")].find(item => item.textContent.trim() === text);
+async function chooseAssignmentScope(label, value) {
+  const native = document.querySelector(`[aria-label="${label}"]`).closest(".admin-select").querySelector("select");
+  await act(async () => { native.value = value; native.dispatchEvent(new Event("change", { bubbles: true })); });
+  await settle();
+}
+async function mountAssignments(topics) {
+  query = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
+  root = createRoot(document.getElementById("root"));
+  await act(async () => root.render(h(QueryClientProvider, { client: query }, h(MemoryRouter, { initialEntries: ["/crt?tab=assignments&organizationId=org-a"] }, h(CrtAssignmentsPanel, { topics, topicsPending: false, topicsError: null })))));
+  await settle();
+}
+const publishedTopic = (id, title = "Percentages") => ({ ...topic(), title, id, revision: 1, status: "published", versionId: `${id}-content`, version: 1, pdf: null });
+
+test("all branches reads and saves an organization-wide assignment, including an organization with future branches only", async () => {
+  const writes = [], reads = [];
+  let saved = [];
+  const response = value => new Response(JSON.stringify(value), { status: 200 });
+  globalThis.fetch = async (url, options = {}) => {
+    const target = new URL(url, "https://admin.example.test"), organizationId = target.searchParams.get("organizationId");
+    if (target.pathname.endsWith("/organizations")) return response([{ id: "org-a", name: "College A", status: "active" }, { id: "org-b", name: "College B", status: "active" }]);
+    if (target.pathname.endsWith("/audience")) return response({ organizationId, branches: organizationId === "org-a" ? [] : [{ id: "branch-b", name: "Computer Science", code: "CSE", studentCount: 4 }] });
+    if (options.method === "PUT") { const body = JSON.parse(options.body); writes.push(body); saved = body.topics; return response(body); }
+    if (target.pathname.endsWith("/assignments")) { reads.push({ organizationId, branchId: target.searchParams.get("branchId") }); return response({ organizationId, branchId: null, topics: organizationId === "org-a" ? saved : [] }); }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  await mountAssignments([publishedTopic("topic-1")]);
+  await chooseAssignmentScope("CRT assignment branch", "all");
+  assert.match(document.querySelector(".crt-assignment-scope").textContent, /All branches.*College A.*Current and future branches/);
+  assert.equal(reads.at(-1).branchId, null);
+  await act(async () => document.querySelector('.crt-assignment-topic input[type="checkbox"]').click());
+  await act(async () => buttonNamed("Update assignments").click());
+  assert.match(document.querySelector(".crt-publish-confirm").textContent, /All branches at College A.*branches added later/);
+  await act(async () => buttonNamed("Confirm update").click());
+  await settle();
+  assert.deepEqual(writes, [{ organizationId: "org-a", branchId: null, topics: [{ topicId: "topic-1", versionId: "topic-1-content" }] }]);
+  assert.equal(buttonNamed("Update assignments").disabled, true);
+  await chooseAssignmentScope("CRT assignment organization", "org-b");
+  assert.equal(document.querySelector(".crt-assignment-scope"), null);
+  assert.equal(document.querySelector('[aria-label="CRT assignment branch"]').closest(".admin-select").querySelector("select").value, "");
+  await chooseAssignmentScope("CRT assignment branch", "all");
+  assert.match(document.querySelector(".crt-assignment-scope").textContent, /College B/);
+  assert.equal(document.querySelector('.crt-assignment-topic input[type="checkbox"]').checked, false);
+  assert.deepEqual(reads.at(-1), { organizationId: "org-b", branchId: null });
+});
+
+test("branch assignments show inherited topics read-only, count each once and preserve branch-specific content on save", async () => {
+  const writes = [];
+  let saved = [{ topicId: "topic-shared", versionId: "previous-branch-content" }];
+  const response = value => new Response(JSON.stringify(value), { status: 200 });
+  globalThis.fetch = async (url, options = {}) => {
+    const target = new URL(url, "https://admin.example.test"), organizationId = target.searchParams.get("organizationId");
+    if (target.pathname.endsWith("/organizations")) return response([{ id: "org-a", name: "College A", status: "active" }]);
+    if (target.pathname.endsWith("/audience")) return response({ organizationId, branches: [{ id: "branch-a", name: "Computer Science", code: "CSE", studentCount: 10 }] });
+    if (options.method === "PUT") { const body = JSON.parse(options.body); writes.push(body); saved = body.topics; return response(body); }
+    if (target.pathname.endsWith("/assignments")) return response({ organizationId, branchId: "branch-a", topics: saved, inheritedTopics: [{ topicId: "topic-shared", versionId: "topic-shared-content" }, { topicId: "topic-global-only", versionId: "topic-global-only-content" }] });
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  await mountAssignments([publishedTopic("topic-shared", "Percentages"), publishedTopic("topic-global-only", "Ratios"), publishedTopic("topic-extra", "Profit and loss")]);
+  await chooseAssignmentScope("CRT assignment branch", "branch-a");
+  const rows = [...document.querySelectorAll(".crt-assignment-topic")];
+  for (const row of rows.slice(0, 2)) {
+    assert.equal(row.querySelector("input").checked, true);
+    assert.equal(row.querySelector("input").disabled, true);
+    assert.equal(row.querySelector("small").textContent, "All branches");
+    assert.equal(row.querySelector("button"), null);
+  }
+  assert.match(document.querySelector(".crt-assignment-scope").textContent, /2 assigned topics/);
+  await act(async () => rows[2].querySelector("input").click());
+  assert.match(document.querySelector(".crt-assignment-scope").textContent, /3 assigned topics/);
+  await chooseAssignmentScope("CRT assignment branch", "all");
+  assert.match(document.querySelector(".crt-scope-confirm").textContent, /unsaved assignment changes/);
+  await act(async () => buttonNamed("Keep editing").click());
+  await act(async () => buttonNamed("Update assignments").click());
+  assert.match(document.querySelector(".crt-publish-confirm").textContent, /3 topics available.*Topics assigned to all branches remain included/);
+  await act(async () => buttonNamed("Confirm update").click());
+  await settle();
+  assert.deepEqual(writes, [{ organizationId: "org-a", branchId: "branch-a", topics: [{ topicId: "topic-shared", versionId: "previous-branch-content" }, { topicId: "topic-extra", versionId: "topic-extra-content" }] }]);
+});
+
+test("changing organization hides the previous organization's branch options and inherited topic selections", async () => {
+  const response = value => new Response(JSON.stringify(value), { status: 200 });
+  globalThis.fetch = async url => {
+    const target = new URL(url, "https://admin.example.test"), organizationId = target.searchParams.get("organizationId");
+    if (target.pathname.endsWith("/organizations")) return response([{ id: "org-a", name: "College A", status: "active" }, { id: "org-b", name: "College B", status: "active" }]);
+    if (target.pathname.endsWith("/audience")) return response({ organizationId, branches: [{ id: organizationId === "org-a" ? "branch-a" : "branch-b", name: "Computer Science", code: "CSE", studentCount: 10 }] });
+    if (target.pathname.endsWith("/assignments")) return response({ organizationId, branchId: target.searchParams.get("branchId"), topics: [], inheritedTopics: organizationId === "org-a" ? [{ topicId: "topic-1", versionId: "topic-1-content" }] : [] });
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  await mountAssignments([publishedTopic("topic-1")]);
+  await chooseAssignmentScope("CRT assignment branch", "branch-a");
+  assert.equal(document.querySelector('.crt-assignment-topic input').checked, true);
+  await chooseAssignmentScope("CRT assignment organization", "org-b");
+  assert.equal(document.querySelector(".crt-assignment-topic"), null);
+  const options = document.querySelector('[aria-label="CRT assignment branch"]').closest(".admin-select").querySelectorAll("option");
+  assert.equal([...options].some(option => option.value === "branch-a"), false);
+  await chooseAssignmentScope("CRT assignment branch", "branch-b");
+  const check = document.querySelector('.crt-assignment-topic input');
+  assert.equal(check.checked, false);
+  assert.equal(check.disabled, false);
+});

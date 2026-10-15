@@ -87,12 +87,12 @@ export class CrtController {
   @Get("platform/crt/assignments") async assignments(
     @Req() req: Request,
     @Query("organizationId") org: string,
-    @Query("branchId") branch: string,
+    @Query("branchId") branch: string | undefined,
   ) {
     return this.crt.assignments(
       await this.service.actor(req, "platform_admin"),
       uuid.parse(org),
-      uuid.parse(branch),
+      branch === undefined ? null : uuid.parse(branch),
     );
   }
   @Put("platform/crt/assignments") async assign(

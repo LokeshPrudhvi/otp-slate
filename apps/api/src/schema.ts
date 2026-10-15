@@ -553,7 +553,7 @@ export const crtVersions = pgTable("crt_versions", {
 export const crtAssignments = pgTable("crt_assignments", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("org_id").notNull(),
-  branchId: uuid("branch_id").notNull(),
+  branchId: uuid("branch_id"),
   topicId: uuid("topic_id").notNull(),
   versionId: uuid("version_id").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })

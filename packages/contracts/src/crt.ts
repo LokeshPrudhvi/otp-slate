@@ -39,8 +39,11 @@ export interface CrtAudience {
 }
 export interface CrtAssignments {
   organizationId: string;
-  branchId: string;
+  /** Null assigns content to every current and future branch in this organization. */
+  branchId: string | null;
   topics: { topicId: string; versionId: string }[];
+  /** Read-only organization assignments included when viewing one branch. */
+  inheritedTopics?: { topicId: string; versionId: string }[];
 }
 export interface CrtBankQuestion {
   id: string;

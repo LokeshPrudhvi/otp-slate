@@ -5,7 +5,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { randomInt, randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
@@ -68,7 +68,7 @@ export const crtRevisionInput = z
 export const crtAssignmentsInput = z
   .object({
     organizationId: z.uuid(),
-    branchId: z.uuid(),
+    branchId: z.uuid().nullable(),
     topics: z
       .array(z.object({ topicId: z.uuid(), versionId: z.uuid() }).strict())
       .max(1000),
@@ -136,7 +136,7 @@ export class CrtService {
   private async branch(
     tx: Transaction,
     organizationId: string,
-    branchId: string,
+    branchId: string | null,
   ) {
     await lockOrganizationBranches(tx, organizationId);
     const [org] = await tx
@@ -145,6 +145,7 @@ export class CrtService {
       .where(eq(s.organizations.id, organizationId));
     if (!org || org.status !== "active")
       throw new BadRequestException("Select an active organization.");
+    if (branchId === null) return null;
     const [branch] = await tx
       .select()
       .from(s.organizationBranches)
@@ -160,10 +161,25 @@ export class CrtService {
       );
     return branch;
   }
+  private async assignmentLock(
+    tx: Transaction,
+    organizationId: string,
+    write = false,
+  ) {
+    // Branch identity is always locked first. One organization lock then keeps
+    // branch and organization assignments consistent during reads and grading.
+    const key = `slate:crt-assignments:${organizationId}`;
+    await tx.execute(
+      write
+        ? sql`select pg_advisory_xact_lock(hashtextextended(${key},0))`
+        : sql`select pg_advisory_xact_lock_shared(hashtextextended(${key},0))`,
+    );
+  }
   private async student(tx: Transaction, actor: Actor) {
     if (actor.role !== "student" || !actor.organizationId)
       throw new ForbiddenException("Student access is required.");
     await lockOrganizationBranches(tx, actor.organizationId);
+    await this.assignmentLock(tx, actor.organizationId);
     const [member] = await tx
       .select()
       .from(s.members)
@@ -218,7 +234,7 @@ export class CrtService {
   ) {
     const { branch } = await this.student(tx, actor);
     if (!branch) return [];
-    return tx
+    const rows = await tx
       .select({ version: s.crtVersions })
       .from(s.crtAssignments)
       .innerJoin(
@@ -228,41 +244,38 @@ export class CrtService {
       .where(
         and(
           eq(s.crtAssignments.organizationId, actor.organizationId!),
-          eq(s.crtAssignments.branchId, branch.id),
-          filters?.subjectId
-            ? sql`${s.crtVersions.content}->>'subjectId'=${filters.subjectId}`
-            : undefined,
+          or(
+            isNull(s.crtAssignments.branchId),
+            eq(s.crtAssignments.branchId, branch.id),
+          ),
           filters?.topicIds?.length
             ? inArray(s.crtAssignments.topicId, filters.topicIds)
             : undefined,
         ),
       )
-      .then((rows) => rows.map((r) => r.version));
+      .orderBy(asc(sql`${s.crtAssignments.branchId} IS NOT NULL`));
+    // A shared organization assignment is authoritative for a duplicate topic.
+    // Filter by subject only after selecting that content, so a stale branch
+    // copy cannot reappear through practice filters after the topic is updated.
+    const selected = new Map<string, Version>();
+    for (const { version } of rows)
+      if (!selected.has(version.topicId))
+        selected.set(version.topicId, version);
+    return [...selected.values()].filter(
+      (version) =>
+        !filters?.subjectId || version.content.subjectId === filters.subjectId,
+    );
   }
   private async assigned(tx: Transaction, actor: Actor, topicId: string) {
-    const { branch } = await this.student(tx, actor);
-    const [row] = branch
-      ? await tx
-          .select({ version: s.crtVersions })
-          .from(s.crtAssignments)
-          .innerJoin(
-            s.crtVersions,
-            eq(s.crtVersions.id, s.crtAssignments.versionId),
-          )
-          .where(
-            and(
-              eq(s.crtAssignments.organizationId, actor.organizationId!),
-              eq(s.crtAssignments.branchId, branch.id),
-              eq(s.crtAssignments.topicId, topicId),
-            ),
-          )
-          .limit(1)
-      : [];
+    const [row] = await this.available(tx, actor, {
+      topicIds: [topicId],
+      count: 10,
+    });
     if (!row)
       throw new NotFoundException(
         "This CRT topic is not assigned to your organization and branch.",
       );
-    return row.version;
+    return row;
   }
   private progress(tx: Transaction, actor: Actor, versionIds: string[]) {
     if (!versionIds.length) return Promise.resolve([]);
@@ -504,24 +517,45 @@ export class CrtService {
   async assignments(
     actor: Actor,
     organizationId: string,
-    branchId: string,
+    branchId: string | null,
   ): Promise<CrtAssignments> {
     this.admin(actor);
     return this.service.scope(actor, async (tx) => {
       await this.branch(tx, organizationId, branchId);
+      await this.assignmentLock(tx, organizationId);
       const topics = await tx
         .select({
           topicId: s.crtAssignments.topicId,
           versionId: s.crtAssignments.versionId,
+          branchId: s.crtAssignments.branchId,
         })
         .from(s.crtAssignments)
         .where(
           and(
             eq(s.crtAssignments.organizationId, organizationId),
-            eq(s.crtAssignments.branchId, branchId),
+            branchId === null
+              ? isNull(s.crtAssignments.branchId)
+              : or(
+                  isNull(s.crtAssignments.branchId),
+                  eq(s.crtAssignments.branchId, branchId),
+                ),
           ),
         );
-      return { organizationId, branchId, topics };
+      const own = topics
+        .filter((topic) => topic.branchId === branchId)
+        .map(({ topicId, versionId }) => ({ topicId, versionId }));
+      return {
+        organizationId,
+        branchId,
+        topics: own,
+        ...(branchId !== null
+          ? {
+              inheritedTopics: topics
+                .filter((topic) => topic.branchId === null)
+                .map(({ topicId, versionId }) => ({ topicId, versionId })),
+            }
+          : {}),
+      };
     });
   }
   async assign(actor: Actor, raw: CrtAssignments) {
@@ -529,9 +563,7 @@ export class CrtService {
     const input = crtAssignmentsInput.parse(raw);
     return this.service.scope(actor, async (tx) => {
       await this.branch(tx, input.organizationId, input.branchId);
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`slate:crt:${input.branchId}`},0))`,
-      );
+      await this.assignmentLock(tx, input.organizationId, true);
       const versions = input.topics.length
         ? await tx
             .select()
@@ -559,7 +591,9 @@ export class CrtService {
         .where(
           and(
             eq(s.crtAssignments.organizationId, input.organizationId),
-            eq(s.crtAssignments.branchId, input.branchId),
+            input.branchId === null
+              ? isNull(s.crtAssignments.branchId)
+              : eq(s.crtAssignments.branchId, input.branchId),
           ),
         );
       if (input.topics.length)
@@ -583,7 +617,11 @@ export class CrtService {
         actorId: actor.id,
         organizationId: input.organizationId,
         action: "crt.assignments.updated",
-        resourceId: input.branchId,
+        resourceId: input.branchId ?? input.organizationId,
+        details: {
+          scope: input.branchId === null ? "organization" : "branch",
+          branchId: input.branchId,
+        },
       });
       return input;
     });
@@ -669,7 +707,7 @@ export class CrtService {
       const { branch } = await this.student(tx, actor);
       if (!branch) return [];
       const topics = await tx
-        .select({
+        .selectDistinctOn([s.crtAssignments.topicId], {
           id: s.crtVersions.topicId,
           versionId: s.crtVersions.id,
           version: s.crtVersions.number,
@@ -689,8 +727,15 @@ export class CrtService {
         .where(
           and(
             eq(s.crtAssignments.organizationId, actor.organizationId!),
-            eq(s.crtAssignments.branchId, branch.id),
+            or(
+              isNull(s.crtAssignments.branchId),
+              eq(s.crtAssignments.branchId, branch.id),
+            ),
           ),
+        )
+        .orderBy(
+          s.crtAssignments.topicId,
+          asc(sql`${s.crtAssignments.branchId} IS NOT NULL`),
         );
       const progress = await this.progress(
         tx,
@@ -943,7 +988,10 @@ export class CrtService {
           .where(
             and(
               eq(s.crtAssignments.organizationId, actor.organizationId!),
-              eq(s.crtAssignments.branchId, branch.id),
+              or(
+                isNull(s.crtAssignments.branchId),
+                eq(s.crtAssignments.branchId, branch.id),
+              ),
             ),
           )
       : [];
