@@ -1374,6 +1374,23 @@ button:disabled {
   width: 100%;
   justify-content: center;
 }
+.a-tray .account-help-title {
+  padding-right: 24px;
+}
+.account-help-support {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #f3f6fb;
+}
+.account-help-support h3 {
+  margin: 0 0 4px;
+  color: #0f2747;
+  font-size: 15px;
+}
+.account-help-support .tray-l li:last-child {
+  border-bottom: 0;
+}
 .otto-mini {
   display: block;
   width: 34px;

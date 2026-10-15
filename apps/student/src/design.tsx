@@ -244,13 +244,12 @@ export function StudentShell() {
     .map((part) => part[0])
     .slice(0, 2)
     .join("");
-  const [tray, setTray] = useState<"account" | "help" | null>(null),
+  const [tray, setTray] = useState(false),
     [otto, setOtto] = useState(false),
     [collapsed, setCollapsed] = useState(false);
   const main = useRef<HTMLElement>(null),
     close = useRef<HTMLButtonElement>(null),
-    account = useRef<HTMLButtonElement>(null),
-    help = useRef<HTMLButtonElement>(null);
+    account = useRef<HTMLButtonElement>(null);
   const logout = useMutation({
     mutationFn: async () => {
       const result = await authClient.signOut();
@@ -263,7 +262,7 @@ export function StudentShell() {
     },
   });
   useEffect(() => {
-    setTray(null);
+    setTray(false);
     setOtto(false);
     main.current?.scrollTo({ top: 0 });
   }, [location.pathname]);
@@ -271,9 +270,8 @@ export function StudentShell() {
     if (tray) close.current?.focus();
   }, [tray]);
   const closeTray = () => {
-    const previous = tray;
-    setTray(null);
-    (previous === "account" ? account : help).current?.focus();
+    setTray(false);
+    account.current?.focus();
   };
   const mayNavigate = () =>
     window.dispatchEvent(
@@ -281,7 +279,7 @@ export function StudentShell() {
     );
   const go = (path: string) => {
     if (!mayNavigate()) return;
-    setTray(null);
+    setTray(false);
     setOtto(false);
     navigate(path);
   };
@@ -299,13 +297,14 @@ export function StudentShell() {
         </Link>
         <button
           ref={account}
-          className={`a-nav${tray === "account" ? " on" : ""}`}
-          aria-expanded={tray === "account"}
+          className={`a-nav${tray || selectedNav === "/help" ? " on" : ""}`}
+          aria-label="Account & help"
+          aria-expanded={tray}
           aria-controls="student-tray"
-          onClick={() => setTray(tray === "account" ? null : "account")}
+          onClick={() => setTray(!tray)}
         >
           <span className="a-av">{initials}</span>
-          <span className="rail-label">Account</span>
+          <span className="rail-label">Account &amp; help</span>
         </button>
         {navigation
           .filter(
@@ -326,17 +325,6 @@ export function StudentShell() {
               <span className="rail-label">{item.label}</span>
             </Link>
           ))}
-        <button
-          ref={help}
-          className={`a-nav${tray === "help" ? " on" : ""}`}
-          aria-label="Help"
-          aria-expanded={tray === "help"}
-          aria-controls="student-tray"
-          onClick={() => setTray(tray === "help" ? null : "help")}
-        >
-          <StudentIcon name="help" />
-          <span className="rail-label">Help</span>
-        </button>
         <span className="sp" />
         <button
           className="a-nav"
@@ -354,7 +342,7 @@ export function StudentShell() {
         <aside
           id="student-tray"
           className="a-tray open"
-          aria-label={tray === "account" ? "Account" : "Help"}
+          aria-labelledby="student-account-help-title"
           onKeyDown={(event) => {
             if (event.key === "Escape") closeTray();
           }}
@@ -367,91 +355,87 @@ export function StudentShell() {
           >
             ×
           </button>
-          {tray === "account" ? (
-            <>
-              <div className="prof">
-                <div className="big">{initials}</div>
-                <b>{identity.name}</b>
-                <small>{identity.organizationName}</small>
-              </div>
-              <p className="account-email">{identity.email}</p>
-              <button
-                className="a-btn account-logout"
-                onClick={() => {
-                  if (mayNavigate()) logout.mutate();
-                }}
-                disabled={logout.isPending}
-              >
-                {logout.isPending ? "Logging out…" : "Log out"}
+          <h2 id="student-account-help-title" className="account-help-title">
+            Account &amp; help
+          </h2>
+          <div className="prof">
+            <div className="big">{initials}</div>
+            <b>{identity.name}</b>
+            <small>{identity.organizationName}</small>
+          </div>
+          <p className="account-email">{identity.email}</p>
+          <button
+            className="a-btn account-logout"
+            onClick={() => {
+              if (mayNavigate()) logout.mutate();
+            }}
+            disabled={logout.isPending}
+          >
+            {logout.isPending ? "Logging out…" : "Log out"}
+          </button>
+          <Status error={logout.error} />
+          <ul className="tray-l">
+            <li>
+              <button onClick={() => go("/")}>
+                Dashboard<small>Your assigned learning and updates</small>
               </button>
-              <Status error={logout.error} />
-              <ul className="tray-l">
+            </li>
+            {hasAccess(identity, "courses") && (
+              <li>
+                <button onClick={() => go("/courses")}>
+                  My courses
+                  <small>Learning assigned by your organization</small>
+                </button>
+              </li>
+            )}
+            {identity.features.includes("resume") && (
+              <li>
+                <button onClick={() => go("/resume")}>
+                  Resume
+                  <small>Your details, templates and saved draft</small>
+                </button>
+              </li>
+            )}
+          </ul>
+          <section
+            className="account-help-support"
+            aria-labelledby="student-support-title"
+          >
+            <h3 id="student-support-title">Help &amp; support</h3>
+            <ul className="tray-l">
+              {!examAttempt && (
                 <li>
-                  <button onClick={() => go("/")}>
-                    Dashboard<small>Your assigned learning and updates</small>
+                  <button
+                    onClick={() => {
+                      setTray(false);
+                      setOtto(true);
+                    }}
+                  >
+                    Ask Otto<small>Find your way around OTP Slate</small>
                   </button>
                 </li>
-                {hasAccess(identity, "courses") && (
-                  <li>
-                    <button onClick={() => go("/courses")}>
-                      My courses
-                      <small>Learning assigned by your organization</small>
-                    </button>
-                  </li>
-                )}
-                {identity.features.includes("resume") && (
-                  <li>
-                    <button onClick={() => go("/resume")}>
-                      Resume
-                      <small>Your details, templates and saved draft</small>
-                    </button>
-                  </li>
-                )}
+              )}
+              <li>
+                <button onClick={() => go("/help")}>
+                  Search the help centre<small>Guides for students</small>
+                </button>
+              </li>
+              {hasAccess(identity, "live-exams") && (
                 <li>
-                  <button onClick={() => setTray("help")}>
-                    Help<small>Guides for your student workspace</small>
+                  <button onClick={() => go("/help#exams")}>
+                    Exam and proctoring rules
+                    <small>What is checked during a test</small>
                   </button>
                 </li>
-              </ul>
-            </>
-          ) : (
-            <>
-              <h2>Help</h2>
-              <ul className="tray-l">
-                {!examAttempt && (
-                  <li>
-                    <button
-                      onClick={() => {
-                        setTray(null);
-                        setOtto(true);
-                      }}
-                    >
-                      Ask Otto<small>Find your way around OTP Slate</small>
-                    </button>
-                  </li>
-                )}
-                <li>
-                  <button onClick={() => go("/help")}>
-                    Search the help centre<small>Guides for students</small>
-                  </button>
-                </li>
-                {hasAccess(identity, "live-exams") && (
-                  <li>
-                    <button onClick={() => go("/help#exams")}>
-                      Exam and proctoring rules
-                      <small>What is checked during a test</small>
-                    </button>
-                  </li>
-                )}
-                <li>
-                  <button onClick={() => go("/help#access")}>
-                    Learning access
-                    <small>Contact your placement team for assignments</small>
-                  </button>
-                </li>
-              </ul>
-            </>
-          )}
+              )}
+              <li>
+                <button onClick={() => go("/help#access")}>
+                  Learning access
+                  <small>Contact your placement team for assignments</small>
+                </button>
+              </li>
+            </ul>
+          </section>
         </aside>
       )}
       {!examAttempt && (
