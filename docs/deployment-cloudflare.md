@@ -2,7 +2,11 @@
 
 Each React portal is a separate Pages project. The browser keeps using its existing same-origin `/api` paths; a small Pages Function proxies them to the Render API. Pages receives only the API origin and a dedicated server-to-server proxy secret. The separate private R2 bucket is accessed through short-lived URLs signed by Render; the four R2 credentials/settings remain server-only on Render. No database URL, email key, or Better Auth secret belongs in Cloudflare. No secret belongs in a `VITE_*` variable or browser build.
 
-## Live portals — 14 October 2026
+## Live portals — 15 October 2026
+
+Admin `33afe962`, from source `0fb4050`, adds **CRT → Branch assignments → select organization → All branches**. It covers current and future valid branches in that organization, preserves branch-specific topics and saved progress, and keeps other organizations isolated. Publishing still requires a separate assignment. Student `d57bebdd` and Organization `50c314db` remain unchanged. The matching API is live; production Admin/Student deep links, exact JavaScript/CSS bytes, health and anonymous access denial were verified. See the [release record](deployment-render.md#crt-assignments-for-all-branches--15-october-2026).
+
+## Previous portals — 14 October 2026
 
 Source `2e7280d`: Admin `de4c5f75`, Student `d57bebdd`. Course and CRT version labels are removed, while assignment history and student progress remain intact. Organization is unchanged. See the [release record](deployment-render.md#portal-wording-cleanup--14-october-2026).
 
@@ -36,7 +40,7 @@ Announcements remain available under **Admin → Announcements**. Choose an orga
 | Platform Admin | [otp-slate-admin.pages.dev](https://otp-slate-admin.pages.dev)               | `otp-slate-admin`        |
 | Organization   | [otp-slate-organization.pages.dev](https://otp-slate-organization.pages.dev) | `otp-slate-organization` |
 
-All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#portal-wording-cleanup--14-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
+All three are live on the free setup and proxy API requests to `https://otp-slate-api.onrender.com`. Portal loading, health and unauthenticated API checks passed. The [current Render record](deployment-render.md#crt-assignments-for-all-branches--15-october-2026) identifies the latest backend commit and database migration; the same document records private R2 setup. The earlier lesson UI bundles were Platform Admin `7603acfb`, Student `ed483d0a` and Organization `50c314db`; the admin and student releases above supersede those bundles. Existing projects should be updated using the build/deploy commands below; do not create duplicate projects.
 
 ## Build configuration
 

@@ -2,6 +2,16 @@
 
 The root `render.yaml` defines one **Free** Node web service in Ohio, close to the existing Neon database in AWS us-east-2. Cloudflare hosts the portals separately. The Blueprint does not create a database, paid worker or persistent disk. Automatic deploys and previews are disabled so releases are deliberate.
 
+## CRT assignments for all branches — 15 October 2026
+
+Source `0fb4050` is live on the existing Free / Ohio API as `dep-db87pvou01pc73ero7fg`, with Admin Pages `33afe962`. Student `d57bebdd` and Organization `50c314db` are unchanged. No service, plan or secret was added.
+
+In **Admin → CRT → Branch assignments**, choose an organization and **All branches** to assign published topics to its current and future valid branches. Branch-specific topics remain additional; an all-branches assignment takes precedence for the same topic and appears once. Removing it preserves any separate branch assignment. Students still require CRT access, and publishing alone does not assign a topic. Existing assignments, attempts and progress remain saved; live exams still require one branch.
+
+Migration `013-crt-all-branches` was rehearsed twice on an auto-expiring Neon clone, including PostgreSQL role/isolation checks, before production. Counts and digests of all **37 existing tables** remained unchanged. Verification passed **217 API checks** (one existing optional check skipped), **18 focused CRT frontend checks**, and all three portal builds. One timing-sensitive Student test was rerun successfully with the full Student CRT suite in isolation. Browser checks confirmed both branches received the shared topic, a separate branch topic remained available, and another organization was excluded. The temporary preview was stopped.
+
+Production Admin/Student deep links served the exact tested JavaScript/CSS bytes; health returned 200 and anonymous CRT reads/writes, including both assignment scopes, returned 401. No real topic assignments or student data were changed for testing.
+
 ## Portal wording cleanup — 14 October 2026
 
 Source `2e7280d` removes visible content version labels and numbers from course catalogs, course/lesson pages, access selectors, submissions and CRT. Publishing controls use **Publish changes** and CRT assignment updates use **Apply update**. Internal publication history, assignment pins and student progress are unchanged. There is no database migration or plan change.
