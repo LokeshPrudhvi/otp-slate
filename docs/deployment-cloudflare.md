@@ -4,6 +4,10 @@ Each React portal is a separate Pages project. The browser keeps using its exist
 
 ## Live portals — 15 October 2026
 
+Student `63722333`, from source `e9ae42b`, combines the separate Account and Help navigation into **Account & help**. The single panel keeps profile details, logout and learning shortcuts together with a softly tinted support section. Existing help URLs and exam navigation safeguards remain intact. Student build and nine login checks passed (the Node test harness used a local CSS import loader). Isolated browser checks verified the merged panel, Escape/focus restoration, collapsed sidebar, Dashboard/help navigation and logout. Production deep links and exact JavaScript/CSS bytes matched the tested build; health returned 200 and anonymous identity requests returned 401. Admin, Organization, API and database are unchanged by this UI release.
+
+## CRT assignments release — 15 October 2026
+
 Admin `33afe962`, from source `0fb4050`, adds **CRT → Branch assignments → select organization → All branches**. It covers current and future valid branches in that organization, preserves branch-specific topics and saved progress, and keeps other organizations isolated. Publishing still requires a separate assignment. Student `d57bebdd` and Organization `50c314db` remain unchanged. The matching API is live; production Admin/Student deep links, exact JavaScript/CSS bytes, health and anonymous access denial were verified. See the [release record](deployment-render.md#crt-assignments-for-all-branches--15-october-2026).
 
 ## Previous portals — 14 October 2026
