@@ -1,0 +1,473 @@
+{
+  "id": "campus-recruitment-aptitude-training-2026-10",
+  "source": {
+    "fileName": "Campus Recruitment -Aptitude Training.pdf",
+    "sha256": "407a002e1ab597f8bd5ac12f33de730f951a5371630e9bb576f8a29f48241406",
+    "pageCount": 4,
+    "kind": "syllabus-only"
+  },
+  "defaultPassingScore": 70,
+  "topics": [
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Number System and Simplification",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Percentages",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Ratio and Proportion",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Averages",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Profit, Loss and Discounts",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Simple and Compound Interest",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Time and Work",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Time, Speed and Distance",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Problems on Ages",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Mixtures and Alligation",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Number Series",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Basic Probability",
+      "sourcePage": 1
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Permutations and Combinations",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "quantitative",
+      "sourceSubject": "Quantitative Aptitude",
+      "title": "Data Interpretation (Tables, Bar Graphs and Pie Charts)",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Number and Alphabet Series",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Coding and Decoding",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Analogy and Classification",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Blood Relations",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Direction Sense",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Ranking and Ordering",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Seating Arrangements",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Logical Puzzles",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Syllogisms",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Statement and Conclusion",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Statement and Assumption",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Statement and Argument",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Cause and Effect",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Data Sufficiency",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Verbal Reasoning",
+      "title": "Critical Thinking and Problem-Solving",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Figure Series",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Figure Analogy",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Figure Classification",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Odd Figure Out",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Mirror Images",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Water Images",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Paper Folding and Cutting",
+      "sourcePage": 2
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Embedded Figures",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Figure Completion",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Pattern Completion",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Counting Figures",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Cubes and Dice",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Rotation and Reflection",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "reasoning",
+      "sourceSubject": "Logical Reasoning",
+      "group": "Non-Verbal Reasoning",
+      "title": "Spatial Visualization",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Basic English Grammar",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Parts of Speech and Tenses",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Subject-Verb Agreement",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Articles and Prepositions",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Vocabulary: Synonyms and Antonyms",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Idioms and Phrases",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Error Detection and Sentence Correction",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Fill in the Blanks",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Reading Comprehension",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Sentence Rearrangement",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Email Writing",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Spoken English and Fluency",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Self-Introduction",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Group Discussion",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "verbal",
+      "sourceSubject": "English and Communication Skills",
+      "title": "Presentation and Public Speaking",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Resume Preparation",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "HR Interview Questions",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Self-Introduction and Career Goals",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Strengths and Weaknesses",
+      "sourcePage": 3
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Project and Internship Explanation",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Basic Technical or Subject-Related Interview Questions",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Body Language and Professional Etiquette",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Teamwork and Leadership",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Time Management",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Problem-Solving and Decision-Making",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Workplace Communication",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Group Discussion Practice",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Mock Interviews",
+      "sourcePage": 4
+    },
+    {
+      "subjectId": "soft-skills",
+      "sourceSubject": "Corporate Interview and Employability Skills",
+      "title": "Aptitude and Placement Mock Tests",
+      "sourcePage": 4
+    }
+  ]
+}

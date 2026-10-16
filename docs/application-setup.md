@@ -421,3 +421,20 @@ Assignments stay within one organization, so identical codes such as `CSE` in di
 New or edited live exam drafts require one organization and exactly one branch. The audience can include all eligible students in that branch or selected students within it. Existing published exams keep their frozen rosters and results; legacy broad drafts must select a branch before they can be saved or published.
 
 Migration `012-crt-curriculum` creates curriculum, branch assignments, extra questions and attempt storage with forced row-level security. Migration `013-crt-all-branches` adds organization-wide topic assignments without rewriting existing assignments or progress. Apply migrations separately before deploying the API; the Render service must not run migrations at startup.
+
+### Campus Recruitment syllabus import
+
+`data/crt/campus-recruitment-aptitude-training.json` records the supplied four-page syllabus and its source checksum: 14 quantitative topics, 29 reasoning topics (15 Verbal Reasoning and 14 Non-Verbal Reasoning), 15 English/communication topics, and 14 interview/employability topics. The four existing CRT subject identities stay unchanged. Reasoning subgroup names and source pages are retained in each draft's introduction.
+
+The source contains topic names only. Imported topics are **drafts** with no reading PDF or questions; the editable passing score starts at the existing 70% editor default. Find them in **Admin → CRT → Topic library → Drafts**, then add the actual topic PDF and assessment, publish, and assign to the intended organization/branches. The syllabus PDF is not reused as a lesson or an assessment.
+
+Build the API first, then run the additive importer against an explicitly selected private environment file and database host:
+
+```sh
+npm run build:packages
+npm run build -w @slate/api
+node scripts/import-crt-syllabus.mjs --env <private-env-file> --expected-host <database-host>
+node scripts/import-crt-syllabus.mjs --env <private-env-file> --expected-host <database-host> --apply
+```
+
+The first command is a dry run. The private environment file must contain a restricted runtime `DATABASE_URL`; owner/superuser connections are rejected. If more than one active Platform Admin exists, provide `--actor-id <member-uuid>`. Importing creates missing draft rows and one audit event in a single transaction. Stable IDs and normalized subject/title matching prevent repeat imports from duplicating topics. Existing topics, published content, assignments, attempts, bank questions and uploaded files are preserved, including manually edited or renamed imported topics. No schema migration, app deployment, email or automatic student assignment is involved.
