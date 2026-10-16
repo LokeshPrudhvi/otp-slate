@@ -2,6 +2,12 @@
 
 The root `render.yaml` defines one **Free** Node web service in Ohio, close to the existing Neon database in AWS us-east-2. Cloudflare hosts the portals separately. The Blueprint does not create a database, paid worker or persistent disk. Automatic deploys and previews are disabled so releases are deliberate.
 
+## Coordinated release — 16 October 2026
+
+Source `a308e8c` is live on the existing Free / Ohio API as `dep-db8tuv0n74is73cqtt30`. Cloudflare releases from the same source are Admin `2da5d33f`, Student `d0073410` and Organization `fea1b234`. The API/portal builds and nine deployment-proxy checks passed. All three live portals served matching tested assets and deep links; direct API and portal health returned 200, protected anonymous requests returned 401, and no application error logs appeared during rollout.
+
+No runtime configuration, plan, schema or assignment changes were needed. The 72-topic syllabus import was already verified in production; release commands did not rerun imports, seeds or migrations. The topics remain drafts until their actual reading PDFs and assessments are added, published and assigned.
+
 ## CRT assignments for all branches — 15 October 2026
 
 Source `0fb4050` is live on the existing Free / Ohio API as `dep-db87pvou01pc73ero7fg`, with Admin Pages `33afe962`. Student `d57bebdd` and Organization `50c314db` are unchanged. No service, plan or secret was added.

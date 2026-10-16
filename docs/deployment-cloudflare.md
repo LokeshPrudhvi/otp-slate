@@ -2,7 +2,13 @@
 
 Each React portal is a separate Pages project. The browser keeps using its existing same-origin `/api` paths; a small Pages Function proxies them to the Render API. Pages receives only the API origin and a dedicated server-to-server proxy secret. The separate private R2 bucket is accessed through short-lived URLs signed by Render; the four R2 credentials/settings remain server-only on Render. No database URL, email key, or Better Auth secret belongs in Cloudflare. No secret belongs in a `VITE_*` variable or browser build.
 
-## Live portals — 15 October 2026
+## Live portals — 16 October 2026
+
+All three portals were rebuilt and deployed from `a308e8c`: Admin `2da5d33f`, Student `d0073410`, Organization `fea1b234`. The matching Render API is live as `dep-db8tuv0n74is73cqtt30`. Existing free plans, secrets and the Neon database remain unchanged. All portal builds and nine proxy checks passed. Production login/CRT/access/help/analytics deep links served the exact tested JavaScript/CSS bytes; all three portal health checks returned 200 and protected anonymous requests returned 401. No API application errors were reported during rollout.
+
+The 72 syllabus topics had already been imported into the live database as drafts. This deployment did not rerun the import, migrations or seed commands, and did not publish topics or change student assignments. Add lesson PDFs and MCQs in **Admin → CRT → Topic library**, then publish and assign when ready.
+
+## Previous student release — 15 October 2026
 
 Student `63722333`, from source `e9ae42b`, combines the separate Account and Help navigation into **Account & help**. The single panel keeps profile details, logout and learning shortcuts together with a softly tinted support section. Existing help URLs and exam navigation safeguards remain intact. Student build and nine login checks passed (the Node test harness used a local CSS import loader). Isolated browser checks verified the merged panel, Escape/focus restoration, collapsed sidebar, Dashboard/help navigation and logout. Production deep links and exact JavaScript/CSS bytes matched the tested build; health returned 200 and anonymous identity requests returned 401. Admin, Organization, API and database are unchanged by this UI release.
 
