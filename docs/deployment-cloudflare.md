@@ -2,7 +2,13 @@
 
 Each React portal is a separate Pages project. The browser keeps using its existing same-origin `/api` paths; a small Pages Function proxies them to the Render API. Pages receives only the API origin and a dedicated server-to-server proxy secret. The separate private R2 bucket is accessed through short-lived URLs signed by Render; the four R2 credentials/settings remain server-only on Render. No database URL, email key, or Better Auth secret belongs in Cloudflare. No secret belongs in a `VITE_*` variable or browser build.
 
-## Live portals — 16 October 2026
+## CRT topic tabs — 16 October 2026
+
+Student `3225653c`, from source `0ee47f0`, replaces the split PDF/assessment layout with **PDF lesson** and **Assessment** tabs. Each panel fills the topic workspace; the compact topic header leaves more room for reading. The PDF viewer, draft answers, reading acknowledgement and results remain mounted across tab switches. Keyboard navigation and the full-screen PDF dialog remain available.
+
+The Student build and all 11 CRT UI tests passed. An isolated browser check verified full-width panels, answer preservation, the reading-to-assessment action and PDF expansion without changing real student attempts. Production CRT deep links serve the exact tested JavaScript/CSS bytes; API health returned 200 and anonymous identity requests returned 401. Admin, Organization, Render and Neon are unchanged by this release.
+
+## Previous portals — 16 October 2026
 
 All three portals were rebuilt and deployed from `a308e8c`: Admin `2da5d33f`, Student `d0073410`, Organization `fea1b234`. The matching Render API is live as `dep-db8tuv0n74is73cqtt30`. Existing free plans, secrets and the Neon database remain unchanged. All portal builds and nine proxy checks passed. Production login/CRT/access/help/analytics deep links served the exact tested JavaScript/CSS bytes; all three portal health checks returned 200 and protected anonymous requests returned 401. No API application errors were reported during rollout.
 
