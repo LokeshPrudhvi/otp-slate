@@ -176,11 +176,25 @@ const button = (text) =>
   [...document.querySelectorAll("button")].find(
     (item) => item.textContent.trim() === text,
   );
+const activityTab = (name) =>
+  document.querySelector(`[role="tab"][aria-label="${name}"]`);
+const activityPanel = (name) =>
+  document.getElementById(activityTab(name).getAttribute("aria-controls"));
 const topicsOnScreen = () => [...document.querySelectorAll(".crt-topic-link")];
 const location = () => document.querySelector("[data-location]").textContent;
 async function click(item) {
   assert.ok(item, "Expected interactive element");
   await act(async () => item.click());
+  await settle();
+}
+async function pressKey(item, key) {
+  assert.ok(item, "Expected keyboard target");
+  await act(async () => {
+    item.focus();
+    item.dispatchEvent(
+      new dom.window.KeyboardEvent("keydown", { key, bubbles: true }),
+    );
+  });
   await settle();
 }
 async function choose(label, text) {
@@ -355,7 +369,7 @@ test("topic search and progress dropdown reset pagination and expose only matchi
   assert.equal(button("Next →").disabled, true);
 });
 
-test("the five fixed tabs switch subjects on the same page and clear a previously open topic", async () => {
+test("the five fixed subject tabs return after leaving the focused topic workspace", async () => {
   const subjects = ["quantitative", "reasoning", "verbal", "soft-skills"];
   const topics = subjects.map((subject, i) =>
     topic(i + 1, subject, { title: `${subject} lesson` }),
@@ -376,6 +390,11 @@ test("the five fixed tabs switch subjects on the same page and clear a previousl
   }
   await click(topicsOnScreen()[0]);
   assert.match(location(), /topic=/);
+  assert.equal(document.querySelector(".crt-hero"), null);
+  assert.equal(tabs().length, 0);
+  await click(button("← All topics"));
+  assert.doesNotMatch(location(), /topic=/);
+  assert.equal(tabs().length, 5);
   await click(tabs()[4]);
   assert.equal(location(), "/crt?subject=practice");
   assert.match(document.body.textContent, /Choose what to work on/);
@@ -439,6 +458,7 @@ test("topic submissions require reading acknowledgement, preserve request identi
   };
   await mount(h(CrtPage), `/crt?subject=quantitative&topic=${value.id}`);
   assert.equal(document.querySelector("iframe").title, `${value.title} PDF`);
+  await click(activityTab("Assessment"));
   assert.equal(button("Submit assessment").disabled, true);
   await answerAll();
   assert.equal(button("Submit assessment").disabled, true);
@@ -532,16 +552,96 @@ test("PDF enlargement keeps the assessment in place and restores focus after clo
   assert.equal(document.activeElement, trigger);
 });
 
+test("topic activity tabs expose one panel at a time with keyboard navigation and roving focus", async () => {
+  const value = detail();
+  topicReads(value);
+  await mount(h(CrtPage), `/crt?subject=quantitative&topic=${value.id}`);
+  const tablist = document.querySelector(
+    '[role="tablist"][aria-label="Topic activity"]',
+  );
+  assert.ok(tablist);
+  assert.equal(tablist.querySelectorAll('[role="tab"]').length, 2);
+  const pdfTab = activityTab("PDF lesson");
+  const assessmentTab = activityTab("Assessment");
+  const pdfPanel = activityPanel("PDF lesson");
+  const assessmentPanel = activityPanel("Assessment");
+  const assertSelected = (selectedTab, visiblePanel, otherTab, hiddenPanel) => {
+    assert.equal(selectedTab.getAttribute("aria-selected"), "true");
+    assert.equal(selectedTab.tabIndex, 0);
+    assert.equal(otherTab.getAttribute("aria-selected"), "false");
+    assert.equal(otherTab.tabIndex, -1);
+    assert.equal(visiblePanel.getAttribute("role"), "tabpanel");
+    assert.equal(visiblePanel.getAttribute("aria-labelledby"), selectedTab.id);
+    assert.equal(visiblePanel.hidden, false);
+    assert.equal(hiddenPanel.hidden, true);
+  };
+  assertSelected(pdfTab, pdfPanel, assessmentTab, assessmentPanel);
+  await pressKey(pdfTab, "ArrowRight");
+  assertSelected(assessmentTab, assessmentPanel, pdfTab, pdfPanel);
+  assert.equal(document.activeElement, assessmentTab);
+  await pressKey(assessmentTab, "ArrowRight");
+  assertSelected(pdfTab, pdfPanel, assessmentTab, assessmentPanel);
+  await pressKey(pdfTab, "ArrowLeft");
+  assertSelected(assessmentTab, assessmentPanel, pdfTab, pdfPanel);
+  await pressKey(assessmentTab, "Home");
+  assertSelected(pdfTab, pdfPanel, assessmentTab, assessmentPanel);
+  assert.equal(document.activeElement, pdfTab);
+  await pressKey(pdfTab, "End");
+  assertSelected(assessmentTab, assessmentPanel, pdfTab, pdfPanel);
+  assert.equal(document.activeElement, assessmentTab);
+  assert.equal(calls.length, 0);
+});
+
+test("switching topic tabs preserves the PDF, answer draft, reading acknowledgement and submitted result", async () => {
+  const value = detail();
+  topicReads(value);
+  send = () => result();
+  await mount(h(CrtPage), `/crt?subject=quantitative&topic=${value.id}`);
+  const pdfFrame = document.querySelector("iframe");
+  assert.ok(pdfFrame);
+  await click(button("Continue to assessment →"));
+  assert.equal(activityTab("Assessment").getAttribute("aria-selected"), "true");
+  await answerAll();
+  const acknowledgement = document.querySelector(".crt-read-ack input");
+  await click(acknowledgement);
+  assert.equal(button("Submit assessment").disabled, false);
+  await click(activityTab("PDF lesson"));
+  assert.equal(document.querySelector("iframe"), pdfFrame);
+  assert.equal(activityPanel("Assessment").hidden, true);
+  await click(activityTab("Assessment"));
+  assert.equal(
+    document.querySelectorAll('input[type="radio"]:checked').length,
+    2,
+  );
+  assert.equal(document.querySelector(".crt-read-ack input"), acknowledgement);
+  assert.equal(acknowledgement.checked, true);
+  assert.equal(button("Submit assessment").disabled, false);
+  await click(button("Submit assessment"));
+  const outcome = document.querySelector(".crt-result-banner");
+  assert.match(outcome.textContent, /Topic completed/);
+  await click(activityTab("PDF lesson"));
+  assert.equal(document.querySelector("iframe"), pdfFrame);
+  await click(activityTab("Assessment"));
+  assert.equal(document.querySelector(".crt-result-banner"), outcome);
+  assert.equal(calls.length, 1);
+  assert.equal(
+    reads.filter((path) => path === `student/crt/topics/${value.id}/pdf`).length,
+    1,
+  );
+});
+
 test("draft answers survive revisiting the same immutable version and stay separate from a replacement version", async () => {
   let value = detail();
   topicReads(value);
   const url = `/crt?subject=quantitative&topic=${value.id}`;
   await mount(h(CrtPage), url);
+  await click(activityTab("Assessment"));
   await click(document.querySelector('input[type="radio"][value="1"]'));
   await act(async () => root.unmount());
   query.clear();
   root = undefined;
   await mount(h(CrtPage), url);
+  await click(activityTab("Assessment"));
   assert.equal(
     document.querySelectorAll('input[type="radio"]:checked').length,
     1,
@@ -552,6 +652,7 @@ test("draft answers survive revisiting the same immutable version and stay separ
   value = { ...value, versionId: "replacement-version", version: 2 };
   topicReads(value);
   await mount(h(CrtPage), url);
+  await click(activityTab("Assessment"));
   assert.equal(
     document.querySelectorAll('input[type="radio"]:checked').length,
     0,

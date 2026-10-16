@@ -40,49 +40,52 @@ export function CrtPage() {
   const completed = topics.data?.filter((topic) => topic.completed).length || 0;
   const changeTab = (subject: string) => setParams({ subject });
   return (
-    <div className="crt-page">
-      <header className="crt-hero">
-        <div className="crt-hero-copy">
-          <span className="crt-eyebrow">CAMPUS RECRUITMENT TRAINING</span>
-          <h1>One topic closer to ready.</h1>
-          <p>
-            Read the concepts, put them into practice and build your confidence.
-          </p>
-        </div>
-        <div className="crt-progress-summary">
-          <StudentIcon name="practice" />
-          <div>
-            <strong>
-              {completed}
-              <span> / {topics.data?.length ?? "—"}</span>
-            </strong>
-            <span>topics completed</span>
+    <div className={`crt-page${topicId ? " crt-page--topic" : ""}`}>
+      {!topicId && (
+        <header className="crt-hero">
+          <div className="crt-hero-copy">
+            <span className="crt-eyebrow">CAMPUS RECRUITMENT TRAINING</span>
+            <h1>One topic closer to ready.</h1>
+            <p>
+              Read the concepts, put them into practice and build your
+              confidence.
+            </p>
           </div>
-        </div>
-        <nav className="crt-subjects" aria-label="CRT subjects">
-          {crtSubjects.map((subject, index) => (
+          <div className="crt-progress-summary">
+            <StudentIcon name="practice" />
+            <div>
+              <strong>
+                {completed}
+                <span> / {topics.data?.length ?? "—"}</span>
+              </strong>
+              <span>topics completed</span>
+            </div>
+          </div>
+          <nav className="crt-subjects" aria-label="CRT subjects">
+            {crtSubjects.map((subject, index) => (
+              <button
+                type="button"
+                key={subject.id}
+                className={selected === subject.id ? "is-active" : ""}
+                aria-current={selected === subject.id ? "page" : undefined}
+                onClick={() => changeTab(subject.id)}
+              >
+                <span className="crt-tab-number">0{index + 1}</span>
+                <span>{subject.name}</span>
+              </button>
+            ))}
             <button
               type="button"
-              key={subject.id}
-              className={selected === subject.id ? "is-active" : ""}
-              aria-current={selected === subject.id ? "page" : undefined}
-              onClick={() => changeTab(subject.id)}
+              className={selected === "practice" ? "is-active" : ""}
+              aria-current={selected === "practice" ? "page" : undefined}
+              onClick={() => changeTab("practice")}
             >
-              <span className="crt-tab-number">0{index + 1}</span>
-              <span>{subject.name}</span>
+              <StudentIcon name="practice" />
+              <span>Practice</span>
             </button>
-          ))}
-          <button
-            type="button"
-            className={selected === "practice" ? "is-active" : ""}
-            aria-current={selected === "practice" ? "page" : undefined}
-            onClick={() => changeTab("practice")}
-          >
-            <StudentIcon name="practice" />
-            <span>Practice</span>
-          </button>
-        </nav>
-      </header>
+          </nav>
+        </header>
+      )}
       <main
         className="crt-content"
         aria-label={
@@ -341,6 +344,28 @@ function TopicActivity({
     `topic:${me.data?.id}:${topic.versionId}`,
   );
   const [read, setRead] = useState(false);
+  const [activePanel, setActivePanel] = useState<"lesson" | "assessment">(
+    "lesson",
+  );
+  const activityId = useId();
+  const lessonTab = useRef<HTMLButtonElement>(null);
+  const assessmentTab = useRef<HTMLButtonElement>(null);
+  const selectPanel = (
+    panel: "lesson" | "assessment",
+    focus = false,
+    scroll = false,
+  ) => {
+    setActivePanel(panel);
+    const tab = (panel === "lesson" ? lessonTab : assessmentTab).current;
+    if (focus) tab?.focus({ preventScroll: !scroll });
+    if (scroll) tab?.scrollIntoView?.({ block: "start", behavior: "auto" });
+  };
+  const answeredCount = topic.questions.filter(
+    (question) =>
+      Number.isInteger(answers[question.id]) &&
+      answers[question.id] >= 0 &&
+      answers[question.id] < question.options.length,
+  ).length;
   const [clientId, setClientId] = useState(() => crypto.randomUUID());
   const submit = useMutation({
     mutationFn: () =>
@@ -364,8 +389,13 @@ function TopicActivity({
     <>
       <div className="crt-section-head">
         <div>
-          <span className="crt-eyebrow">READ & APPLY</span>
-          <h2>{topic.title}</h2>
+          <span className="crt-eyebrow">
+            {
+              crtSubjects.find((subject) => subject.id === topic.subjectId)
+                ?.name
+            }
+          </span>
+          <h1>{topic.title}</h1>
           {topic.description && <p>{topic.description}</p>}
         </div>
         {topic.completed && (
@@ -375,80 +405,162 @@ function TopicActivity({
           </span>
         )}
       </div>
-      <div className="crt-reader-grid">
-        <PdfReader topic={topic} />
-        <section className="crt-assessment" aria-label="Topic assessment">
-          <div className="crt-panel-heading">
-            <div>
-              <span className="crt-eyebrow">PUT IT INTO PRACTICE</span>
-              <h3>Check your understanding</h3>
-            </div>
-            <span>{topic.questions.length} questions</span>
-          </div>
-          <p className="crt-assessment-note">
-            Score at least <strong>{topic.passingScore}%</strong> to complete
-            this topic. You can try again as often as you need.
-          </p>
-          {submit.data ? (
-            <AssessmentResult
-              result={submit.data}
-              passingScore={topic.passingScore}
-              imageSource={(imageId) =>
-                `student/crt/topics/${topic.id}/images/${imageId}`
-              }
-              onRetry={retry}
-            />
-          ) : (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (read && allAnswered(topic.questions, answers))
-                  submit.mutate();
-              }}
+      <div className="crt-topic-workspace">
+        <div
+          className="crt-activity-tabs"
+          role="tablist"
+          aria-label="Topic activity"
+          onKeyDown={(event) => {
+            const panels = ["lesson", "assessment"] as const;
+            let next: "lesson" | "assessment";
+            if (event.key === "ArrowRight" || event.key === "ArrowLeft")
+              next = panels[activePanel === "lesson" ? 1 : 0];
+            else if (event.key === "Home") next = "lesson";
+            else if (event.key === "End") next = "assessment";
+            else return;
+            event.preventDefault();
+            selectPanel(next, true);
+          }}
+        >
+          <button
+            ref={lessonTab}
+            type="button"
+            role="tab"
+            id={`${activityId}-lesson-tab`}
+            aria-label="PDF lesson"
+            aria-selected={activePanel === "lesson"}
+            aria-controls={`${activityId}-lesson-panel`}
+            tabIndex={activePanel === "lesson" ? 0 : -1}
+            onClick={() => selectPanel("lesson")}
+          >
+            <StudentIcon name="courses" />
+            <span>PDF lesson</span>
+            <small>Read & learn</small>
+          </button>
+          <button
+            ref={assessmentTab}
+            type="button"
+            role="tab"
+            id={`${activityId}-assessment-tab`}
+            aria-label="Assessment"
+            aria-selected={activePanel === "assessment"}
+            aria-controls={`${activityId}-assessment-panel`}
+            tabIndex={activePanel === "assessment" ? 0 : -1}
+            onClick={() => selectPanel("assessment")}
+          >
+            <StudentIcon name="practice" />
+            <span>Assessment</span>
+            <small aria-hidden="true">
+              {submit.data
+                ? "View results"
+                : `${answeredCount}/${topic.questions.length} answered`}
+            </small>
+          </button>
+        </div>
+        <div
+          className="crt-activity-panel"
+          role="tabpanel"
+          id={`${activityId}-lesson-panel`}
+          aria-labelledby={`${activityId}-lesson-tab`}
+          hidden={activePanel !== "lesson"}
+          tabIndex={0}
+        >
+          <PdfReader topic={topic} />
+          <div className="crt-reading-next">
+            <p>
+              Ready to put this into practice? You can return to the PDF
+              anytime.
+            </p>
+            <button
+              type="button"
+              className="a-btn pri"
+              onClick={() => selectPanel("assessment", true, true)}
             >
-              <Questions
-                questions={topic.questions}
-                answers={answers}
-                onChange={setAnswers}
-                disabled={submit.isPending}
+              {submit.data
+                ? "View assessment results"
+                : "Continue to assessment"}{" "}
+              →
+            </button>
+          </div>
+        </div>
+        <div
+          className="crt-activity-panel"
+          role="tabpanel"
+          id={`${activityId}-assessment-panel`}
+          aria-labelledby={`${activityId}-assessment-tab`}
+          hidden={activePanel !== "assessment"}
+          tabIndex={0}
+        >
+          <section className="crt-assessment" aria-label="Topic assessment">
+            <div className="crt-panel-heading">
+              <div>
+                <span className="crt-eyebrow">PUT IT INTO PRACTICE</span>
+                <h3>Check your understanding</h3>
+              </div>
+              <span>{topic.questions.length} questions</span>
+            </div>
+            <p className="crt-assessment-note">
+              Score at least <strong>{topic.passingScore}%</strong> to complete
+              this topic. You can try again as often as you need.
+            </p>
+            {submit.data ? (
+              <AssessmentResult
+                result={submit.data}
+                passingScore={topic.passingScore}
                 imageSource={(imageId) =>
                   `student/crt/topics/${topic.id}/images/${imageId}`
                 }
+                onRetry={retry}
               />
-              <div className="crt-submit">
-                <label className="crt-read-ack">
-                  <input
-                    type="checkbox"
-                    checked={read}
-                    disabled={submit.isPending}
-                    onChange={(event) => setRead(event.target.checked)}
-                  />
-                  <span>I’ve read the PDF and I’m ready to submit.</span>
-                </label>
-                <Status error={submit.error} />
-                <button
-                  className="a-btn pri"
-                  disabled={
-                    submit.isPending ||
-                    !read ||
-                    !allAnswered(topic.questions, answers)
+            ) : (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (read && allAnswered(topic.questions, answers))
+                    submit.mutate();
+                }}
+              >
+                <Questions
+                  questions={topic.questions}
+                  answers={answers}
+                  onChange={setAnswers}
+                  disabled={submit.isPending}
+                  imageSource={(imageId) =>
+                    `student/crt/topics/${topic.id}/images/${imageId}`
                   }
-                >
-                  {submit.isPending ? "Checking answers…" : "Submit assessment"}
-                </button>
-                <small>
-                  {
-                    Object.keys(answers).filter((key) =>
-                      topic.questions.some((q) => q.id === key),
-                    ).length
-                  }{" "}
-                  of {topic.questions.length} answered · Your draft answers stay
-                  on this device.
-                </small>
-              </div>
-            </form>
-          )}
-        </section>
+                />
+                <div className="crt-submit">
+                  <label className="crt-read-ack">
+                    <input
+                      type="checkbox"
+                      checked={read}
+                      disabled={submit.isPending}
+                      onChange={(event) => setRead(event.target.checked)}
+                    />
+                    <span>I’ve read the PDF and I’m ready to submit.</span>
+                  </label>
+                  <Status error={submit.error} />
+                  <button
+                    className="a-btn pri"
+                    disabled={
+                      submit.isPending ||
+                      !read ||
+                      !allAnswered(topic.questions, answers)
+                    }
+                  >
+                    {submit.isPending
+                      ? "Checking answers…"
+                      : "Submit assessment"}
+                  </button>
+                  <small>
+                    {answeredCount} of {topic.questions.length} answered · Your
+                    draft answers stay on this device.
+                  </small>
+                </div>
+              </form>
+            )}
+          </section>
+        </div>
       </div>
     </>
   );
@@ -679,7 +791,7 @@ function AssessmentResult({
         className={`crt-result-banner${passingScore !== undefined && !result.passed ? " needs-practice" : ""}`}
         role="status"
       >
-          <strong>{result.score}%</strong>
+        <strong>{result.score}%</strong>
         <div>
           <h3>
             {passingScore === undefined
