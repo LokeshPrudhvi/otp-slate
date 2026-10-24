@@ -11,6 +11,7 @@ import { r2Configured } from "./providers.js";
 
 export interface LessonStorage {
   configured(): boolean;
+  put?(key:string,body:Uint8Array,contentType:string):Promise<void>;
   upload(key: string, contentType: string, size: number): Promise<string>;
   head(key: string): Promise<{ size: number; contentType: string }>;
   readPrefix?(key: string, length: number): Promise<Uint8Array>;
@@ -32,6 +33,9 @@ function client() {
 }
 export const r2LessonStorage: LessonStorage = {
   configured: r2Configured,
+  async put(key,body,contentType) {
+    await client().send(new PutObjectCommand({Bucket:process.env.R2_BUCKET,Key:key,Body:body,ContentType:contentType,ContentLength:body.length,CacheControl:"public,max-age=31536000,immutable"}),{abortSignal:AbortSignal.timeout(30_000)});
+  },
   async upload(key, contentType, size) {
     return getSignedUrl(
       client(),

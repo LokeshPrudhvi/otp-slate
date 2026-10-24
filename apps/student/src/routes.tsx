@@ -1,15 +1,25 @@
-import { useState } from "react";
-import { Link, Route, Routes, useParams } from "react-router-dom";
+import { JobCards } from "./job-cards";
+import { CareerOpportunities, CertificationsPage, PyqPage } from "./career";
+import { MailboxPage } from "./mailbox";
+import { useEffect, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+} from "react-router-dom";
 import type {
-  Announcement,
   Course,
+  CourseCatalogItem,
   Job,
   Lesson,
   StudentExamSummary,
   Ranking,
-  PracticeAssessment,
 } from "@slate/contracts";
-import { Protected, useMe } from "@slate/ui";
+import { api, Protected, useMe } from "@slate/ui";
 import {
   Artwork,
   Banner,
@@ -18,16 +28,12 @@ import {
   Status,
   StudentIcon,
   StudentShell,
-  courseAppearance,
-  heroBackground,
-  shade,
-  tracks,
 } from "./design";
+import { CourseCard, recentlyOpened } from "./course-cards";
 import { StudentLogin, StudentOnboarding, StudentResetPassword } from "./auth";
 import { StudentRegistration } from "./registration";
 import { ResumePage } from "./resume";
-import { AssessmentPlayer, PracticeCatalogue } from "./assessments";
-import { CodingLibrary } from "./coding";
+import { CodingLibrary, CodingProblemPage } from "./coding";
 import { CompilerPage } from "./compiler";
 import { CrtPage } from "./crt";
 import { SelfAssessment } from "./self-assessment";
@@ -38,168 +44,41 @@ import {
   LiveExamAttemptPage,
 } from "./live-exams";
 import { AnnouncementsPage } from "./announcements";
-import {
-  AccessRoute,
-  hasAccess,
-  hasToolkitTrack,
-  useStudentData as useData,
-} from "./access";
+import { AccessRoute, hasAccess, useStudentData as useData } from "./access";
 
 type LearningCourse = Course & {
   lessons: Lesson[];
   completedLessonIds: string[];
 };
-function CourseCard({ course, index }: { course: Course; index: number }) {
-  const appearance = courseAppearance(course),
-    [menu, setMenu] = useState(false);
-  return (
-    <article className="a-card">
-      <Link
-        to={`/courses/${course.id}`}
-        className="course-card-link"
-        aria-label={`Open ${course.title}`}
-      >
-        <div
-          className="a-hero"
-          style={{ background: heroBackground(appearance.color, index) }}
-        >
-          <span className="a-glyph">{appearance.glyph}</span>
-        </div>
-        <div className="a-cbody">
-          <div
-            className="a-ctitle"
-            style={{ color: shade(appearance.color, -12) }}
-          >
-            {course.title}
-          </div>
-          <div className="a-ccode">
-            {tracks.find((track) => track.id === course.track)?.name ||
-              (course.track === "foundation"
-                ? "Foundation courses"
-                : "Learning courses")}
-          </div>
-        </div>
-        <div className="a-cicons" aria-hidden="true">
-          <span>
-            <StudentIcon name="ann" />
-          </span>
-          <span>
-            <StudentIcon name="assign" />
-          </span>
-          <span>
-            <StudentIcon name="discussion" />
-          </span>
-        </div>
-      </Link>
-      <button
-        className="a-kebab"
-        aria-label={`Options for ${course.title}`}
-        aria-expanded={menu}
-        onClick={() => setMenu(!menu)}
-      >
-        ⋮
-      </button>
-      {menu && (
-        <div className="course-card-menu">
-          <Link to={`/courses/${course.id}`}>Open course →</Link>
-          <Link to="/courses">All courses</Link>
-        </div>
-      )}
-    </article>
-  );
-}
-function CourseRow({ course }: { course: Course }) {
-  const appearance = courseAppearance(course);
-  return (
-    <Link className="a-row" to={`/courses/${course.id}`}>
-      <span className="a-sw" style={{ background: appearance.color }}>
-        {appearance.glyph}
-      </span>
-      <span>
-        <b>{course.title}</b>
-        <small>{course.description}</small>
-        <span className="a-tags">
-          <span className="a-tag ide">Self-paced learning</span>
-          <span className="a-tag en">Enrolled</span>
-        </span>
-      </span>
-    </Link>
-  );
-}
-function ToolkitShortcuts() {
-  const me = useMe();
-  const available = tracks.filter((track) =>
-    hasToolkitTrack(me.data, track.id),
-  );
-  if (!available.length) return null;
-  return (
-    <section aria-label="Explore learning paths">
-      <p className="hub-eyebrow">
-        {me.data?.access?.display.toolkitTitle || "Your Placement Toolkit"}
-      </p>
-      <div className="hub-shortcuts">
-        {available.map((track) => (
-          <Link key={track.id} to={`/toolkit/${track.id}`}>
-            <span>{track.glyph}</span>
-            <b>{track.name}</b>
-            <span aria-hidden="true">↗</span>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
 function LiveExamShortcut() {
-  const me = useMe();
-  const exams = useData<StudentExamSummary[]>("exams", "student/exams"),
-    live = exams.data?.find((exam) => exam.state === "live");
-  if (exams.isPending || exams.isError)
-    return (
-      <section className="live-dash">
-        <div>
-          <h2>Live exams</h2>
-          <Status pending={exams.isPending} error={exams.error} />
-        </div>
-        <Link className="a-btn" to="/live-exams">
-          View exams →
-        </Link>
-      </section>
-    );
-  if (live)
-    return (
-      <section className="live-dash" aria-label="Live exams">
-        <div>
-          <span className="hub-eyebrow">LIVE EXAMS</span>
-          <h2>{live.title}</h2>
-          <p>
-            {live.durationMinutes} minutes · {live.questionCount} questions ·
-            Available now
-          </p>
-        </div>
-        <Link className="a-btn" to="/live-exams">
-          View exam →
-        </Link>
-      </section>
-    );
+  const exams = useData<StudentExamSummary[]>("exams", "student/exams");
+  useEffect(() => {
+    const timer = window.setInterval(() => void exams.refetch(), 30_000);
+    return () => window.clearInterval(timer);
+  }, [exams.refetch]);
+  const live = exams.data?.find((exam) => exam.state === "live");
+  if (exams.isPending || exams.isError || !live) return null;
   return (
     <section className="live-dash" aria-label="Live exams">
       <div>
-        <span className="hub-eyebrow">LIVE EXAMS</span>
-        <h2>No live exams right now</h2>
-        <p>Your next exam will appear here when your institute releases it.</p>
+        <span className="hub-eyebrow">LIVE NOW</span>
+        <h2>{live.title}</h2>
+        <p>
+          {live.durationMinutes} minutes · {live.questionCount} questions ·
+          Available now
+        </p>
       </div>
-      {hasAccess(me.data, "practice") && (
-        <Link className="a-btn" to="/practice">
-          Explore practice →
-        </Link>
-      )}
+      <Link className="a-btn" to={`/live-exams/${live.id}`}>
+        View exam →
+      </Link>
     </section>
   );
 }
 function Rankings() {
   const me = useMe(),
     [search, setSearch] = useState(""),
-    [page, setPage] = useState(0);
+    [page, setPage] = useState(0),
+    [rankingMode, setRankingMode] = useState<"latest" | "overall">("overall");
   const visibilityKey = `slate:rankings-visibility:${me.data?.id}`;
   const [visible, setVisible] = useState(() => {
     try {
@@ -208,7 +87,11 @@ function Rankings() {
       return true;
     }
   });
-  const people = useData<Ranking[]>("rankings", "student/rankings", visible);
+  const people = useData<Ranking[]>(
+    `crt-rankings:${rankingMode}`,
+    `student/rankings?kind=crt&mode=${rankingMode}`,
+    visible,
+  );
   function toggleVisibility() {
     const next = !visible;
     setVisible(next);
@@ -225,18 +108,16 @@ function Rankings() {
       person.name.toLowerCase().includes(search.toLowerCase()),
     ) || [];
   return (
-    <aside className="a-aside rankings-panel" aria-label="Student rankings">
+    <aside className="a-aside rankings-panel" aria-label="CRT ranking">
       <div className="rankings-head">
         <span className="hub-eyebrow">LEARN · PRACTISE · CLIMB</span>
         <div className="rankings-title-row">
-          <h2>Student rankings</h2>
+          <h2>CRT – Ranking</h2>
           <button
             type="button"
             className="rankings-visibility-toggle"
-            aria-label={
-              visible ? "Hide student rankings" : "Show student rankings"
-            }
-            title={visible ? "Hide student rankings" : "Show student rankings"}
+            aria-label={visible ? "Hide CRT ranking" : "Show CRT ranking"}
+            title={visible ? "Hide CRT ranking" : "Show CRT ranking"}
             aria-expanded={visible}
             aria-controls="student-rankings-content"
             onClick={toggleVisibility}
@@ -258,6 +139,29 @@ function Rankings() {
         </div>
       </div>
       <div id="student-rankings-content" hidden={!visible}>
+        <div
+          className="crt-ranking-tabs"
+          role="group"
+          aria-label="CRT ranking period"
+        >
+          {(["latest", "overall"] as const).map((mode) => (
+            <button
+              key={mode}
+              aria-pressed={rankingMode === mode}
+              onClick={() => {
+                setRankingMode(mode);
+                setPage(0);
+              }}
+            >
+              {mode === "latest" ? "Latest" : "Overall"}
+            </button>
+          ))}
+        </div>
+        <p className="ranking-note">
+          {rankingMode === "latest"
+            ? "Latest completed topic assessment per student."
+            : "Average of each student’s best score per CRT topic."}
+        </p>
         <p className="ranking-note">
           All {people.data?.length ?? "—"} students · Your organization
         </p>
@@ -271,11 +175,15 @@ function Rankings() {
           </span>
         </div>
         <p className="ranking-note">
-          {people.data?.some((person) => person.sample)
-            ? "Sample placement results · Local preview"
-            : "Rankings appear when assessment results are published."}
+          Scores are percentages. Students without completed CRT assessments
+          remain unranked.
         </p>
-        <Status pending={people.isPending} error={people.error} />
+        <Status
+          pending={people.isPending}
+          error={people.error}
+          label="Loading rankings"
+          variant="inline"
+        />
         {people.data && (
           <>
             <input
@@ -295,7 +203,7 @@ function Rankings() {
                   <tr>
                     <th>Rank</th>
                     <th>Student</th>
-                    <th>Points</th>
+                    <th>Score %</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -347,89 +255,52 @@ function Rankings() {
 }
 function Dashboard() {
   const me = useMe(),
-    courses = useData<Course[]>("courses", "student/courses"),
-    [options, setOptions] = useState(false);
+    courses = useData<Course[]>("courses", "student/courses");
   const allowed = (feature: string) => hasAccess(me.data, feature);
-  const insights = allowed("rankings") || allowed("self-assessment");
+  const showRankings = allowed("rankings") && allowed("crt");
+  const insights = showRankings;
   const display = me.data?.access?.display;
   return (
     <div className="a-page">
+      <Heading title={display?.portalTitle || "Dashboard"}>
+        {me.data?.demo && <span className="a-tag">Sample data</span>}
+        {allowed("courses") && (
+          <Link className="a-btn" to="/courses">
+            All courses
+          </Link>
+        )}
+      </Heading>
+      {display?.welcomeText && (
+        <p className="hub-note">{display.welcomeText}</p>
+      )}
+      {allowed("self-assessment") && <SelfAssessment />}
       <div className={`a-dash${insights ? "" : " dashboard-wide"}`}>
         <div>
-          <Heading title={display?.portalTitle || "Dashboard"}>
-            {me.data?.demo && <span className="a-tag">Sample data</span>}
-            {allowed("courses") && (
-              <Link className="a-btn" to="/courses">
-                All courses
-              </Link>
-            )}
-            {(allowed("toolkit") || allowed("live-exams")) && (
-              <button
-                className="a-btn"
-                aria-label="Dashboard options"
-                aria-expanded={options}
-                onClick={() => setOptions(!options)}
-              >
-                ⋮
-              </button>
-            )}
-          </Heading>
-          {display?.welcomeText && (
-            <p className="hub-note">{display.welcomeText}</p>
-          )}
-          {options && (
-            <div className="dashboard-options">
-              {allowed("toolkit") && (
-                <Link className="a-btn" to="/toolkit">
-                  {display?.toolkitTitle || "Placement toolkit"} →
-                </Link>
-              )}
-              {allowed("live-exams") && (
-                <Link className="a-btn" to="/live-exams">
-                  Live exams →
-                </Link>
-              )}
-            </div>
-          )}
-          {allowed("toolkit") && <ToolkitShortcuts />}
-          {allowed("crt") && (
-            <section
-              className="live-dash"
-              aria-label="Campus recruitment training"
-            >
-              <div>
-                <span className="hub-eyebrow">CAMPUS RECRUITMENT TRAINING</span>
-                <h2>Read. Solve. Build confidence.</h2>
-                <p>
-                  Explore your assigned PDF topics and practise aptitude,
-                  reasoning, English and interview skills.
-                </p>
-              </div>
-              <Link className="a-btn" to="/crt">
-                Open CRT →
-              </Link>
-            </section>
-          )}
           {allowed("live-exams") && <LiveExamShortcut />}
           {allowed("courses") && (
             <>
-              <h2
-                style={{ fontSize: 20, fontWeight: 400, margin: "24px 0 16px" }}
-              >
-                Continue learning
-              </h2>
-              <Status pending={courses.isPending} error={courses.error} />
+              <div className="learning-section-heading">
+                <h2>Continue learning</h2>
+                <p>All your enrolled courses · Recently opened first</p>
+              </div>
+              <Status
+                pending={courses.isPending}
+                error={courses.error}
+                label="Loading your courses"
+                variant="cards"
+              />
               {courses.data?.length ? (
-                <div className="a-cards">
-                  {courses.data.map((course, index) => (
-                    <CourseCard key={course.id} course={course} index={index} />
+                <div className="learning-cards">
+                  {recentlyOpened(courses.data).map((course) => (
+                    <CourseCard key={course.id} course={course} />
                   ))}
                 </div>
               ) : (
                 !courses.isPending &&
                 !courses.error && (
                   <NoResults title="Your courses will appear here">
-                    Your organization will assign courses to your account.
+                    Explore the course catalog to request enrollment, or ask
+                    your organization to assign a course.
                   </NoResults>
                 )
               )}
@@ -444,8 +315,7 @@ function Dashboard() {
         </div>
         {insights && (
           <div className="dashboard-insights">
-            {allowed("self-assessment") && <SelfAssessment />}
-            {allowed("rankings") && <Rankings key={me.data?.id} />}
+            {showRankings && <Rankings key={me.data?.id} />}
           </div>
         )}
       </div>
@@ -453,128 +323,146 @@ function Dashboard() {
   );
 }
 function Courses() {
-  const me = useMe(),
-    data = useData<Course[]>("courses", "student/courses"),
-    practice = useData<PracticeAssessment[]>("practice", "student/practice"),
+  const data = useData<CourseCatalogItem[]>(
+      "course-catalog",
+      "student/course-catalog",
+    ),
     [search, setSearch] = useState(""),
-    [category, setCategory] = useState("tracks");
-  const assigned = data.data || [],
-    items = assigned.filter((course) =>
+    [filter, setFilter] = useState<"all" | "enrolled">("all");
+  const courses = data.data || [],
+    enrolled = courses.filter((course) => course.enrolled),
+    selected = filter === "enrolled" ? recentlyOpened(enrolled) : courses,
+    items = selected.filter((course) =>
       `${course.title} ${course.description}`
         .toLowerCase()
-        .includes(search.toLowerCase()),
+        .includes(search.trim().toLowerCase()),
     );
-  const papers = (practice.data || []).filter(
-    (item) =>
-      item.kind === "quiz" &&
-      `${item.title} ${item.description}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-  );
   return (
-    <div className="a-page">
-      <Heading title="Courses">
-        <span style={{ fontSize: 14, color: "#6b7780" }}>
-          {assigned.length} courses you can open
-        </span>
-      </Heading>
-      <div className="a-filters">
-        {[
-          ["tracks", "All courses"],
-          ["pyq", "Company PYQs"],
-        ]
-          .filter(([id]) => id !== "pyq" || hasAccess(me.data, "practice"))
-          .map(([id, label]) => (
-            <button
-              key={id}
-              className={`a-pill${category === id ? " on" : ""}`}
-              aria-pressed={category === id}
-              onClick={() => setCategory(id)}
-            >
-              {label}
-            </button>
-          ))}
+    <div className="a-page course-catalog-page">
+      <Heading title="Courses" />
+      <p className="course-catalog-intro">
+        Your next skill starts here. Continue an enrolled course, or request
+        access to something new.
+      </p>
+      <div
+        className="a-filters course-catalog-filters"
+        aria-label="Course filters"
+      >
+        {(
+          [
+            ["all", "All Courses"],
+            ["enrolled", "Enrolled"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={`a-pill${filter === id ? " on" : ""}`}
+            aria-pressed={filter === id}
+            onClick={() => setFilter(id)}
+          >
+            {label}
+          </button>
+        ))}
         <input
           className="a-search"
           type="search"
-          placeholder="Search courses or topics"
+          placeholder="Search courses"
           aria-label="Search courses"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>
-      <Status pending={data.isPending} error={data.error} />
+      <Status
+        pending={data.isPending}
+        error={data.error}
+        label="Loading courses"
+        variant="cards"
+      />
       {data.data && (
-        <div id="catalog">
-          <section className="a-cat">
-            <h2>{category === "pyq" ? "Company PYQs" : "Courses"}</h2>
-            <p>
-              {category === "pyq"
-                ? papers.length
-                  ? "Sample company-style practice sets. These are illustrative questions, not actual previous-year company papers."
-                  : "Previous-year papers shared by your placement team."
-                : "Explore the courses and learning paths assigned to you."}
-            </p>
-            {category === "pyq" && papers.length ? (
-              <div className="a-cgrid">
-                {papers.map((paper, index) => (
-                  <Link
-                    key={paper.id}
-                    className="a-row"
-                    to={`/practice/${paper.id}`}
-                  >
-                    <span
-                      className="a-sw"
-                      style={{
-                        background: ["#315f98", "#2f8f72", "#8059a4"][
-                          index % 3
-                        ],
-                      }}
-                    >
-                      Q
-                    </span>
-                    <span>
-                      <b>{paper.title}</b>
-                      <small>
-                        {paper.questions?.length} questions · Sample placement
-                        paper
-                      </small>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            ) : category === "tracks" && items.length ? (
-              <div className="a-cgrid">
-                {items.map((course) => (
-                  <CourseRow key={course.id} course={course} />
-                ))}
-              </div>
-            ) : (
-              <NoResults
-                title={
-                  category === "pyq"
-                    ? "No company papers assigned"
-                    : search
-                      ? "No matching courses"
-                      : "No courses assigned"
-                }
-              >
-                {category === "pyq"
-                  ? "Your placement team will publish and assign papers when they are available."
-                  : search
-                    ? "Try a course name or topic, or clear your search."
-                    : "Your assigned courses will appear here."}
-              </NoResults>
-            )}
-          </section>
-        </div>
+        <section
+          id="catalog"
+          aria-label={filter === "all" ? "All courses" : "Enrolled courses"}
+        >
+          <p className="course-catalog-count">
+            {items.length} {items.length === 1 ? "course" : "courses"}
+            {filter === "enrolled"
+              ? " · Recently opened first"
+              : ` · ${enrolled.length} enrolled`}
+          </p>
+          {items.length ? (
+            <div className="learning-cards">
+              {items.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  enrolled={course.enrolled}
+                />
+              ))}
+            </div>
+          ) : (
+            <NoResults
+              title={
+                search
+                  ? "No matching courses"
+                  : filter === "enrolled"
+                    ? "Your learning journey starts here"
+                    : "No courses available yet"
+              }
+            >
+              {search
+                ? "Try a course name or topic, or clear your search."
+                : filter === "enrolled"
+                  ? "Browse All Courses and request enrollment in a course you would like to study."
+                  : "Your organization will make courses available here."}
+            </NoResults>
+          )}
+        </section>
       )}
     </div>
   );
 }
 function useCourse() {
   const { id } = useParams();
-  return useData<LearningCourse>(`course-${id}`, `student/courses/${id}`);
+  const data = useData<LearningCourse>(`course-${id}`, `student/courses/${id}`);
+  const client = useQueryClient();
+  const recorded = useRef<string | null>(null);
+  const opened = useMutation({
+    mutationFn: (courseId: string) =>
+      api<{ lastOpenedAt: string }>(
+        `student/courses/${courseId}/opened`,
+        "POST",
+      ),
+    onSuccess: (result, courseId) => {
+      const update = <T extends Course>(items: T[] | undefined) =>
+        items?.map((course) =>
+          course.id === courseId
+            ? { ...course, lastOpenedAt: result.lastOpenedAt }
+            : course,
+        );
+      client.setQueriesData<Course[]>(
+        { queryKey: ["student", "courses"] },
+        (items) => (items ? recentlyOpened(update(items)!) : items),
+      );
+      client.setQueriesData<CourseCatalogItem[]>(
+        { queryKey: ["student", "course-catalog"] },
+        update,
+      );
+      void client.invalidateQueries({ queryKey: ["student", "courses"] });
+      void client.invalidateQueries({
+        queryKey: ["student", "course-catalog"],
+      });
+    },
+  });
+  useEffect(() => {
+    // A deliberate course/lesson visit records recency; query refreshes and
+    // Strict Mode's repeated effects must not create additional writes.
+    if (!data.data?.id || data.data.id !== id || recorded.current === id)
+      return;
+    recorded.current = id;
+    opened.mutate(id);
+  }, [id, data.data?.id, opened.mutate]);
+  return data;
 }
 function CoursePage() {
   const data = useCourse(),
@@ -596,18 +484,13 @@ function CoursePage() {
     next = course.lessons.find(
       (lesson) => !course.completedLessonIds.includes(lesson.id),
     );
-  const track = tracks.find(
-      (item) => item.id === course.track && hasToolkitTrack(me.data, item.id),
-    ),
-    nextIndex = next ? course.lessons.indexOf(next) : 0;
+  const nextIndex = next ? course.lessons.indexOf(next) : 0;
   return (
     <div className="a-page learn-page">
       <div className="a-crumbs">
         <Link to="/">Dashboard</Link>
         <span>›</span>
-        <Link to={track ? `/toolkit/${track.id}` : "/courses"}>
-          {track?.name || "Courses"}
-        </Link>
+        <Link to="/courses">Courses</Link>
         <span>›</span>
         <span>{course.title}</span>
       </div>
@@ -833,131 +716,30 @@ function LessonPage() {
     </div>
   );
 }
-function Toolkit() {
-  const { track } = useParams(),
-    me = useMe(),
-    data = useData<Course[]>("courses", "student/courses"),
-    available = tracks.filter((item) => hasToolkitTrack(me.data, item.id)),
-    selected = available.find((item) => item.id === track),
-    toolkitTitle =
-      me.data?.access?.display.toolkitTitle || "Your Placement Toolkit";
-  if (track && !selected) return <Unavailable />;
-  const courses = data.data?.filter((course) => course.track === track) || [];
+function LegacyPracticeRedirect() {
+  const { id } = useParams();
+  const location = useLocation();
   return (
-    <div className="a-page">
-      {selected && (
-        <div className="a-crumbs">
-          <Link to="/toolkit">{toolkitTitle}</Link>
-          <span>›</span>
-          <span>{selected.name}</span>
-        </div>
-      )}
-      <Heading title={selected?.name || toolkitTitle}>
-        <span className="a-tag">
-          {selected
-            ? `${courses.length} learning paths`
-            : `${available.length} learning tracks`}
-        </span>
-      </Heading>
-      <Banner
-        title={selected?.intro || "Get ready for your next opportunity."}
-        description={
-          selected?.description ||
-          "Explore the learning tracks selected for you by your organization."
-        }
-        glyph={selected?.glyph || "⌘"}
-      />
-      {!available.length && (
-        <NoResults title="Your toolkit is ready">
-          Your organization will choose the learning tracks available to you.
-        </NoResults>
-      )}
-      {!selected ? (
-        <div className="hub-grid" style={{ marginTop: 24 }}>
-          {available.map((item) => (
-            <article className="hub-card" key={item.id}>
-              <div className="hub-card-top">
-                <span className="rail-glyph" aria-hidden="true">
-                  {item.glyph}
-                </span>
-                <span className="a-tag">
-                  {data.data?.filter((course) => course.track === item.id)
-                    .length ?? "—"}{" "}
-                  learning paths
-                </span>
-              </div>
-              <h2>{item.name}</h2>
-              <p>{item.description}</p>
-              <div className="hub-actions">
-                <Link className="a-btn pri" to={`/toolkit/${item.id}`}>
-                  Explore {item.name} <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <>
-          <p className="hub-note">{selected.note}</p>
-          {hasAccess(me.data, "courses") && (
-            <Status pending={data.isPending} error={data.error} />
-          )}
-          {!hasAccess(me.data, "courses") && (
-            <NoResults title="No courses assigned to this track">
-              Your organization controls the courses available in your learning
-              tracks.
-            </NoResults>
-          )}
-          {data.data &&
-            (courses.length ? (
-              <div className="hub-grid">
-                {courses.map((course) => {
-                  const appearance = courseAppearance(course);
-                  return (
-                    <article className="hub-card" key={course.id}>
-                      <div className="hub-card-top">
-                        <span
-                          className="a-sw"
-                          style={{ background: appearance.color }}
-                        >
-                          {appearance.glyph}
-                        </span>
-                      </div>
-                      <h2>{course.title}</h2>
-                      <p>{course.description}</p>
-                      <small>Learning assigned by your placement team</small>
-                      <div className="hub-actions">
-                        <Link
-                          className="a-btn pri"
-                          to={`/courses/${course.id}`}
-                        >
-                          Explore modules <span aria-hidden="true">→</span>
-                        </Link>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <NoResults
-                title="No assigned learning in this track"
-                action={
-                  <Link className="a-btn" to="/toolkit">
-                    Back to toolkit
-                  </Link>
-                }
-              >
-                Your placement team will add the courses and practice assigned
-                to you.
-              </NoResults>
-            ))}
-        </>
-      )}
-    </div>
+    <Navigate
+      replace
+      to={`${id && id !== "coding" ? `/competitive-programming/${encodeURIComponent(id)}` : "/competitive-programming"}${location.search}${location.hash}`}
+    />
   );
 }
-function Practice() {
-  return <PracticeCatalogue />;
+function CareerLanding() {
+  const me = useMe();
+  return (
+    <Navigate
+      replace
+      to={
+        hasAccess(me.data, "jobs")
+          ? "/career-opportunities/jobs"
+          : hasAccess(me.data, "resume")
+            ? "/career-opportunities/resume"
+            : "/"
+      }
+    />
+  );
 }
 function Jobs() {
   const data = useData<Job[]>("jobs", "student/jobs"),
@@ -971,9 +753,9 @@ function Jobs() {
     ) || [];
   return (
     <div className="a-page">
-      <Heading title="Jobs">
+      <Heading title="Job opportunities">
         {me.data?.features.includes("resume") && (
-          <Link className="a-btn" to="/resume">
+          <Link className="a-btn" to="/career-opportunities/resume">
             Build your resume →
           </Link>
         )}
@@ -992,46 +774,15 @@ function Jobs() {
         className="a-search jobs-search"
         type="search"
         aria-label="Search jobs"
-        placeholder="Search role, company or location"
+        placeholder="Search role, company or description"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
       />
       <Status pending={data.isPending} error={data.error} />
       {data.data && (
         <div id="jobCatalog">
-          <p className="hub-note" role="status">
-            {jobs.length} {jobs.length === 1 ? "opportunity" : "opportunities"}
-          </p>
           {jobs.length ? (
-            <div className="hub-grid">
-              {jobs.map((job) => (
-                <a
-                  key={job.id}
-                  className="hub-card job-card"
-                  href={job.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Open ${job.title} at ${job.company}`}
-                >
-                  <div className="hub-card-top">
-                    <span className="a-tag">Job opportunity</span>
-                    <time dateTime={job.postedAt}>
-                      {new Date(job.postedAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </time>
-                  </div>
-                  <h2>{job.title}</h2>
-                  <b>{job.company}</b>
-                  <p>{job.description}</p>
-                  <div className="job-link">
-                    View original posting <span aria-hidden="true">↗</span>
-                  </div>
-                </a>
-              ))}
-            </div>
+            <JobCards jobs={jobs} />
           ) : (
             <NoResults title="No jobs available">
               New opportunities will appear when your placement team publishes
@@ -1043,56 +794,7 @@ function Jobs() {
     </div>
   );
 }
-function Inbox() {
-  const me = useMe();
-  const data = useData<Announcement[]>(
-    "announcements",
-    "student/announcements",
-  );
-  const title = "Inbox";
-  if (!hasAccess(me.data, "announcements"))
-    return (
-      <div className="a-page">
-        <Heading title={title} />
-        <NoResults title="No updates available">
-          Announcements are not enabled for your account. Contact your
-          organization for support.
-        </NoResults>
-      </div>
-    );
-  return (
-    <div className="a-page">
-      <Heading title={title} />
-      <Status pending={data.isPending} error={data.error} />
-      {data.data?.length ? (
-        <>
-          <p className="hub-note">Organization announcements</p>
-          <div className="hub-grid">
-            {data.data.map((message) => (
-              <article className="hub-card" key={message.id}>
-                <div className="hub-card-top">
-                  <span className="a-tag">{message.from}</span>
-                  <small>
-                    {new Date(message.date).toLocaleDateString("en-IN")}
-                  </small>
-                </div>
-                <h2>{message.title}</h2>
-                <p>{message.body}</p>
-                {message.sample && <small>Sample announcement</small>}
-              </article>
-            ))}
-          </div>
-        </>
-      ) : (
-        data.data && (
-          <NoResults title="No announcements yet">
-            Announcements shared with your account will appear here.
-          </NoResults>
-        )
-      )}
-    </div>
-  );
-}
+
 function Help() {
   const me = useMe();
   return (
@@ -1106,7 +808,7 @@ function Help() {
       <section className="help-section" id="access">
         <h2>Courses and learning access</h2>
         <p>
-          Your placement team assigns courses and practice. Contact your
+          Your placement team assigns courses and coding. Contact your
           organization if a course is missing. Organization viewers track
           progress; Platform Admin manages access.
         </p>
@@ -1202,22 +904,6 @@ export function StudentRoutes() {
             }
           />
           <Route
-            path="toolkit"
-            element={
-              <AccessRoute feature="toolkit">
-                <Toolkit />
-              </AccessRoute>
-            }
-          />
-          <Route
-            path="toolkit/:track"
-            element={
-              <AccessRoute feature="toolkit">
-                <Toolkit />
-              </AccessRoute>
-            }
-          />
-          <Route
             path="compiler"
             element={
               <AccessRoute feature="compiler">
@@ -1226,15 +912,7 @@ export function StudentRoutes() {
             }
           />
           <Route
-            path="practice"
-            element={
-              <AccessRoute feature="practice">
-                <Practice />
-              </AccessRoute>
-            }
-          />
-          <Route
-            path="practice/coding"
+            path="competitive-programming"
             element={
               <AccessRoute feature="practice" coding>
                 <CodingLibrary />
@@ -1242,13 +920,15 @@ export function StudentRoutes() {
             }
           />
           <Route
-            path="practice/:id"
+            path="competitive-programming/:id"
             element={
-              <AccessRoute feature="practice">
-                <AssessmentPlayer />
+              <AccessRoute feature="practice" coding>
+                <CodingProblemPage />
               </AccessRoute>
             }
           />
+          <Route path="practice" element={<LegacyPracticeRedirect />} />
+          <Route path="practice/:id" element={<LegacyPracticeRedirect />} />
           <Route
             path="live-exams"
             element={
@@ -1275,17 +955,48 @@ export function StudentRoutes() {
           />
           <Route
             path="jobs"
+            element={<Navigate replace to="/career-opportunities/jobs" />}
+          />
+          <Route
+            path="resume"
+            element={<Navigate replace to="/career-opportunities/resume" />}
+          />
+          <Route path="career-opportunities" element={<CareerLanding />} />
+          <Route
+            path="career-opportunities/jobs"
             element={
               <AccessRoute feature="jobs">
-                <Jobs />
+                <CareerOpportunities>
+                  <Jobs />
+                </CareerOpportunities>
               </AccessRoute>
             }
           />
           <Route
-            path="resume"
+            path="career-opportunities/certifications"
+            element={
+              <AccessRoute feature="jobs">
+                <CareerOpportunities>
+                  <CertificationsPage />
+                </CareerOpportunities>
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="career-opportunities/resume"
             element={
               <AccessRoute feature="resume">
-                <ResumePage />
+                <CareerOpportunities>
+                  <ResumePage />
+                </CareerOpportunities>
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="pyq"
+            element={
+              <AccessRoute feature="pyq">
+                <PyqPage />
               </AccessRoute>
             }
           />
@@ -1293,7 +1004,7 @@ export function StudentRoutes() {
             path="inbox"
             element={
               <AccessRoute feature="inbox">
-                <Inbox />
+                <MailboxPage />
               </AccessRoute>
             }
           />

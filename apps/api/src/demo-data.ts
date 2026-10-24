@@ -291,7 +291,7 @@ export function demoAnnouncements(): Announcement[] {
     [
       "courses",
       "New full stack learning paths",
-      "MERN, Java and Python full stack modules are now included in your assigned toolkit. Open a module to continue learning.",
+      "MERN, Java and Python full stack modules are now included in your assigned courses. Open a course to continue learning.",
       "Course team",
     ],
   ].map(([id, title, body, from], index) => ({

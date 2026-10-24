@@ -116,7 +116,7 @@ export function redactLesson(lesson: Lesson): Lesson {
 }
 export const uploadInput = z
   .object({
-    purpose: z.enum(["video", "assignment", "question_image", "crt_pdf"]),
+    purpose: z.enum(["video", "assignment", "question_image", "crt_pdf", "course_cover"]),
     fileName: nonempty(180).refine(
       (value) => !/[\x00-\x1f/\\]/.test(value),
       "Choose a valid file name.",

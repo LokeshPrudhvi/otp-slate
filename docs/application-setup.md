@@ -1,6 +1,20 @@
 # Application setup and implementation status
 
-Updated 12 October 2026. The [production architecture](production-architecture.md) specifies the full product; this guide describes what the repository currently runs. The application connects to the supplied Neon PostgreSQL database using self-hosted Better Auth. Managed Neon Auth remains a separate, uncompleted migration. Student self-registration approval and direct admin provisioning with welcome emails are implemented; the selected Resend sender is `OTP Slate <noreply@resumeehub.in>`. Actual inbox delivery remains unverified.
+Updated 21 October 2026. The [production architecture](production-architecture.md) specifies the full product; this guide describes what the repository currently runs. The application connects to the supplied Neon PostgreSQL database using self-hosted Better Auth. Managed Neon Auth remains a separate, uncompleted migration. Student self-registration approval and direct admin provisioning with welcome emails are implemented; the selected Resend sender is `OTP Slate <noreply@resumeehub.in>`. Actual inbox delivery remains unverified.
+
+## Course discovery and enrollment requests — 21 October 2026
+
+The student dashboard lists every enrolled course, most recently opened first. CRT remains in navigation but has no dashboard card. The live-exam card appears only when an assigned exam is live. Dashboard and Courses share the same image-card layout. Courses has **All Courses** and **Enrolled** filters; the old PYQs tab is removed.
+
+Platform Admin can add an optional cover when creating or publishing a course: a public HTTPS image URL or a private R2 upload (PNG, JPEG or WebP, at most 5 MB). The compact image field shows upload status without a student-card preview. Uploaded covers are signed for authorized catalog reads. Courses without an image retain a built-in cover. Presentation changes do not replace assigned lesson versions or student progress.
+
+**All Courses** exposes published course metadata within the student's organization and branch course limits. Un-enrolled students can request access, but cannot read the course lessons. Each student/course pair creates one durable request, one Admin **Inbox** notification and one encrypted Resend outbox message. Repeated requests reuse that record. The email contains the course, student name/email/ID, organization, branch and request date. Set server-only `ENROLLMENT_REQUEST_EMAIL` to change its recipient; it defaults to `prudhvilokesh789@gmail.com`. Existing `RESEND_API_KEY` and verified `EMAIL_FROM` send the message. Inbox delivery state distinguishes queued/provider-accepted/failed messages; provider acceptance is not proof of inbox receipt.
+
+Admin Inbox supports searching, organization/status filters, unread counts, read/reviewed actions and a link to the student's Learning access settings. Marking a request reviewed does not grant access. Platform Admin must update the student's course selection through Learning access, subject to organization and branch limits.
+
+Migration `015-course-catalog-requests` adds optional cover fields, per-student last-opened history and enrollment requests with forced row-level security. Migration `014-retired-access-preferences` removes retired portal preferences only. Apply these owner migrations separately before deploying the new API; hosted startup does not migrate automatically. Neither migration creates accounts, assigns courses or sends emails.
+
+Both migrations were rehearsed twice on a short-lived Neon branch, including cross-student/organization isolation checks, and applied to the linked LMS database. Existing accounts, 24 enrollments, 59 completion records, course content and all course-access pins were preserved. UI builds and isolated API/UI tests passed. Browser checks used synthetic students and a disabled mail worker; no real enrollment-request email was sent. The hosted portals have not been redeployed for this change.
 
 ## Rich lessons and private storage — 12 October 2026
 
@@ -57,11 +71,11 @@ Verification: 49 API tests passed using isolated PostgreSQL memory databases and
 
 ### Organization, branch and student access — 9 October 2026
 
-Platform Admin manages the student experience at `/access`. Choose an organization, then edit its defaults, an academic branch, or an individual student. Controls cover Courses, Learning toolkit, Compiler, Practice, Live exams, Inbox, Announcements, Self-assessment, Jobs, Resume and Student rankings. Course, practice-module and toolkit-track selectors support multiple selections. Changes remain a draft until **Update access** is clicked; an organization revision prevents a stale browser from overwriting another administrator's update.
+Platform Admin manages the student experience at `/access`. Choose an organization, then edit its defaults, an academic branch, or an individual student. Controls cover Courses, CRT, Compiler, Practice, Live exams, Inbox, Announcements, Self-assessment, Jobs, Resume and Student rankings. Course and practice-module selectors support multiple selections. Changes remain a draft until **Update access** is clicked; an organization revision prevents a stale browser from overwriting another administrator's update.
 
 Organization settings are the upper limit for every branch and student in that organization. Within that limit, a student's explicit selection overrides the branch selection, which overrides the organization selection. Each category can inherit (`null`) or explicitly select nothing (`[]`); these are different states. Existing organizations retain their current grants and features until configured. Explicit course selections at organization level also limit the courses that branches and students can receive. To give branches different curricula, first allow the combined course catalog for the organization, then select each branch's subset.
 
-For example, turn off Compiler for a medical-coding organization and select its published courses. For an engineering organization, allow its combined course catalog, add an `ME` branch, choose the mechanical courses, and assign students to that branch. New approved students inherit the policy for their academic branch code. An individual exception can add or remove selections within the organization limit. Portal title, toolkit heading and welcome text are also editable per organization; published courses support a General learning track for subjects outside the programming catalog.
+For example, turn off Compiler for a medical-coding organization and select its published courses. For an engineering organization, allow its combined course catalog, add an `ME` branch, choose the mechanical courses, and assign students to that branch. New approved students inherit the policy for their academic branch code. An individual exception can add or remove selections within the organization limit. Portal title and welcome text are also editable per organization; published courses support a General learning track for subjects outside the programming catalog.
 
 Every authenticated student request resolves current access from the database. Disabled capabilities and unassigned content are rejected by API guards, and the student portal filters navigation, dashboard sections, course lists, practice and direct routes. Active student sessions refresh access periodically and on focus; passive access refreshes do not extend the idle timeout. Organization viewers remain analytics-only. Their course coverage includes inherited assignments.
 
@@ -179,7 +193,7 @@ In a controlled local API restart trace, the first account check changed from 2.
 | Provisioning           | Platform creates individual/bulk students immediately and approves public self-registrations; both queue temporary credentials by email. Viewer accounts remain separate. Suspend/disable revokes sessions |
 | Onboarding             | Required temporary-password change; student WhatsApp phone challenge. Verification consumes the challenge and revokes old sessions before fresh sign-in         |
 | Course authoring       | Create drafts with Markdown text, video, written/link/file assignments or MCQ lessons; publish immutable versions. Existing students retain their assigned version |
-| Student learning       | Assigned courses and toolkit tracks, course-module accordions, idempotent lesson completion; populated local practice/exam previews and normal empty states     |
+| Student learning       | Assigned courses and CRT topics, course-module accordions, idempotent lesson completion; populated local practice/exam previews and normal empty states     |
 | Organization analytics | Fixed organization, actual student counts, assigned-course coverage, completion bars, student search/status filtering/pagination and individual progress        |
 | Rankings               | Organization student names on the dashboard. Seeded local organizations show labeled sample rankings; other organizations remain unranked                       |
 | Jobs                   | Platform manually publishes dated HTTPS job cards to an organization. Eligible students open the original external application page                             |
@@ -189,7 +203,7 @@ In a controlled local API restart trace, the first account check changed from 2.
 
 Local analytics measures recorded lesson completion, not skills, exam scores or cheating. Current roster endpoints are bounded to 2,000 records; server pagination must replace that limit before exceeding the initial population. The current SQL file is an initial foundation migration, not a complete future schema migration system.
 
-The student application preserves the original `src/otp-slate.html` design: its navigation rail, dashboard course tiles and rankings panel, placement toolkit, course modules, empty exam screen, resume layout, login screen and SVG artwork. The generated `reference.css` and `reference-art.ts` contain only styles and static artwork; regenerate them with `npm run sync:student-design` when the reference changes. React controls, server authentication, assigned content and database saves remain active. Platform and Organization Admin keep their separate applications.
+The student application preserves the original `src/otp-slate.html` design: its navigation rail, dashboard course tiles and rankings panel, CRT, course modules, empty exam screen, resume layout, login screen and SVG artwork. The generated `reference.css` and `reference-art.ts` contain only styles and static artwork; regenerate them with `npm run sync:student-design` when the reference changes. React controls, server authentication, assigned content and database saves remain active. Platform and Organization Admin keep their separate applications.
 
 ## Local development
 
@@ -373,7 +387,7 @@ Do not put provider keys in frontend `VITE_*` variables. The Services page repor
 ## Next implementation phases
 
 1. **Production foundation:** Neon role/migration rehearsal, ingress/IP validation, deployment/secret management, persistent logs, backups and staging browser tests.
-2. **Provisioning at scale:** Registration/import/approval, organization/branch/student access policies, course/practice/toolkit selection, compiler controls, branch assignment and account suspension now work. Next add enrollment expiry controls, explicit course-version upgrades, student-ID/cohort corrections and server pagination beyond the initial 2,000-student roster.
+2. **Provisioning at scale:** Registration/import/approval, organization/branch/student access policies, course/practice selection, compiler controls, branch assignment and account suspension now work. Next add enrollment expiry controls, explicit course-version upgrades, student-ID/cohort corrections and server pagination beyond the initial 2,000-student roster.
 3. **Learning media:** Publish and verify the remaining frontend bundles for the implemented rich lessons and private uploads. Next add adaptive encoding/renditions and managed Zoom/Meet class links. Course assignments already accept written answers, project/repository links and files; MCQ assignments grade on the server.
 4. **Practice:** Connect the existing practice and coding UI to versioned question/problem banks, durable attempts, a runtime registry, managed external execution, quotas and authoritative grading.
 5. **Live exams:** Admin release/audiences, admission, server deadlines, autosave/reconnect, browser-event monitoring, review and result-release policy.
@@ -414,7 +428,7 @@ Platform Admin manages CRT at `/crt`. The four subjects are fixed: Quantitative 
 3. In **CRT → Branch assignments**, choose an organization, then **All branches** or one specific branch. Select published topics and click **Update assignments → Confirm update**. All branches includes current and future branches in that organization. Students must also have CRT enabled in **Learning access** when using a custom portal policy.
 4. Add extra MCQs in **CRT → Practice bank**. These become available to students whose branch is assigned the associated topic; disabling a bank question does not rewrite existing practice attempts.
 
-Students use `/crt`: four subject tabs list assigned topics with search, progress filters and pagination, and a fifth tab provides practice. A topic pairs its PDF with its assessment. Students acknowledge reading and meet the topic's passing score to earn a checkmark. Retries are allowed. Practice mixes assigned topic MCQs and active extra bank questions; practice results do not complete the topic assessment.
+Students enter `/crt` through four subject cards and a separate Practice card. Each subject card shows assigned-topic and completion counts, then opens its topic library with a subject-coloured progress header, search and quick progress filters. All matching assigned topics appear in one continuous scrolling list without pagination. **All CRT subjects** returns to the cards. Deep links still open their subject, topic or saved practice session. A topic has full-width **PDF lesson** and **Assessment** tabs. Students acknowledge reading and meet the topic's passing score to earn a checkmark. Retries are allowed. Practice mixes assigned topic MCQs and active extra bank questions; practice results do not complete the topic assessment.
 
 Assignments stay within one organization, so identical codes such as `CSE` in different organizations are independent. All-branches topics are inherited by every valid branch; branch-specific topics remain additional. If the same topic is assigned both ways, the all-branches content takes precedence and appears once. Removing an all-branches assignment does not remove a separate branch assignment. Branch name/code edits preserve assignments. Publishing changes does not switch existing assignments; **Apply update** is explicit. Earlier attempts remain saved, while updated content has its own completion status.
 
@@ -438,3 +452,26 @@ node scripts/import-crt-syllabus.mjs --env <private-env-file> --expected-host <d
 ```
 
 The first command is a dry run. The private environment file must contain a restricted runtime `DATABASE_URL`; owner/superuser connections are rejected. If more than one active Platform Admin exists, provide `--actor-id <member-uuid>`. Importing creates missing draft rows and one audit event in a single transaction. Stable IDs and normalized subject/title matching prevent repeat imports from duplicating topics. Existing topics, published content, assignments, attempts, bank questions and uploaded files are preserved, including manually edited or renamed imported topics. No schema migration, app deployment, email or automatic student assignment is involved.
+
+### CRT starter material
+
+`output/pdf/crt-sample.pdf` is the shared placeholder reading material. It explicitly says **This is a sample PDF text.** and should be replaced with the actual lesson PDF when available. The two `data/crt/starter-*.json` files provide two original starter MCQs per imported topic (144 questions across 72 topics), including answers and explanations. These are introductory practice material, not questions extracted from the supplied syllabus.
+
+Upload the PDF once through the normal private `crt_pdf` upload flow. To attach it to missing draft PDFs and populate empty assessments, build the API and use the completed upload's ID with the existing active Platform Admin's member ID:
+
+```sh
+node scripts/attach-crt-sample-pdf.mjs --env <private-env-file> --expected-host <direct-database-host> --actor-id <member-uuid> --upload-id <completed-upload-uuid> --starter-file data/crt/starter-quantitative-reasoning.json --starter-file data/crt/starter-verbal-soft-skills.json
+```
+
+This is a dry run; add `--apply` to save. Exact topic ID, title and subject must match. Existing PDFs, existing questions, published topics and student records are preserved. Repeating the operation is a no-op. Publish ready topics through the existing CRT publication flow; organization and branch assignment remains a separate admin action. The attachment helper does not publish or grant access.
+
+
+### Career opportunities, company PYQs and student mailbox — 25 October 2026
+
+Student navigation groups jobs, external certification links and the existing resume builder under `/career-opportunities`; legacy `/jobs` and `/resume` URLs redirect to the corresponding tabs. Jobs/certifications retain the `jobs` permission, while resume keeps its independent `resume` permission. PYQ has a separate `pyq` permission in Learning access; explicit organization/branch/student policies remain authoritative. Platform Admin can create, edit, publish or archive shared certification/company resources from Certifications and PYQ. Company training requires a logo URL, hiring procedure, paper links and practice questions before publication. No third-party papers, logos or course offers were fabricated or seeded.
+
+Migration `022-placement-resources` adds a shared catalogue with platform-only writes and published-only authenticated reads; API guards enforce the relevant feature and role. The additive migration was tested with PGlite and on a temporary branch of the actual LMS project `small-shape-18661054`, then applied through the configured direct migration connection. Test data was rolled back and the temporary branch was removed. The older `.neon` context was not changed.
+
+Competitive Programming now includes 600 stable problem IDs. The added 400 are parameter-focused exercises across 40 problem families: 240 Easy, 100 Medium and 60 Hard, with explicit examples and validation cases. Existing IDs/drafts/progress are retained. The compiler displays a linked OneCompiler attribution; provider terms still govern embedding.
+
+Live exam navigation is Live / Upcoming / Results. Upcoming and ended unattempted exam actions are disabled, and exam cards have a responsive 380px maximum width. The student Inbox uses the existing real mailbox API for previews, full messages, organization contact selection, compose/reply, read/star/archive actions and folders. UI tests use a fake transport and send no real messages.

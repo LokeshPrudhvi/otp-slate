@@ -104,8 +104,8 @@ test("admin-created student completes emailed-password onboarding and accesses o
       assert.equal(created.body.emailStatus, "pending");
       assert.equal(created.body.temporaryPassword, undefined);
       memberId = created.body.memberId;
-      await updateAccess("organization", { features: ["courses", "practice", "compiler"], courseIds: [assignedCourse, unassignedCourse], practiceModuleIds: ["aptitude", "competitive-coding", "reasoning"], toolkitTrackIds: [] });
-      await updateAccess("student", { features: ["courses", "practice"], courseIds: [assignedCourse], practiceModuleIds: ["aptitude"], toolkitTrackIds: [] });
+      await updateAccess("organization", { features: ["courses", "practice", "compiler"], courseIds: [assignedCourse, unassignedCourse], practiceModuleIds: ["aptitude", "competitive-coding", "reasoning"] });
+      await updateAccess("student", { features: ["courses", "practice"], courseIds: [assignedCourse], practiceModuleIds: ["aptitude"] });
     });
 
     await t.test("outbox worker delivers one complete welcome into the injected mailbox and clears credentials from storage", async () => {
@@ -162,7 +162,7 @@ test("admin-created student completes emailed-password onboarding and accesses o
       assert.equal(identity.body.id, memberId);
       assert.equal(identity.body.organizationId, organizationId);
       assert.deepEqual(identity.body.access.courseIds, [assignedCourse]);
-      assert.deepEqual(identity.body.access.practiceModuleIds, ["aptitude"]);
+      assert.deepEqual(identity.body.access.practiceModuleIds, []);
       for (const portal of ["platform", "organization"])
         assert.equal((await student.request(`/api/v1/me?portal=${portal}`)).status, 403);
     });
@@ -177,13 +177,14 @@ test("admin-created student completes emailed-password onboarding and accesses o
       assert.equal((await student.request(`/api/v1/student/courses/${assignedCourse}/lessons/${assignedLesson}/complete`, "POST")).status, 201);
       const practice = await student.request("/api/v1/student/practice");
       assert.equal(practice.status, 200);
-      assert.deepEqual(practice.body.map((item: any) => item.id).sort(), ["aptitude-foundations", "data-interpretation", "percentages", "placement-mock"]);
+      // A retired aptitude assignment must not silently grant coding access.
+      assert.deepEqual(practice.body, []);
       // There is no practice detail/start API yet. Sample content is returned
       // only by the authorized catalog; compiler/submission access is separate.
       assert.equal((await student.request("/api/v1/student/compiler")).status, 403);
       assert.equal((await student.request("/api/v1/student/submissions", "POST")).status, 403);
       assert.equal((await student.request("/api/v1/platform/students", "POST", {})).status, 403);
-      await updateAccess("student", { features: ["courses", "practice"], courseIds: [], practiceModuleIds: [], toolkitTrackIds: [] });
+      await updateAccess("student", { features: ["courses", "practice"], courseIds: [], practiceModuleIds: [] });
       assert.deepEqual((await student.request("/api/v1/student/courses")).body, []);
       assert.deepEqual((await student.request("/api/v1/student/practice")).body, []);
       assert.equal((await student.request(`/api/v1/student/courses/${assignedCourse}`)).status, 403);

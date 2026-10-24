@@ -1,0 +1,592 @@
+.career-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #cbd7e5;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.career-tabs a {
+  padding: 12px 18px;
+  color: #60738c;
+  text-decoration: none;
+  font-weight: 700;
+  border-bottom: 3px solid transparent;
+}
+.career-tabs a[aria-current] {
+  color: #224f8a;
+  border-bottom-color: #416fb1;
+  background: #e4edfa;
+  border-radius: 8px 8px 0 0;
+}
+.career-content > .a-page {
+  padding: 0;
+}
+.career-content .a-head {
+  margin-bottom: 18px;
+}
+.career-intro {
+  background: linear-gradient(120deg, #dce8fa, #eee4f6);
+  padding: 26px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+.career-intro h2 {
+  margin: 8px 0;
+  color: #173657;
+}
+.career-intro p {
+  color: #53627b;
+  line-height: 1.6;
+  max-width: 700px;
+}
+.career-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 360px));
+  gap: 20px;
+}
+.career-resource-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #cbd8e7;
+  border-radius: 16px;
+  text-align: left;
+  box-shadow: 0 5px 20px #1734570b;
+  min-width: 0;
+  color: #173657;
+  font: inherit;
+}
+.career-resource-card h2,
+.career-resource-card h3 {
+  margin: 0;
+  font-size: 21px;
+}
+.career-resource-card p {
+  margin: 0;
+  color: #65748a;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.career-resource-card .a-btn,
+.company-open {
+  margin-top: auto;
+}
+.company-logo {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: #edf2fa;
+  color: #42669a;
+  font-size: 22px;
+  font-weight: 800;
+  overflow: hidden;
+  border: 1px solid #dee6ef;
+}
+.company-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+  box-sizing: border-box;
+  background: #fff;
+}
+.company-card {
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s,
+    border-color 0.15s;
+}
+.company-card:hover {
+  border-color: #7298cb;
+  box-shadow: 0 8px 24px #17345717;
+}
+.company-card ul {
+  padding-left: 18px;
+  margin: 2px 0 10px;
+  font-size: 13px;
+  line-height: 2;
+  color: #60738c;
+}
+.company-open {
+  color: #315f98;
+  font-weight: 700;
+  font-size: 14px;
+}
+.company-heading {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin: 24px 0;
+}
+.company-heading h2 {
+  margin: 0 0 8px;
+}
+.company-heading p {
+  margin: 0;
+  color: #60738c;
+}
+.company-training {
+  max-width: 1000px;
+}
+.company-section {
+  border: 1px solid #cbd8e7;
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+  margin: 18px 0;
+}
+.company-section h3 {
+  margin: 0 0 18px;
+  color: #173657;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+  color: #4d6079;
+}
+.company-paper {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px;
+  background: #f0f5fc;
+  color: #315f98;
+  margin: 8px 0;
+  border-radius: 8px;
+  text-decoration: none;
+}
+.company-paper span {
+  font-size: 12px;
+}
+.company-question {
+  border-top: 1px solid #e1e7ef;
+  padding: 12px 0;
+}
+.company-question h4 {
+  line-height: 1.6;
+}
+.company-question summary {
+  color: #315f98;
+  cursor: pointer;
+}
+/* Company preparation library */
+.pyq-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 36px;
+  margin-bottom: 28px;
+  border-radius: 22px;
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 90% 10%, #7763b073, transparent 55%),
+    linear-gradient(120deg, #153d68, #315e91);
+  box-shadow: 0 10px 24px #153d6818;
+}
+.pyq-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  font-weight: 800;
+  opacity: 0.8;
+}
+.pyq-hero h1 {
+  font-size: clamp(25px, 3vw, 36px);
+  line-height: 1.2;
+  margin: 12px 0;
+  color: inherit;
+}
+.pyq-hero p {
+  max-width: 620px;
+  margin: 0;
+  line-height: 1.7;
+  color: #dfebfc;
+}
+.pyq-hero-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 110px;
+  height: 110px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #ffffff24, #ffffff09);
+  border: 1px solid #ffffff30;
+  font-size: 64px;
+  transform: rotate(-8deg);
+}
+.pyq-hero-art small {
+  position: absolute;
+  right: -12px;
+  bottom: -5px;
+  color: #ffda94;
+  font-size: 44px;
+}
+.pyq-library-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.pyq-library-toolbar h2 {
+  font-size: 22px;
+  margin: 0 0 5px;
+  color: #193b60;
+}
+.pyq-library-toolbar p {
+  margin: 0;
+  color: #62748b;
+  font-size: 14px;
+}
+.pyq-library-toolbar .a-search {
+  width: min(100%, 330px);
+  margin: 0;
+}
+.pyq-company-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+  gap: 22px;
+}
+.pyq-company-card {
+  --brand: #355d9d;
+  --tint: #eaf1fd;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  font: inherit;
+  background: #fff;
+  border: 1px solid #c7d5e6;
+  border-radius: 20px;
+  padding: 0;
+  overflow: hidden;
+  max-width: 430px;
+  box-shadow: 0 5px 18px #24456d0c;
+  cursor: pointer;
+}
+.pyq-company-card[data-tone="1"] {
+  --brand: #6f4b92;
+  --tint: #f2ebfc;
+}
+.pyq-company-card[data-tone="2"] {
+  --brand: #22695c;
+  --tint: #e4f4ee;
+}
+.pyq-company-card[data-tone="3"] {
+  --brand: #9c512e;
+  --tint: #fff0e4;
+}
+.pyq-card-brand {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  margin: 10px 10px 0;
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at 25% 15%, #ffffffbb, transparent 65%), var(--tint);
+}
+.pyq-card-brand .company-logo {
+  width: 65%;
+  max-width: 180px;
+  height: auto;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 24px;
+  background: transparent;
+  color: var(--brand);
+  font-size: 54px;
+}
+.pyq-card-brand .company-logo img {
+  padding: 0;
+  background: transparent;
+}
+.pyq-company-card > h2 {
+  font-size: 23px;
+  color: #173657;
+  line-height: 1.3;
+  margin: 0;
+  padding: 22px 24px 26px;
+  overflow-wrap: anywhere;
+}
+.pyq-company-card:hover {
+  border-color: var(--brand);
+  box-shadow: 0 8px 24px #24456d1a;
+}
+.pyq-company-card:focus-visible,
+.pyq-section-tabs button:focus-visible,
+.pyq-back:focus-visible {
+  outline: 3px solid #6299d7;
+  outline-offset: 3px;
+}
+.pyq-back {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0 0 18px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: #315f98;
+  cursor: pointer;
+}
+.pyq-page .company-training {
+  max-width: 1200px;
+}
+.pyq-detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 28px;
+  background: linear-gradient(115deg, #e4edf9, #f2edf9);
+  border: 1px solid #c9d7e8;
+  border-radius: 20px 20px 0 0;
+}
+.pyq-detail-hero .company-logo {
+  width: 90px;
+  height: 90px;
+  background: #fff;
+}
+.pyq-detail-hero h1 {
+  font-size: 30px;
+  margin: 8px 0;
+  color: #183c62;
+}
+.pyq-detail-hero p {
+  font-size: 14px;
+  color: #526981;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 620px;
+}
+.pyq-detail-counts {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+  color: #4c6380;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.pyq-detail-counts span {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pyq-detail-counts b {
+  font-size: 23px;
+  color: #234a75;
+}
+.pyq-section-tabs {
+  display: flex;
+  background: #e4ecf7;
+  border: 1px solid #c9d7e8;
+  border-top: 0;
+  padding: 8px 8px 0;
+  gap: 5px;
+  overflow: auto;
+}
+.pyq-section-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex: 1;
+  white-space: nowrap;
+  padding: 17px 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  background: transparent;
+  color: #536e8b;
+  border: 0;
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+}
+.pyq-section-tabs button[aria-current] {
+  background: #fff;
+  color: #255c99;
+}
+.pyq-section-tabs button small {
+  background: #dce8f7;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 11px;
+}
+.pyq-page .pyq-section-content {
+  margin: 0;
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+  padding: 30px;
+  min-height: 320px;
+  box-shadow: 0 8px 22px #1734570a;
+}
+.pyq-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.pyq-section-heading h2 {
+  font-size: 21px;
+  color: #173657;
+  margin: 0 0 6px;
+}
+.pyq-section-heading p {
+  font-size: 14px;
+  color: #61738a;
+  margin: 0;
+}
+.pyq-section-icon {
+  display: grid;
+  place-items: center;
+  background: #eaf1fa;
+  color: #35679e;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 25px;
+  flex-shrink: 0;
+}
+.pyq-hiring-copy {
+  padding: 22px;
+  background: #f3f7fc;
+  border-radius: 12px;
+  margin-bottom: 22px;
+}
+.pyq-paper-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 16px;
+}
+.pyq-paper-grid .company-paper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  gap: 14px;
+  margin: 0;
+  border: 1px solid #d1deed;
+  background: linear-gradient(140deg, #f1f6fd, #fff);
+  border-radius: 14px;
+}
+.pyq-paper-grid .company-paper:hover {
+  border-color: #6790c2;
+}
+.pyq-paper-number {
+  font-weight: 800;
+  color: #708cad;
+  font-size: 13px;
+}
+.pyq-paper-grid .company-paper strong {
+  font-size: 17px;
+  line-height: 1.5;
+}
+.pyq-paper-grid .company-paper > span:last-child {
+  margin-top: auto;
+  font-weight: 700;
+}
+.pyq-section-content .company-question {
+  display: flex;
+  gap: 15px;
+  padding: 22px 0;
+}
+.pyq-question-number {
+  font-size: 12px;
+  font-weight: 800;
+  background: #e7eef9;
+  border-radius: 9px;
+  padding: 10px;
+  height: fit-content;
+  color: #406595;
+}
+.company-question > div {
+  flex: 1;
+  min-width: 0;
+}
+.pyq-section-content .company-question h3 {
+  font-size: 16px;
+  margin: 0 0 14px;
+  line-height: 1.6;
+}
+.company-question textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccd9e7;
+  border-radius: 10px;
+  padding: 12px;
+  font: inherit;
+  font-size: 14px;
+  background: #f9fbfe;
+  color: #173657;
+  resize: vertical;
+  margin-bottom: 14px;
+}
+.pyq-practice-note {
+  font-size: 12px;
+  color: #61738a;
+}
+@media (max-width: 800px) {
+  .pyq-detail-counts {
+    display: none;
+  }
+  .pyq-hero-art {
+    width: 75px;
+    height: 75px;
+    font-size: 45px;
+  }
+  .pyq-hero {
+    padding: 25px;
+  }
+  .pyq-section-tabs button {
+    padding: 14px 12px;
+  }
+  .pyq-library-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .pyq-library-toolbar .a-search {
+    width: 100%;
+  }
+  .pyq-detail-hero {
+    padding: 22px;
+  }
+  .pyq-page .pyq-section-content {
+    padding: 20px;
+  }
+}
+@media (max-width: 480px) {
+  .pyq-hero-art {
+    display: none;
+  }
+  .pyq-detail-hero {
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .pyq-detail-hero .company-logo {
+    width: 60px;
+    height: 60px;
+  }
+  .pyq-detail-hero h1 {
+    font-size: 24px;
+  }
+  .pyq-section-tabs button {
+    font-size: 12px;
+    gap: 6px;
+  }
+  .pyq-section-tabs button > span {
+    display: none;
+  }
+  .pyq-section-heading h2 {
+    font-size: 18px;
+  }
+}

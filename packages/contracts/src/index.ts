@@ -101,15 +101,58 @@ export interface Course {
   status: string;
   versionId?: string;
   version?: number;
+  coverImageUrl?: string | null;
+  coverUploadId?: string | null;
+  lastOpenedAt?: string | null;
   lessons?: Lesson[];
 }
+export interface CompanyLogo { id:string; companyName:string; sha256:string; fileName:string; url:string|null; }
 export interface Job {
   id: string;
   title: string;
   company: string;
+  logoId?:string|null;
+  companyLogoUrl?:string|null;
   description: string;
   url: string;
   postedAt: string;
+}
+export interface ResumeProject {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  bullets: string[];
+}
+export interface ResumeExperience {
+  id: string;
+  title: string;
+  company: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  description: string;
+  bullets: string[];
+}
+export interface ResumeEducation {
+  id: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  grade: string;
+  description: string;
+}
+export interface ResumeCertification {
+  id: string;
+  name: string;
+  issuer: string;
+  issuedDate: string;
+  credentialId: string;
+  url: string;
+  description: string;
 }
 export interface Resume {
   name: string;
@@ -119,11 +162,11 @@ export interface Resume {
   location?: string;
   links?: string;
   summary: string;
-  education: string;
-  experience: string;
-  skills: string;
-  projects: string;
-  certifications?: string;
+  education: string | ResumeEducation[];
+  experience: string | ResumeExperience[];
+  skills: string | string[];
+  projects: string | ResumeProject[];
+  certifications?: string | ResumeCertification[];
   template: "classic" | "compact" | "modern" | "serif";
 }
 export interface Analytics {
@@ -177,6 +220,7 @@ export interface PracticeAssessment {
   problem?: {
     statement: string;
     examples: { input: string; output: string; explanation: string }[];
+    testCases?: { input: string; output: string; description: string }[];
     constraints: string[];
     starterCode: Record<string, string>;
     hints?: string[];
@@ -300,3 +344,36 @@ export interface IntegrationStatus {
   execution: string;
   environment: string;
 }
+
+export interface CourseCatalogItem extends Course {
+  enrolled: boolean;
+  enrollmentRequestStatus: "pending" | "reviewed" | null;
+}
+export interface CourseEnrollmentRequest {
+  id: string;
+  studentMemberId: string;
+  studentName: string;
+  studentEmail: string;
+  studentId: string | null;
+  organizationId: string;
+  organizationName: string;
+  branchName: string | null;
+  branchCode: string | null;
+  courseId: string;
+  courseTitle: string;
+  status: "pending" | "reviewed";
+  createdAt: string;
+  readAt: string | null;
+  reviewedAt: string | null;
+  emailStatus: string;
+  enrolled: boolean;
+}
+export interface CourseEnrollmentInbox {
+  items: CourseEnrollmentRequest[];
+  unreadCount: number;
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export type { PlacementLink, PlacementResource, PlacementResourceInput } from "./placement.js";

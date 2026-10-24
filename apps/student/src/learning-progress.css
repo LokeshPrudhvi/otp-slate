@@ -1,0 +1,343 @@
+.learning-progress-card {
+  margin-bottom: 24px;
+}
+.learning-progress-card .hub-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.learning-progress-card h2 {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 5px 0;
+}
+.learning-progress-card .self-assessment-subtitle {
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.5;
+}
+.learning-progress-card .learning-progress-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 14px;
+  margin-top: 15px;
+  align-items: stretch;
+}
+.learning-progress-card .programming-progress-visual {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 14px;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1px solid #dce5ef;
+  border-radius: 12px;
+  background: #fff;
+  color: #193b60;
+  color-scheme: light;
+}
+.learning-progress-panels > .programming-progress-visual:only-child {
+  grid-column: 1 / -1;
+}
+.learning-progress-card .programming-progress-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+.learning-progress-card .programming-progress-title > a {
+  color: #244d7b;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+}
+.learning-progress-card .programming-progress-title > a > span {
+  font-size: 11px;
+  color: #8296ad;
+  margin-left: 4px;
+}
+.learning-progress-card .programming-progress-title > button {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  padding: 5px;
+  border: 0;
+  border-radius: 7px;
+  background: #f3f6fb;
+  color: #73869e;
+  cursor: pointer;
+}
+.learning-progress-card .programming-progress-title > button:hover {
+  background: #e9f0f9;
+  color: #244d7b;
+}
+.learning-progress-card .programming-progress-title > button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.learning-progress-card .programming-progress-title svg {
+  width: 17px;
+  height: 17px;
+}
+.learning-progress-card .programming-progress-title :focus-visible {
+  outline: 2px solid #568ac4;
+  outline-offset: 3px;
+}
+.learning-progress-card
+  :is(.crt-progress-layout, .programming-progress-layout) {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.8fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  flex: 1;
+}
+.learning-progress-card .programming-gauge {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 160px;
+  justify-self: center;
+  background: transparent;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.learning-progress-card .programming-gauge > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.learning-progress-card .programming-gauge-track {
+  stroke: #e8edf3;
+}
+.learning-progress-card .programming-gauge-solved {
+  stroke: #35a681;
+}
+.learning-progress-card .programming-gauge-attempting {
+  stroke: #a5b4c5;
+  stroke-linecap: butt;
+}
+.learning-progress-card .programming-gauge-value {
+  position: absolute;
+  top: 38%;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 5px;
+}
+.learning-progress-card .programming-gauge-value > strong {
+  font-size: 34px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #193b60;
+}
+.learning-progress-card .programming-gauge-value > strong > small {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  margin-left: 2px;
+  color: #718399;
+}
+.learning-progress-card .programming-gauge-value > span {
+  font-size: 12px;
+  font-weight: 500;
+  color: #536c86;
+  line-height: 1.2;
+}
+.learning-progress-card .programming-gauge-value i {
+  font-style: normal;
+  color: #32936f;
+  margin-right: 2px;
+}
+.learning-progress-card .programming-gauge-caption {
+  position: absolute;
+  bottom: 7%;
+  width: 100%;
+  text-align: center;
+  margin: 0;
+  color: #74859a;
+  font-size: 10px;
+  line-height: 1.2;
+}
+.learning-progress-card .programming-gauge-caption > b {
+  font-weight: 700;
+  margin-right: 2px;
+}
+.learning-progress-card .programming-difficulty-stack.learning-complexity-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  align-self: stretch;
+}
+.learning-progress-card
+  .programming-difficulty-stack.learning-complexity-grid
+  > div {
+  --level: #287f73;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  background: #f0f8f5;
+  border: 1px solid #dfede7;
+  border-radius: 8px;
+  min-width: 0;
+}
+.learning-progress-card
+  .programming-difficulty-stack.learning-complexity-grid
+  > div[data-level="medium"] {
+  --level: #956716;
+  background: #fcf8ee;
+  border-color: #eee5ce;
+}
+.learning-progress-card
+  .programming-difficulty-stack.learning-complexity-grid
+  > div[data-level="hard"] {
+  --level: #ad526a;
+  background: #fcf3f5;
+  border-color: #f0dfe5;
+}
+.learning-progress-card
+  .programming-difficulty-stack.learning-complexity-grid
+  > div
+  > span {
+  color: var(--level);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+.learning-progress-card
+  .programming-difficulty-stack.learning-complexity-grid
+  b {
+  color: #294562;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.learning-progress-card
+  .programming-difficulty-stack.learning-complexity-grid
+  b
+  small {
+  color: #6e8095;
+  font-size: 11px;
+  font-weight: 400;
+}
+.learning-progress-card .programming-progress-error {
+  color: #a23d51;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.learning-progress-card .crt-module-progress-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  min-width: 0;
+}
+.learning-progress-card .crt-module-progress-item {
+  --module-color: #2a8791;
+  display: block;
+  padding: 9px;
+  background: #f7f9fc;
+  border: 1px solid #e6ecf3;
+  border-radius: 8px;
+  text-decoration: none;
+  min-width: 0;
+}
+.learning-progress-card .crt-module-progress-item[data-subject="reasoning"] {
+  --module-color: #8060b0;
+}
+.learning-progress-card .crt-module-progress-item[data-subject="verbal"] {
+  --module-color: #9b741c;
+}
+.learning-progress-card .crt-module-progress-item[data-subject="soft-skills"] {
+  --module-color: #b15b7a;
+}
+.learning-progress-card .crt-module-progress-item > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 7px;
+}
+.learning-progress-card .crt-module-progress-item > div > span {
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--module-color);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.learning-progress-card .crt-module-progress-item b {
+  font-size: 13px;
+  color: #294562;
+  line-height: 1.2;
+}
+.learning-progress-card .crt-module-progress-item b i {
+  font-style: normal;
+  color: #32936f;
+}
+.learning-progress-card .crt-module-progress-item small {
+  display: block;
+  font-size: 9px;
+  color: #73859b;
+  margin-top: 4px;
+}
+.learning-progress-card .crt-module-progress-item:hover {
+  background: #eef3fa;
+  border-color: #bfd1e7;
+}
+.learning-progress-card .crt-module-progress-item:focus-visible {
+  outline: 2px solid var(--module-color);
+  outline-offset: 2px;
+}
+.learning-progress-card .crt-module-progress-track {
+  height: 3px;
+  border-radius: 8px;
+  background: #e3eaf3;
+  overflow: hidden;
+}
+.learning-progress-card .crt-module-progress-track > span {
+  display: block;
+  height: 100%;
+  background: var(--module-color);
+  border-radius: inherit;
+}
+@container (max-width:300px) {
+  .learning-progress-card
+    :is(.crt-progress-layout, .programming-progress-layout) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .learning-progress-card .programming-gauge {
+    max-width: 140px;
+  }
+  .learning-progress-card .programming-gauge-value > strong {
+    font-size: 30px;
+  }
+  .learning-progress-card
+    .programming-difficulty-stack.learning-complexity-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .learning-progress-card
+    .programming-difficulty-stack.learning-complexity-grid
+    > div {
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px 4px;
+  }
+}
+@media (max-width: 767px) {
+  .learning-progress-card .learning-progress-panels {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}

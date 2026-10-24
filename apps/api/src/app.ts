@@ -133,6 +133,7 @@ export async function createApplication(service: SlateService) {
   // Ten coding answers may each contain 30,000 Unicode characters. Keep the
   // transport bound compatible with those validated per-answer limits.
   app.use("/api/v1/student/exam-attempts", express.json({ limit: "2mb" }));
+  app.use("/api/v1/platform/company-logos", express.json({limit:"1mb"}));
   app.use(express.json({ limit: "128kb" }));
   app.use("/api/v1", (req: Request, res: Response, next: () => void) => {
     if (

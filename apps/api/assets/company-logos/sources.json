@@ -1,0 +1,128 @@
+[
+  {
+    "companyName": "TCS",
+    "slug": "tcs",
+    "fileName": "tcs.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/tcs.svg",
+    "brandSource": "https://www.tcs.com",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 8680
+  },
+  {
+    "companyName": "Infosys",
+    "slug": "infosys",
+    "fileName": "infosys.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/infosys.svg",
+    "brandSource": "https://www.infosys.com/newsroom/journalist-resources/infosyslogo.html",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 8222
+  },
+  {
+    "companyName": "Wipro",
+    "slug": "wipro",
+    "fileName": "wipro.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/wipro.svg",
+    "brandSource": "https://www.wipro.com/content/dam/nexus/en/service-lines/applications/latest-thinking/state-of-cybersecurity-report-2019.pdf",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 15281
+  },
+  {
+    "companyName": "HCL",
+    "slug": "hcl",
+    "fileName": "hcl.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/hcl.svg",
+    "brandSource": "https://www.hcl.com/brand-guidelines",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 4728
+  },
+  {
+    "companyName": "Reliance",
+    "slug": "relianceindustrieslimited",
+    "fileName": "relianceindustrieslimited.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/relianceindustrieslimited.svg",
+    "brandSource": "https://www.ril.com/news-media/resource-center/media-kit/reliance-industries-limited",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 9451
+  },
+  {
+    "companyName": "Airtel",
+    "slug": "airtel",
+    "fileName": "airtel.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/airtel.svg",
+    "brandSource": "https://www.airtel.in/logo-tune",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 8627
+  },
+  {
+    "companyName": "Swiggy",
+    "slug": "swiggy",
+    "fileName": "swiggy.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/swiggy.svg",
+    "brandSource": "https://www.swiggy.com",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 7638
+  },
+  {
+    "companyName": "Zomato",
+    "slug": "zomato",
+    "fileName": "zomato.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/zomato.svg",
+    "brandSource": "https://www.zomato.com/business/apps",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 7705
+  },
+  {
+    "companyName": "Razorpay",
+    "slug": "razorpay",
+    "fileName": "razorpay.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/razorpay.svg",
+    "brandSource": "https://razorpay.com/newsroom/brand-assets/",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 8365
+  },
+  {
+    "companyName": "Zerodha",
+    "slug": "zerodha",
+    "fileName": "zerodha.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/zerodha.svg",
+    "brandSource": "https://zerodha.com",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 5810
+  },
+  {
+    "companyName": "Meta",
+    "slug": "meta",
+    "fileName": "meta.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/meta.svg",
+    "brandSource": "https://www.meta.com",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 9729
+  },
+  {
+    "companyName": "Amazon",
+    "slug": "amazon",
+    "fileName": "amazon.png",
+    "source": "https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/svgs/brands/amazon.svg",
+    "brandSource": "https://fontawesome.com/icons/amazon",
+    "license": "CC BY 4.0 (Font Awesome Free icons)",
+    "size": 7204
+  },
+  {
+    "companyName": "Netflix",
+    "slug": "netflix",
+    "fileName": "netflix.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/netflix.svg",
+    "brandSource": "https://brand.netflix.com/en/assets/logos",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 8453
+  },
+  {
+    "companyName": "Google",
+    "slug": "google",
+    "fileName": "google.png",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg",
+    "brandSource": "https://partnermarketinghub.withgoogle.com",
+    "license": "CC0-1.0 (Simple Icons)",
+    "size": 8972
+  }
+]

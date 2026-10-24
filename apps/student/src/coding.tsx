@@ -1,11 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import type { PracticeAssessment } from "@slate/contracts";
 import { api, useMe } from "@slate/ui";
 import { useStudentData as useData } from "./access";
-import { Heading, NoResults, Status } from "./design";
+import { NoResults, Status } from "./design";
 import { generateTestCasesForProblem, type TestCase } from "./test-cases";
 import { executeViaOneCompiler, type ExecutionVerdict } from "./code-runner";
+import "./coding.css";
+
+const CodeEditor = lazy(() => import("./code-editor"));
 
 type Progress = { bookmarked?: boolean; status?: "Attempted" | "Solved" };
 type Submission = {
@@ -38,6 +54,86 @@ function useLocalDemo<T>(name: string, fallback: T) {
   }, [key, value]);
   return [value, setValue, saved] as const;
 }
+const defaultSettings = {
+  language: "Python",
+  theme: "light",
+  font: 14,
+  tabSize: 4,
+};
+
+function CodingIcon({
+  name,
+}: {
+  name: "sun" | "moon" | "progress" | "target" | "layers" | "code" | "chevron";
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {name === "moon" && (
+        <path d="M20 15.6A8.5 8.5 0 0 1 8.4 4 8.5 8.5 0 1 0 20 15.6Z" />
+      )}
+      {name === "sun" && (
+        <>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5" />
+        </>
+      )}
+      {name === "progress" && (
+        <>
+          <path d="M4 20V10m8 10V4m8 16v-7" />
+          <path d="M2 20h20" />
+        </>
+      )}
+      {name === "target" && (
+        <>
+          <circle cx="12" cy="12" r="8" />
+          <circle cx="12" cy="12" r="4" />
+          <path d="m12 12 8-8m-4 0h4v4" />
+        </>
+      )}
+      {name === "layers" && (
+        <>
+          <path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5" />
+        </>
+      )}
+      {name === "code" && (
+        <>
+          <path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-16-2 20" />
+        </>
+      )}
+      {name === "chevron" && <path d="m6 9 6 6 6-6" />}
+    </svg>
+  );
+}
+
+function CodingThemeToggle({
+  dark,
+  onToggle,
+}: {
+  dark: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="coding-theme-toggle"
+      onClick={onToggle}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-pressed={dark}
+    >
+      <CodingIcon name={dark ? "sun" : "moon"} />
+    </button>
+  );
+}
+
 const difficultyOrder = { Easy: 0, Medium: 1, Hard: 2 };
 const plans = [
   {
@@ -92,6 +188,14 @@ export function CodingLibrary() {
   );
   const [lists, setLists] = useLocalDemo<Record<string, string[]>>("lists", {});
   const [listName, setListName] = useState("");
+  const [settings, setSettings] = useLocalDemo("settings", defaultSettings);
+  const [planningOpen, setPlanningOpen] = useState(true);
+  const dark = settings.theme === "dark";
+  const toggleTheme = () =>
+    setSettings((current) => ({
+      ...current,
+      theme: current.theme === "dark" ? "light" : "dark",
+    }));
   const items = (data.data || []).filter((item) => item.kind === "coding");
   const topics = [
     ...new Set(items.flatMap((item) => item.topics || [])),
@@ -146,100 +250,280 @@ export function CodingLibrary() {
   const day = Math.floor(Date.now() / 86400000),
     daily = items[day % Math.max(items.length, 1)];
   return (
-    <div className="a-page coding-library">
-      <div className="a-crumbs">
-        <Link to="/practice">Practice</Link>
-        <span>›</span>
-        <span>DSA / Coding Questions</span>
-      </div>
-      <Heading title="DSA / Coding Questions">
-        <span className="a-tag">{items.length} sample problems</span>
-      </Heading>
-      <p className="hub-note">
-        Build your problem-solving skills, one pattern at a time. Your drafts,
-        lists and self-assessed progress are saved in this browser.
-      </p>
-      <Status pending={data.isPending} error={data.error} />
+    <div
+      className="a-page coding-library competitive-coding"
+      data-theme={dark ? "dark" : "light"}
+    >
+      <header className="coding-library-hero">
+        <div className="coding-hero-copy">
+          <span className="coding-hero-icon">
+            <CodingIcon name="code" />
+          </span>
+          <div>
+            <span className="coding-eyebrow">SOLVE · LEARN · REPEAT</span>
+            <h1>Coding</h1>
+            <p>Build your problem-solving skills, one challenge at a time.</p>
+          </div>
+        </div>
+        <div className="coding-hero-actions">
+          {!data.isPending && !data.error && (
+            <span className="coding-library-total">
+              <strong>{items.length}</strong> problems
+            </span>
+          )}
+          <CodingThemeToggle dark={dark} onToggle={toggleTheme} />
+        </div>
+      </header>
+      <Status
+        pending={data.isPending}
+        error={data.error}
+        label="Loading coding problems"
+        variant="table"
+      />
       {items.length > 0 && (
         <>
-          <details className="coding-planning">
+          <details
+            className="coding-planning"
+            open={planningOpen}
+            onToggle={(event) => setPlanningOpen(event.currentTarget.open)}
+          >
             <summary>
-              Your progress, daily pick & study plans{" "}
-              <span>
-                {solved} / {items.length} self-assessed solved
+              <span className="coding-planning-heading">
+                <span className="coding-section-icon">
+                  <CodingIcon name="progress" />
+                </span>
+                <span>
+                  <strong>Your daily progress</strong>
+                  <small>A little consistency goes a long way.</small>
+                </span>
+              </span>
+              <span className="coding-planning-summary">
+                <b>
+                  {solved} / {items.length}
+                </b>{" "}
+                solved <CodingIcon name="chevron" />
               </span>
             </summary>
-            <div className="coding-top-grid">
-              <section className="coding-progress-card">
-                <span className="hub-eyebrow">YOUR PRACTICE</span>
-                <h2>
-                  {solved}
-                  <span> / {items.length}</span>
-                </h2>
-                <p>Self-assessed solved</p>
-                <progress
-                  aria-label="Self-assessed coding progress"
-                  value={solved}
-                  max={items.length}
-                />
-                <div className="coding-counts">
-                  {["Easy", "Medium", "Hard"].map((level) => (
-                    <span
-                      key={level}
-                      className={`difficulty ${level.toLowerCase()}`}
-                    >
-                      {level}{" "}
-                      <b>
-                        {
-                          items.filter(
-                            (item) =>
-                              item.difficulty === level &&
-                              progress[item.id]?.status === "Solved",
-                          ).length
-                        }
-                        /
-                        {
-                          items.filter((item) => item.difficulty === level)
-                            .length
-                        }
-                      </b>
+            <div className="coding-planning-content">
+              <div className="coding-top-grid">
+                <section className="coding-progress-card">
+                  <div className="coding-card-heading">
+                    <span className="coding-section-icon">
+                      <CodingIcon name="progress" />
                     </span>
-                  ))}
+                    <h2>Your progress</h2>
+                    <span className="coding-local-badge">On this browser</span>
+                  </div>
+                  <div className="coding-progress-overview">
+                    <div
+                      className="coding-progress-ring"
+                      role="progressbar"
+                      aria-label="Self-assessed coding progress"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round((solved / items.length) * 100)}
+                      aria-valuetext={`${solved} of ${items.length} problems solved`}
+                      style={
+                        {
+                          "--coding-progress-angle": `${(solved / items.length) * 360}deg`,
+                        } as CSSProperties
+                      }
+                    >
+                      <span>
+                        <strong>
+                          {Math.round((solved / items.length) * 100)}%
+                        </strong>
+                        <small>complete</small>
+                      </span>
+                    </div>
+                    <div className="coding-progress-value">
+                      <strong>{solved}</strong>
+                      <span>of {items.length} problems solved</span>
+                      <small>Keep building your momentum.</small>
+                    </div>
+                  </div>
+                  <div className="coding-counts">
+                    {["Easy", "Medium", "Hard"].map((level) => {
+                      const levelItems = items.filter(
+                        (item) => item.difficulty === level,
+                      );
+                      const levelSolved = levelItems.filter(
+                        (item) => progress[item.id]?.status === "Solved",
+                      ).length;
+                      return (
+                        <span
+                          key={level}
+                          className={`difficulty ${level.toLowerCase()}`}
+                        >
+                          <span>{level}</span>
+                          <b>
+                            {levelSolved}
+                            <small> / {levelItems.length}</small>
+                          </b>
+                          <span
+                            className="coding-difficulty-track"
+                            aria-hidden="true"
+                          >
+                            <i
+                              style={{
+                                width: `${levelItems.length ? (levelSolved / levelItems.length) * 100 : 0}%`,
+                              }}
+                            />
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </section>
+                <section className="coding-daily-card">
+                  <div className="coding-card-heading">
+                    <span className="coding-section-icon">
+                      <CodingIcon name="target" />
+                    </span>
+                    <h2>Today's challenge</h2>
+                    <span
+                      className={`difficulty ${daily?.difficulty.toLowerCase()}`}
+                    >
+                      {daily?.difficulty}
+                    </span>
+                  </div>
+                  <div className="coding-challenge-body">
+                    <div className="coding-challenge-copy">
+                      <span className="coding-challenge-label">DAILY PICK</span>
+                      <h3>{daily?.title}</h3>
+                      <p>{daily?.topics?.join(" · ")}</p>
+                    </div>
+                    <div className="coding-challenge-art" aria-hidden="true">
+                      <svg viewBox="0 0 160 136" fill="none">
+                        <ellipse
+                          cx="80"
+                          cy="68"
+                          rx="74"
+                          ry="31"
+                          stroke="currentColor"
+                          strokeOpacity=".25"
+                          transform="rotate(-28 80 68)"
+                        />
+                        <circle
+                          cx="80"
+                          cy="68"
+                          r="48"
+                          stroke="currentColor"
+                          strokeOpacity=".3"
+                          strokeDasharray="3 7"
+                        />
+                        <rect
+                          x="43"
+                          y="31"
+                          width="74"
+                          height="74"
+                          rx="24"
+                          fill="currentColor"
+                          fillOpacity=".13"
+                          stroke="currentColor"
+                          strokeOpacity=".4"
+                          transform="rotate(8 80 68)"
+                        />
+                        <path
+                          d="m68 55-13 13 13 13m24-26 13 13-13 13m-8-31-8 36"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <circle cx="133" cy="42" r="6" fill="currentColor" />
+                        <circle
+                          cx="25"
+                          cy="94"
+                          r="4"
+                          fill="currentColor"
+                          fillOpacity=".6"
+                        />
+                        <path
+                          d="M31 26v10m-5-5h10m89 75v12m-6-6h12"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <Link
+                    className="a-btn pri"
+                    to={`/competitive-programming/${daily?.id}`}
+                  >
+                    Solve today's problem <span aria-hidden="true">→</span>
+                  </Link>
+                </section>
+              </div>
+              <div className="coding-study-heading">
+                <span className="coding-section-icon">
+                  <CodingIcon name="layers" />
+                </span>
+                <div>
+                  <h2>Find your next milestone</h2>
+                  <p>Pick a study plan to focus your problem library.</p>
                 </div>
-              </section>
-              <section className="coding-daily-card">
-                <span className="hub-eyebrow">TODAY'S PRACTICE PICK</span>
-                <h2>{daily?.title}</h2>
-                <p>
-                  {daily?.topics?.join(" · ")} · {daily?.difficulty}
-                </p>
-                <Link className="a-btn pri" to={`/practice/${daily?.id}`}>
-                  Solve today's problem →
-                </Link>
-              </section>
-            </div>
-            <div className="coding-plans">
-              {plans.map((item) => (
-                <button
-                  key={item.id}
-                  className={`coding-plan${plan === item.id ? " selected" : ""}`}
-                  aria-pressed={plan === item.id}
-                  onClick={() =>
-                    update("plan", plan === item.id ? "all" : item.id)
-                  }
-                >
-                  <strong>{item.title}</strong>
-                  <span>{item.description}</span>
-                  <small>
-                    {
-                      planItems(items, item.id).filter(
-                        (problem) => progress[problem.id]?.status === "Solved",
-                      ).length
-                    }{" "}
-                    / {planItems(items, item.id).length} self-assessed
-                  </small>
-                </button>
-              ))}
+              </div>
+              <div className="coding-plans">
+                {plans.map((item, index) => {
+                  const problems = planItems(items, item.id);
+                  const completed = problems.filter(
+                    (problem) => progress[problem.id]?.status === "Solved",
+                  ).length;
+                  return (
+                    <button
+                      key={item.id}
+                      className={`coding-plan${plan === item.id ? " selected" : ""}`}
+                      data-plan={item.id}
+                      aria-pressed={plan === item.id}
+                      onClick={() =>
+                        update("plan", plan === item.id ? "all" : item.id)
+                      }
+                    >
+                      <span className="coding-plan-top" aria-hidden="true">
+                        <span className="coding-plan-number">0{index + 1}</span>
+                        <span className="coding-plan-symbol">
+                          <CodingIcon
+                            name={
+                              index === 0
+                                ? "code"
+                                : index === 1
+                                  ? "layers"
+                                  : "target"
+                            }
+                          />
+                        </span>
+                      </span>
+                      <span className="coding-plan-title">
+                        <strong>{item.title}</strong>
+                        <span className="coding-plan-check" aria-hidden="true">
+                          {plan === item.id ? "✓" : "→"}
+                        </span>
+                      </span>
+                      <span className="coding-plan-description">
+                        {item.description}
+                      </span>
+                      <span className="coding-plan-footer">
+                        <small>
+                          {completed} / {problems.length} solved
+                        </small>
+                        <span className="coding-plan-meter" aria-hidden="true">
+                          <i
+                            style={{
+                              width: `${problems.length ? (completed / problems.length) * 100 : 0}%`,
+                            }}
+                          />
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="coding-save-note">
+                Your drafts, lists and self-assessed progress are saved in this
+                browser.
+              </p>
             </div>
           </details>
           <section className="coding-list-panel">
@@ -250,7 +534,7 @@ export function CodingLibrary() {
                 disabled={!filtered.length}
                 onClick={() =>
                   navigate(
-                    `/practice/${filtered[Math.floor(Math.random() * filtered.length)].id}`,
+                    `/competitive-programming/${filtered[Math.floor(Math.random() * filtered.length)].id}`,
                   )
                 }
               >
@@ -421,7 +705,7 @@ export function CodingLibrary() {
                           </span>
                         </td>
                         <td>
-                          <Link to={`/practice/${item.id}`}>
+                          <Link to={`/competitive-programming/${item.id}`}>
                             <span className="coding-number">
                               {item.number}.
                             </span>
@@ -508,6 +792,47 @@ export function CodingLibrary() {
   );
 }
 
+export function CodingProblemPage() {
+  const { id } = useParams();
+  const [settings] = useLocalDemo("settings", defaultSettings);
+  const data = useData<PracticeAssessment[]>("practice", "student/practice");
+  const items = (data.data || []).filter((item) => item.kind === "coding");
+  const assessment = items.find((item) => item.id === id);
+  if (assessment?.problem) {
+    return (
+      <div className="a-page coding-problem-page">
+        <CodingWorkspace
+          key={assessment.id}
+          assessment={assessment}
+          items={items}
+        />
+      </div>
+    );
+  }
+  return (
+    <div
+      className="a-page coding-problem-page competitive-coding"
+      data-theme={settings.theme === "dark" ? "dark" : "light"}
+    >
+      <Link className="a-btn" to="/competitive-programming">
+        ← Problem library
+      </Link>
+      <Status
+        pending={data.isPending}
+        error={data.error}
+        label="Preparing your coding workspace"
+        variant="workspace"
+      />
+      {!data.isPending && !data.error && (
+        <NoResults title="Problem unavailable">
+          This problem is not assigned to your account. Choose a problem from
+          your library.
+        </NoResults>
+      )}
+    </div>
+  );
+}
+
 export function CodingWorkspace({
   assessment,
   items,
@@ -548,13 +873,14 @@ export function CodingWorkspace({
   const problem = assessment.problem!;
   const testSuite = useMemo(
     () =>
+      problem.testCases ??
       generateTestCasesForProblem(
         assessment.title,
         problem.examples[0]?.input || "{}",
         problem.examples[0]?.output || "{}",
         assessment.topics?.[0] || "",
       ),
-    [assessment.title, problem.examples, assessment.topics],
+    [assessment.title, problem.examples, problem.testCases, assessment.topics],
   );
 
   const [progress, setProgress] = useLocalDemo<Record<string, Progress>>(
@@ -566,17 +892,12 @@ export function CodingWorkspace({
     `draft:${assessment.id}`,
     problem.starterCode,
   );
-  const [notes, setNotes] = useLocalDemo<string>(`notes:${assessment.id}`, "");
   const [history, setHistory] = useLocalDemo<Submission[]>(
     `submissions:${assessment.id}`,
     [],
   );
-  const [settings, setSettings] = useLocalDemo("settings", {
-    language: "Python",
-    theme: "light",
-    font: 14,
-    tabSize: 4,
-  });
+  const [settings, setSettings] = useLocalDemo("settings", defaultSettings);
+  const dark = settings.theme === "dark";
   const [tab, setTab] = useState("Description"),
     [consoleTab, setConsoleTab] = useState("Test cases"),
     [testCase, setTestCase] = useState(0),
@@ -586,12 +907,7 @@ export function CodingWorkspace({
     [isRunning, setIsRunning] = useState(false),
     [wide, setWide] = useState(false),
     [options, setOptions] = useState(false),
-    [chosenList, setChosenList] = useState(""),
-    [reply, setReply] = useState(""),
-    [savedReply, setSavedReply] = useLocalDemo<string>(
-      `discussion:${assessment.id}`,
-      "",
-    );
+    [chosenList, setChosenList] = useState("");
 
   const language = settings.language,
     source = draft[language] ?? problem.starterCode[language] ?? "";
@@ -716,9 +1032,12 @@ export function CodingWorkspace({
   };
 
   return (
-    <div className={`coding-workspace${wide ? " editor-wide" : ""}`}>
+    <div
+      className={`coding-workspace competitive-coding${wide ? " editor-wide" : ""}`}
+      data-theme={dark ? "dark" : "light"}
+    >
       <div className="coding-workspace-top">
-        <Link className="a-btn" to="/practice/coding">
+        <Link className="a-btn" to="/competitive-programming">
           ☷ Problem list
         </Link>
         <div className="coding-problem-nav">
@@ -726,7 +1045,7 @@ export function CodingWorkspace({
             <Link
               className="a-btn"
               aria-label="Previous problem"
-              to={`/practice/${previous.id}`}
+              to={`/competitive-programming/${previous.id}`}
             >
               ←
             </Link>
@@ -742,7 +1061,7 @@ export function CodingWorkspace({
             <Link
               className="a-btn"
               aria-label="Next problem"
-              to={`/practice/${next.id}`}
+              to={`/competitive-programming/${next.id}`}
             >
               →
             </Link>
@@ -752,13 +1071,23 @@ export function CodingWorkspace({
             </button>
           )}
         </div>
-        <span className="a-tag">DSA Practice</span>
+        <span className="a-tag">Coding</span>
+        <CodingThemeToggle
+          dark={dark}
+          onToggle={() =>
+            setSettings((current) => ({
+              ...current,
+              theme: current.theme === "dark" ? "light" : "dark",
+            }))
+          }
+        />
         <button className="a-btn" onClick={() => setWide(!wide)}>
           {wide ? "Restore split view" : "Expand code panel"}
         </button>
       </div>
       <div className="coding-workspace-note">
-        OneCompiler Multi-Case Execution Active · Run test cases or submit solution to validate against comprehensive test suites.
+        OneCompiler Multi-Case Execution Active · Run test cases or submit
+        solution to validate against comprehensive test suites.
       </div>
       <div className="coding-split">
         <section className="coding-description-panel">
@@ -767,13 +1096,7 @@ export function CodingWorkspace({
             role="tablist"
             aria-label="Problem content"
           >
-            {[
-              "Description",
-              "Solution guide",
-              "Submissions",
-              "Discussion",
-              "Notes",
-            ].map((name) => (
+            {["Description", "Solution guide", "Submissions"].map((name) => (
               <button
                 key={name}
                 role="tab"
@@ -802,7 +1125,7 @@ export function CodingWorkspace({
                 <Link
                   className="a-tag"
                   key={topic}
-                  to={`/practice/coding?topic=${encodeURIComponent(topic)}`}
+                  to={`/competitive-programming?topic=${encodeURIComponent(topic)}`}
                 >
                   {topic}
                 </Link>
@@ -872,7 +1195,9 @@ export function CodingWorkspace({
                       ))}
                     </select>
                   </label>
-                  <small>Updated automatically upon passing test suite on submit.</small>
+                  <small>
+                    Updated automatically upon passing test suite on submit.
+                  </small>
                 </div>
                 <form
                   className="coding-add-list"
@@ -912,7 +1237,7 @@ export function CodingWorkspace({
                       ? "Added"
                       : "Add problem"}
                   </button>
-                  <Link to="/practice/coding">Create a list</Link>
+                  <Link to="/competitive-programming">Create a list</Link>
                 </form>
               </>
             )}
@@ -944,8 +1269,11 @@ export function CodingWorkspace({
                       key={`${item.date}:${index}`}
                     >
                       <summary>
-                        <strong>{item.verdict || "Submitted"}</strong> · {item.language} · {new Date(item.date).toLocaleString()}
-                        {item.totalTests ? ` (${item.passedCount}/${item.totalTests} passed, ${item.runtimeMs}ms)` : ""}
+                        <strong>{item.verdict || "Submitted"}</strong> ·{" "}
+                        {item.language} · {new Date(item.date).toLocaleString()}
+                        {item.totalTests
+                          ? ` (${item.passedCount}/${item.totalTests} passed, ${item.runtimeMs}ms)`
+                          : ""}
                       </summary>
                       <pre>{item.code}</pre>
                       <button
@@ -967,74 +1295,15 @@ export function CodingWorkspace({
                   ))
                 ) : (
                   <p>
-                    No submissions yet. Write a solution and click Submit solution to evaluate against all test cases.
+                    No submissions yet. Write a solution and click Submit
+                    solution to evaluate against all test cases.
                   </p>
                 )}
-              </>
-            )}
-            {tab === "Notes" && (
-              <>
-                <h2>Your solution notes</h2>
-                <label htmlFor="coding-notes">
-                  Approach, complexity and edge cases
-                </label>
-                <textarea
-                  id="coding-notes"
-                  className="demo-textarea"
-                  placeholder="What did you learn from this problem?"
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                />
-                <small>Saved in this browser for your account.</small>
-              </>
-            )}
-            {tab === "Discussion" && (
-              <>
-                <h2>Discuss the approach</h2>
-                <article className="coding-discussion">
-                  <strong>Practice mentor · Sample discussion</strong>
-                  <p>{problem.hints?.[0]}</p>
-                  <p>
-                    Which edge case would distinguish your approach from a
-                    brute-force solution?
-                  </p>
-                </article>
-                {savedReply && (
-                  <article className="coding-discussion">
-                    <strong>Your local reply</strong>
-                    <p>{savedReply}</p>
-                  </article>
-                )}
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    setSavedReply(reply);
-                    setReply("");
-                  }}
-                >
-                  <label htmlFor="coding-reply">Your reflection</label>
-                  <textarea
-                    className="demo-textarea"
-                    id="coding-reply"
-                    value={reply}
-                    onChange={(event) => setReply(event.target.value)}
-                    required
-                  />
-                  <button className="a-btn" disabled={!reply.trim()}>
-                    Save local reply
-                  </button>
-                  <p className="hub-note">
-                    Replies stay in this browser; there is no public discussion
-                    service yet.
-                  </p>
-                </form>
               </>
             )}
           </div>
         </section>
-        <section
-          className={`coding-editor-panel ${settings.theme === "dark" ? "coding-dark" : ""}`}
-        >
+        <section className="coding-editor-panel">
           <div className="coding-editor-top">
             <strong>⌘ Code</strong>
             <span>
@@ -1100,21 +1369,6 @@ export function CodingWorkspace({
           {options && (
             <div className="coding-settings">
               <label>
-                Theme
-                <select
-                  value={settings.theme}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      theme: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </label>
-              <label>
                 Font size
                 <select
                   value={settings.font}
@@ -1149,56 +1403,31 @@ export function CodingWorkspace({
               </label>
             </div>
           )}
-          <div className="coding-code-container">
-            <div
-              className="coding-line-numbers"
-              aria-hidden="true"
-              style={{ fontSize: settings.font }}
-            >
-              {source.split("\n").map((_, index) => (
-                <div key={index}>{index + 1}</div>
-              ))}
-            </div>
-            <textarea
-              className="coding-code-input"
-              aria-label="Solution code"
-              spellCheck={false}
-              style={{ fontSize: settings.font, tabSize: settings.tabSize }}
+          <Suspense
+            fallback={
+              <Status pending label="Preparing code editor" variant="content" />
+            }
+          >
+            <CodeEditor
+              key={language}
+              language={language}
               value={source}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  [language]: event.target.value,
-                }))
+              dark={dark}
+              fontSize={settings.font}
+              tabSize={settings.tabSize}
+              onChange={(value) =>
+                setDraft((current) => ({ ...current, [language]: value }))
               }
-              onKeyDown={(event) => {
-                if (event.key === "Tab") {
-                  event.preventDefault();
-                  const { selectionStart: start, selectionEnd: end } =
-                    event.currentTarget;
-                  const spaces = " ".repeat(settings.tabSize);
-                  setDraft((current) => ({
-                    ...current,
-                    [language]:
-                      source.slice(0, start) + spaces + source.slice(end),
-                  }));
-                  const area = event.currentTarget;
-                  requestAnimationFrame(() =>
-                    area.setSelectionRange(
-                      start + spaces.length,
-                      start + spaces.length,
-                    ),
-                  );
-                }
-              }}
             />
-          </div>
+          </Suspense>
           <div className="coding-run-row">
             <span className="coding-engine-status">
               <span
                 className={`coding-engine-dot${isRunning ? " running" : ""}`}
               ></span>
-              {isRunning ? "Executing on OneCompiler..." : "OneCompiler Engine Active"}
+              {isRunning
+                ? "Executing on OneCompiler..."
+                : "OneCompiler Engine Active"}
             </span>
             <button className="a-btn" disabled={isRunning} onClick={run}>
               ▷ Run
@@ -1264,7 +1493,10 @@ export function CodingWorkspace({
               ) : isRunning ? (
                 <div className="coding-executing-box">
                   <span className="coding-engine-dot running"></span>
-                  <span>Executing solution against test suite on OneCompiler engine...</span>
+                  <span>
+                    Executing solution against test suite on OneCompiler
+                    engine...
+                  </span>
                 </div>
               ) : verdict ? (
                 <div className="coding-verdict-card">
@@ -1286,7 +1518,10 @@ export function CodingWorkspace({
                     </div>
                     <div className="coding-verdict-metrics">
                       <span>
-                        Passed: <strong>{verdict.passedCount} / {verdict.totalTests}</strong>
+                        Passed:{" "}
+                        <strong>
+                          {verdict.passedCount} / {verdict.totalTests}
+                        </strong>
                       </span>
                       <span>
                         Runtime: <strong>{verdict.runtimeMs} ms</strong>
@@ -1300,7 +1535,10 @@ export function CodingWorkspace({
                   </div>
 
                   {verdict.errorSummary && (
-                    <div className="coding-io-box io-error" style={{ marginBottom: 12 }}>
+                    <div
+                      className="coding-io-box io-error"
+                      style={{ marginBottom: 12 }}
+                    >
                       <label>Error Details</label>
                       <pre>{verdict.errorSummary}</pre>
                     </div>
@@ -1327,52 +1565,57 @@ export function CodingWorkspace({
                         ))}
                       </div>
 
-                      {verdict.results[selectedTestIdx] && (() => {
-                        const activeResult = verdict.results[selectedTestIdx];
-                        return (
-                          <div className="coding-io-grid">
-                            <div className="coding-io-box">
-                              <label>
-                                Input {activeResult.description ? `(${activeResult.description})` : ""}
-                              </label>
-                              <pre>{activeResult.input}</pre>
-                            </div>
-                            {activeResult.expected ? (
+                      {verdict.results[selectedTestIdx] &&
+                        (() => {
+                          const activeResult = verdict.results[selectedTestIdx];
+                          return (
+                            <div className="coding-io-grid">
                               <div className="coding-io-box">
-                                <label>Expected Output</label>
-                                <pre>{activeResult.expected}</pre>
+                                <label>
+                                  Input{" "}
+                                  {activeResult.description
+                                    ? `(${activeResult.description})`
+                                    : ""}
+                                </label>
+                                <pre>{activeResult.input}</pre>
                               </div>
-                            ) : null}
-                            <div
-                              className={`coding-io-box${
-                                !activeResult.passed ? " io-error" : ""
-                              }`}
-                            >
-                              <label>Your Output</label>
-                              <pre>
-                                {activeResult.actual ||
-                                  activeResult.error ||
-                                  "(no output)"}
-                              </pre>
-                            </div>
-                            {activeResult.stdout ? (
+                              {activeResult.expected ? (
+                                <div className="coding-io-box">
+                                  <label>Expected Output</label>
+                                  <pre>{activeResult.expected}</pre>
+                                </div>
+                              ) : null}
                               <div
-                                className="coding-io-box"
-                                style={{ gridColumn: "1 / -1" }}
+                                className={`coding-io-box${
+                                  !activeResult.passed ? " io-error" : ""
+                                }`}
                               >
-                                <label>Standard Output (Logs)</label>
-                                <pre>{activeResult.stdout}</pre>
+                                <label>Your Output</label>
+                                <pre>
+                                  {activeResult.actual ||
+                                    activeResult.error ||
+                                    "(no output)"}
+                                </pre>
                               </div>
-                            ) : null}
-                          </div>
-                        );
-                      })()}
+                              {activeResult.stdout ? (
+                                <div
+                                  className="coding-io-box"
+                                  style={{ gridColumn: "1 / -1" }}
+                                >
+                                  <label>Standard Output (Logs)</label>
+                                  <pre>{activeResult.stdout}</pre>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })()}
                     </>
                   )}
                 </div>
               ) : (
                 <div className="coding-empty-result">
-                  Run your code against sample cases or click Submit solution to validate against the comprehensive test suite.
+                  Run your code against sample cases or click Submit solution to
+                  validate against the comprehensive test suite.
                 </div>
               )}
             </div>

@@ -740,7 +740,6 @@ test("CRT curriculum stays branch scoped, versioned, private and persistently gr
               features: [],
               courseIds: null,
               practiceModuleIds: null,
-              toolkitTrackIds: null,
             },
           })
           .returning(),
@@ -902,7 +901,6 @@ test("CRT curriculum stays branch scoped, versioned, private and persistently gr
             features: [],
             courseIds: null,
             practiceModuleIds: null,
-            toolkitTrackIds: null,
           },
         }),
       );

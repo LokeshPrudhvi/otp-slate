@@ -24,6 +24,7 @@ import {
 import { createAuthClient } from "better-auth/react";
 import { twoFactorClient } from "better-auth/client/plugins";
 import type { Identity, Portal } from "@slate/contracts";
+import { LoadingState } from "./loading";
 
 export const authClient = createAuthClient({
   baseURL: window.location.origin,
@@ -164,7 +165,7 @@ export function Icon({ name = "grid" }: { name?: string }) {
         <path d="M12 5v15" />
       </>
     ),
-    toolkit: (
+    workspace: (
       <>
         <rect x="3" y="7" width="18" height="14" rx="2" />
         <path d="M8 7V3h8v4M3 12h18M10 12v3h4v-3" />
@@ -298,12 +299,7 @@ export function DataState({
   error?: unknown;
   children: ReactNode;
 }) {
-  if (pending)
-    return (
-      <p className="loading" role="status">
-        Loading…
-      </p>
-    );
+  if (pending) return <LoadingState label="Loading your content" />;
   if (error) return <ErrorMessage error={error} />;
   return <>{children}</>;
 }
@@ -347,9 +343,11 @@ export function Protected() {
     location = useLocation();
   if (me.isPending)
     return (
-      <div className="loading-screen" role="status">
-        Opening your workspace…
-      </div>
+      <LoadingState
+        fullScreen
+        label="Opening your workspace"
+        detail="Getting your learning space ready."
+      />
     );
   if (me.error instanceof ApiError && me.error.status === 401)
     return <Navigate to="/login" replace />;

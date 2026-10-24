@@ -1213,12 +1213,6 @@
 .dashboard-wide {
   grid-template-columns: minmax(0, 1fr);
 }
-.dashboard-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: -12px 0 20px;
-}
 .student-app a.a-nav {
   color: white;
 }
@@ -1256,31 +1250,6 @@
 }
 .a-card .a-cicons {
   pointer-events: none;
-}
-.hub-shortcuts a {
-  border: 1px solid #d4dbe3;
-  background: #f5f7fa;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px;
-  text-align: left;
-  font-size: 13px;
-  color: #2d3b45;
-  text-decoration: none;
-}
-.hub-shortcuts a:hover {
-  border-color: #0f2747;
-  background: #eef3f9;
-}
-.hub-shortcuts a > span:first-child {
-  color: #24497d;
-  font-size: 23px;
-}
-.hub-shortcuts a > span:last-child {
-  margin-left: auto;
-  color: #617084;
 }
 .a-row {
   text-decoration: none;
@@ -2162,3 +2131,58 @@ button:disabled {
     transform: rotate(360deg);
   }
 }
+
+/* Keep the two-word coding destination legible in the compact navigation rail. */
+.student-app .a-nav[aria-label="Competitive Programming"] .rail-label {
+  max-width: 100%;
+  padding-inline: 2px;
+  text-align: center;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+/* A consistent, distinct icon set for the student navigation rail. */
+.student-app .a-rail .rail-icon {
+  --rail-accent: #c2d6ff;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  box-sizing: border-box;
+  color: var(--rail-accent);
+  border: 1px solid #ffffff17;
+  border-radius: 12px;
+  background: #ffffff0b;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.student-app .a-rail .rail-icon svg {width:25px;height:25px;stroke-width:1.65}
+.student-app [data-nav-icon="courses"] .rail-icon {--rail-accent:#b7d8ff}
+.student-app [data-nav-icon="crt"] .rail-icon {--rail-accent:#cebcf8}
+.student-app [data-nav-icon="compiler"] .rail-icon {--rail-accent:#8ee0d2}
+.student-app [data-nav-icon="competitive"] .rail-icon {--rail-accent:#ffd18a}
+.student-app [data-nav-icon="exams"] .rail-icon {--rail-accent:#ffb6bf}
+.student-app [data-nav-icon="jobs"] .rail-icon {--rail-accent:#9cded0}
+.student-app [data-nav-icon="pyq"] .rail-icon {--rail-accent:#c5c2ff}
+.student-app [data-nav-icon="inbox"] .rail-icon {--rail-accent:#a9d8f7}
+.student-app .a-rail .a-nav:hover .rail-icon {background:#ffffff18;border-color:#ffffff35}
+.student-app .a-rail .a-nav.on .rail-icon {color:#244b79;background:#fff;border-color:#c8d8eb;box-shadow:0 2px 5px #1c3d6510}
+@media(prefers-reduced-motion:reduce){.student-app .a-rail .rail-icon{transition:none}}
+.learning-progress-section{margin-top:22px;padding-top:20px;border-top:1px solid #dce5ef}.learning-progress-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.learning-progress-heading>a{color:#244d7b;text-decoration:none;font-size:17px;font-weight:800}.learning-progress-heading>a>span{font-size:14px;color:#7b94af;margin-left:6px}.learning-progress-heading>strong{font-size:24px;color:#173b63;white-space:nowrap}.learning-progress-heading small{font-size:12px;font-weight:500;color:#61758e}.learning-progress-track{height:6px;border-radius:9px;background:#e5ecf5;overflow:hidden}.learning-progress-track>span{height:100%;display:block;background:linear-gradient(90deg,#5579c7,#9581ce);border-radius:inherit}.learning-progress-note{font-size:11px;color:#677b92;line-height:1.6;margin:10px 0 14px}.learning-module-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.learning-module-grid>div{display:flex;align-items:flex-start;gap:7px;padding:10px 8px;border-radius:9px;background:#f0f4fa;font-size:11px;color:#4b6482;line-height:1.5}.learning-module-grid small{display:block;font-size:10px;color:#697e94;margin-top:3px}.learning-module-grid>div>span:first-child{color:#879eb9;font-weight:800}.learning-module-grid>div.is-complete{background:#e9f5ee}.learning-module-grid>div.is-complete>span:first-child{color:#2f7c5a}.learning-complexity-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.learning-complexity-grid>div{--level:#398069;padding:12px 9px;border:1px solid #d5e8df;border-radius:11px;background:#eff8f3;min-width:0}.learning-complexity-grid>div[data-level="medium"]{--level:#9b6c20;border-color:#eedfbe;background:#fff8e9}.learning-complexity-grid>div[data-level="hard"]{--level:#b44c65;border-color:#f0d9e1;background:#fdf0f4}.learning-complexity-grid>div>span{font-size:12px;font-weight:700;color:var(--level)}.learning-complexity-grid b{display:block;font-size:20px;color:#233d58;margin:9px 0 12px}.learning-complexity-grid b small{font-size:11px;color:#66788b;font-weight:400}.learning-complexity-grid .learning-progress-track{background:#0000000b;height:4px}.learning-complexity-grid .learning-progress-track>span{background:var(--level)}
+.crt-ranking-tabs{display:flex;gap:4px;padding:4px;background:#eaf0f8;border-radius:10px;margin:16px 0}.crt-ranking-tabs button{flex:1;padding:9px;border:0;border-radius:7px;font:inherit;font-size:12px;color:#58708d;background:transparent;cursor:pointer}.crt-ranking-tabs button[aria-pressed="true"]{background:#fff;color:#204e85;font-weight:700;box-shadow:0 2px 5px #1736570d}
+/* Horizontal labels keep the expanded navigation compact and easy to scan. */
+.student-app{--student-rail-width:216px}
+.student-app.rail-collapsed{--student-rail-width:64px}
+.student-app .a-rail{width:var(--student-rail-width);box-sizing:border-box;overflow-x:hidden}
+.student-app .a-tray{left:var(--student-rail-width)}
+.student-app .a-rail .a-logo{display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:20px 16px 18px;min-height:78px;box-sizing:border-box}
+.student-app .a-logo svg{width:44px;height:auto;flex-shrink:0}
+.student-app .rail-brand-name{color:#fff;font-size:20px;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
+.student-app .a-rail .a-nav{flex-direction:row;align-items:center;justify-content:flex-start;width:100%;min-height:56px;padding:9px 14px;gap:12px;box-sizing:border-box;text-align:left;font-size:13.5px;line-height:1.35;font-weight:600}
+.student-app .a-rail .rail-label{min-width:0;overflow-wrap:normal}
+.student-app .a-rail .a-av{display:grid;place-items:center;flex:none;width:38px;height:38px;box-sizing:border-box;line-height:1;border-radius:12px}
+.student-app .a-rail>.a-nav:last-child{min-height:54px;color:#bed0e6;font-size:12px}
+.student-app .a-rail>.a-nav:last-child>svg{width:25px;height:25px;margin:0 6px;flex:none}
+.student-app.rail-collapsed .a-rail .a-nav{justify-content:center;padding:9px 0;gap:0}
+.student-app.rail-collapsed .a-logo{justify-content:center;padding:18px 0}
+.student-app.rail-collapsed .rail-brand-name,.student-app.rail-collapsed .rail-label{display:none}
+@media(max-width:640px){.student-app:not(.rail-collapsed){--student-rail-width:180px}.student-app .a-rail .a-nav{padding:9px 10px;gap:9px;font-size:12.5px}.student-app .a-rail .a-logo{padding-left:12px;gap:9px}.student-app .rail-brand-name{font-size:18px}.student-app.rail-collapsed .a-rail .a-logo{padding-left:0}}

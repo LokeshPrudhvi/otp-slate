@@ -52,18 +52,18 @@ function Monitoring({ exam }: { exam: StudentExamDetail }) {
 }
 export function LiveExamsPage() {
   const data = useStudentData<StudentExamSummary[]>("exams", "student/exams");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("live");
   useEffect(() => {
     const timer = setInterval(() => void data.refetch(), 30_000);
     return () => clearInterval(timer);
   }, [data.refetch]);
   const exams =
-    data.data?.filter(
-      (exam) =>
-        filter === "all" ||
-        (filter === "results"
-          ? exam.resultsReleased && exam.attemptId
-          : exam.state === filter),
+    data.data?.filter((exam) =>
+      filter === "results"
+        ? exam.state === "ended" ||
+          (Boolean(exam.attemptId) && exam.attemptStatus !== "in_progress")
+        : exam.state === filter &&
+          (!exam.attemptId || exam.attemptStatus === "in_progress"),
     ) || [];
   return (
     <div className="a-page real-exams">
@@ -85,25 +85,23 @@ export function LiveExamsPage() {
         </p>
       </div>
       <div className="a-filters" aria-label="Exam status">
-        {["all", "live", "upcoming", "ended", "cancelled", "results"].map(
-          (value) => (
-            <button
-              key={value}
-              className={`a-pill${filter === value ? " on" : ""}`}
-              aria-pressed={filter === value}
-              onClick={() => setFilter(value)}
-            >
-              {value[0].toUpperCase() + value.slice(1)}
-            </button>
-          ),
-        )}
+        {["live", "upcoming", "results"].map((value) => (
+          <button
+            key={value}
+            className={`a-pill${filter === value ? " on" : ""}`}
+            aria-pressed={filter === value}
+            onClick={() => setFilter(value)}
+          >
+            {value[0].toUpperCase() + value.slice(1)}
+          </button>
+        ))}
       </div>
       <Status pending={data.isPending} error={data.error} />
       {data.data &&
         (exams.length ? (
-          <div className="hub-grid">
+          <div className="exam-card-grid">
             {exams.map((exam) => (
-              <article className="hub-card" key={exam.id}>
+              <article className="hub-card exam-catalog-card" key={exam.id}>
                 <div className="hub-card-top">
                   <span
                     className={exam.state === "live" ? "live-status" : "a-tag"}
@@ -143,21 +141,44 @@ export function LiveExamsPage() {
                     Result: <strong>{exam.percentage}%</strong>
                   </p>
                 )}
-                <Link className="a-btn pri" to={`/live-exams/${exam.id}`}>
-                  {exam.attemptStatus === "in_progress"
-                    ? "Resume exam"
-                    : exam.resultsReleased && exam.attemptId
+                {filter === "results" && exam.attemptId ? (
+                  <Link className="a-btn pri" to={`/live-exams/${exam.id}`}>
+                    {exam.resultsReleased
                       ? "View results"
+                      : "Submission details"}{" "}
+                    →
+                  </Link>
+                ) : exam.state === "live" ? (
+                  <Link className="a-btn pri" to={`/live-exams/${exam.id}`}>
+                    {exam.attemptStatus === "in_progress"
+                      ? "Resume exam"
                       : "View exam"}{" "}
-                  →
-                </Link>
+                    →
+                  </Link>
+                ) : (
+                  <button
+                    className="a-btn pri"
+                    disabled
+                    title={
+                      exam.state === "upcoming"
+                        ? "Available when the exam starts"
+                        : "This exam has ended"
+                    }
+                  >
+                    View exam →
+                  </button>
+                )}
               </article>
             ))}
           </div>
         ) : (
           <NoResults
             title={
-              filter === "all" ? "No exams assigned yet" : `No ${filter} exams`
+              filter === "results"
+                ? "No results yet"
+                : filter === "live"
+                  ? "No live exams right now"
+                  : "No upcoming exams"
             }
           >
             Your organization’s published exams will appear here. Check back
@@ -746,7 +767,13 @@ export function ExamAttempt({ initial }: { initial: ExamAttemptView }) {
               </span>
               <h2>{question.title}</h2>
               <LessonContent body={question.prompt} format="markdown" />
-              {question.kind === "mcq" && question.image && <QuestionImageView image={question.image} source={`student/exam-attempts/${view.id}/images/${question.image.uploadId}`} label={`Question ${active + 1} image`} />}
+              {question.kind === "mcq" && question.image && (
+                <QuestionImageView
+                  image={question.image}
+                  source={`student/exam-attempts/${view.id}/images/${question.image.uploadId}`}
+                  label={`Question ${active + 1} image`}
+                />
+              )}
               {question.kind === "coding" &&
                 question.testCases.some((item) => !item.hidden) && (
                   <div className="exam-public-cases">
@@ -980,33 +1007,46 @@ function ExamSubmitted({
             </div>
             <div className="exam-results-list">
               {result.questions.map((item) => {
-                const question = view.questions.find(question => question.id === item.questionId);
+                const question = view.questions.find(
+                  (question) => question.id === item.questionId,
+                );
                 return (
-                <details key={item.questionId}>
-                  <summary>
-                    {item.title}{" "}
-                    <span>
-                      {item.earnedPoints ?? "Pending"} / {item.points} ·{" "}
-                      {item.verdict}
-                    </span>
-                  </summary>
-                  {question?.kind === "mcq" && question.image && <QuestionImageView image={question.image} source={`student/exam-attempts/${view.id}/images/${question.image.uploadId}`} label={`${item.title} image`} />}
-                  {item.totalTests !== undefined && (
-                    <p>
-                      {item.passedTests ?? 0} of {item.totalTests} tests passed
-                    </p>
-                  )}
-                  {item.correctOption !== undefined && (
-                    <p>
-                      Correct answer:{" "}
-                      {String.fromCharCode(65 + item.correctOption)}
-                    </p>
-                  )}
-                  {item.explanation && (
-                    <LessonContent body={item.explanation} format="markdown" />
-                  )}
-                </details>
-              ); })}
+                  <details key={item.questionId}>
+                    <summary>
+                      {item.title}{" "}
+                      <span>
+                        {item.earnedPoints ?? "Pending"} / {item.points} ·{" "}
+                        {item.verdict}
+                      </span>
+                    </summary>
+                    {question?.kind === "mcq" && question.image && (
+                      <QuestionImageView
+                        image={question.image}
+                        source={`student/exam-attempts/${view.id}/images/${question.image.uploadId}`}
+                        label={`${item.title} image`}
+                      />
+                    )}
+                    {item.totalTests !== undefined && (
+                      <p>
+                        {item.passedTests ?? 0} of {item.totalTests} tests
+                        passed
+                      </p>
+                    )}
+                    {item.correctOption !== undefined && (
+                      <p>
+                        Correct answer:{" "}
+                        {String.fromCharCode(65 + item.correctOption)}
+                      </p>
+                    )}
+                    {item.explanation && (
+                      <LessonContent
+                        body={item.explanation}
+                        format="markdown"
+                      />
+                    )}
+                  </details>
+                );
+              })}
             </div>
           </>
         ) : (

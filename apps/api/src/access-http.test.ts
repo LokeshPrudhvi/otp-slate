@@ -204,7 +204,6 @@ test("organization, branch and student policies enforce live HTTP access without
     features: [...featureKeys],
     courseIds: [courseA.id, courseB.id],
     practiceModuleIds: ["aptitude", "competitive-coding"],
-    toolkitTrackIds: ["dsa"],
   };
   try {
     await t.test("platform summary returns numeric counts and denies other roles", async () => {
@@ -227,6 +226,8 @@ test("organization, branch and student policies enforce live HTTP access without
         assert.equal(current.students.length, 2);
         assert.equal(current.catalog.courses.length, 2);
         assert.deepEqual(current.catalog.defaults.practiceModuleIds, []);
+        assert.deepEqual(current.catalog.practiceModules.map((item) => item.id), ["competitive-coding"]);
+        assert.equal(current.catalog.features.find((item) => item.id === "practice")?.name, "Coding");
         assert.deepEqual(current.students[0].baseline.practiceModuleIds, []);
         assert.ok(
           current.catalog.practiceModules.find(
@@ -294,12 +295,11 @@ test("organization, branch and student policies enforce live HTTP access without
       },
     );
     await t.test(
-      "branch course selections and labeled sample practice take effect immediately; new students inherit",
+      "branch course and Competitive Programming selections take effect immediately; new students inherit",
       async () => {
         await update("organization", organizationPolicy, {
           display: {
             portalTitle: "Campus learning",
-            toolkitTitle: "Learning paths",
             welcomeText: "Welcome to your campus.",
           },
         });
@@ -344,7 +344,8 @@ test("organization, branch and student policies enforce live HTTP access without
         );
         const practice = await request("student/practice", cse.cookie);
         assert.equal(practice.status, 200);
-        assert.ok(practice.body.length > 200);
+        assert.equal(practice.body.length, 600);
+        assert.ok(practice.body.every((item: any) => item.kind === "coding"));
         assert.ok(practice.body.every((item: any) => item.sample === true));
         assert.ok(!practice.body.some((item: any) => item.id === "reasoning"));
         const newer = await person("access-new", "student", org.id, "CSE");
@@ -529,7 +530,6 @@ test("organization, branch and student policies enforce live HTTP access without
           features: [],
           courseIds: [],
           practiceModuleIds: [],
-          toolkitTrackIds: [],
         };
         await update("organization", closed);
         for (const endpoint of [
@@ -623,7 +623,6 @@ test("organization, branch and student policies enforce live HTTP access without
             features: ["courses", "compiler"],
             courseIds: [courseA.id],
             practiceModuleIds: ["competitive-coding"],
-            toolkitTrackIds: ["dsa"],
           },
           { targetId: "CSE" },
         );
@@ -631,7 +630,6 @@ test("organization, branch and student policies enforce live HTTP access without
           features: ["courses", "inbox"],
           courseIds: [courseB.id],
           practiceModuleIds: ["aptitude"],
-          toolkitTrackIds: [],
         });
         const before = await workspace();
         const policy = before.branches.find(
@@ -651,7 +649,6 @@ test("organization, branch and student policies enforce live HTTP access without
           features: ["courses"],
           courseIds: [],
           practiceModuleIds: ["aptitude"],
-          toolkitTrackIds: [],
         });
         assert.equal(saved.revision, before.revision + 1);
         for (const forbidden of [

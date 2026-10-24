@@ -1,0 +1,1335 @@
+[
+  {
+    "topicId": "c87fe7fb-d85d-5f05-a336-0174624bfdf6",
+    "title": "Averages",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-c87fe7fb-d85d-5f05-a336-0174624bfdf6-q1",
+        "prompt": "What is the arithmetic mean of 12, 18, 20 and 30?",
+        "options": [
+          "18",
+          "20",
+          "22",
+          "25"
+        ],
+        "correctOption": 1,
+        "explanation": "Add the four numbers: 12 + 18 + 20 + 30 = 80. Divide by 4 to get 20."
+      },
+      {
+        "id": "starter-c87fe7fb-d85d-5f05-a336-0174624bfdf6-q2",
+        "prompt": "Five test scores have an average of 18. A sixth score of 30 is added. What is the new average?",
+        "options": [
+          "18",
+          "19",
+          "20",
+          "21"
+        ],
+        "correctOption": 2,
+        "explanation": "The original total is 5 × 18 = 90. The new average is (90 + 30) ÷ 6 = 20."
+      }
+    ]
+  },
+  {
+    "topicId": "e6f191ae-3ba7-57f7-9d01-01c46dc0753a",
+    "title": "Basic Probability",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-e6f191ae-3ba7-57f7-9d01-01c46dc0753a-q1",
+        "prompt": "A bag contains 3 red balls and 2 blue balls. One ball is chosen uniformly at random. What is the probability that it is red?",
+        "options": [
+          "2/5",
+          "1/2",
+          "2/3",
+          "3/5"
+        ],
+        "correctOption": 3,
+        "explanation": "There are 5 equally likely balls, of which 3 are red. The probability is 3/5."
+      },
+      {
+        "id": "starter-e6f191ae-3ba7-57f7-9d01-01c46dc0753a-q2",
+        "prompt": "A fair six-sided die is numbered 1 to 6. What is the probability of rolling a number greater than 4?",
+        "options": [
+          "1/3",
+          "1/6",
+          "1/2",
+          "2/3"
+        ],
+        "correctOption": 0,
+        "explanation": "The favorable outcomes are 5 and 6, so the probability is 2/6 = 1/3."
+      }
+    ]
+  },
+  {
+    "topicId": "79bc5359-f548-57c2-aca1-5a9a2034fb79",
+    "title": "Data Interpretation (Tables, Bar Graphs and Pie Charts)",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-79bc5359-f548-57c2-aca1-5a9a2034fb79-q1",
+        "prompt": "A sales table records January: 120 units, February: 150 units, March: 180 units. What is the percentage increase from January to March?",
+        "options": [
+          "25%",
+          "40%",
+          "50%",
+          "60%"
+        ],
+        "correctOption": 2,
+        "explanation": "Sales increased by 180 − 120 = 60 units. Relative to January, the increase is 60/120 × 100 = 50%."
+      },
+      {
+        "id": "starter-79bc5359-f548-57c2-aca1-5a9a2034fb79-q2",
+        "prompt": "A pie chart represents 200 students. The engineering segment is 90 degrees out of the full 360 degrees. How many students are in engineering?",
+        "options": [
+          "25",
+          "50",
+          "75",
+          "90"
+        ],
+        "correctOption": 1,
+        "explanation": "The segment is 90/360 = 1/4 of the chart. One quarter of 200 is 50."
+      }
+    ]
+  },
+  {
+    "topicId": "1cddeff7-c552-57fe-865e-3f0537b7e700",
+    "title": "Mixtures and Alligation",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-1cddeff7-c552-57fe-865e-3f0537b7e700-q1",
+        "prompt": "A 10-litre solution contains 20% salt by volume. If 10 litres of pure water are added and volumes are additive, what is the new salt percentage?",
+        "options": [
+          "5%",
+          "15%",
+          "20%",
+          "10%"
+        ],
+        "correctOption": 3,
+        "explanation": "The solution contains 2 litres of salt. After dilution, its total volume is 20 litres, so the salt percentage is 2/20 × 100 = 10%."
+      },
+      {
+        "id": "starter-1cddeff7-c552-57fe-865e-3f0537b7e700-q2",
+        "prompt": "Rice costing ₹40 per kg and ₹60 per kg is mixed to obtain a mixture costing ₹45 per kg, with no loss. What is the ratio of the quantities of ₹40 rice to ₹60 rice?",
+        "options": [
+          "3:1",
+          "1:3",
+          "2:1",
+          "1:2"
+        ],
+        "correctOption": 0,
+        "explanation": "Alligation gives cheaper:dearer = (60 − 45):(45 − 40) = 15:5 = 3:1."
+      }
+    ]
+  },
+  {
+    "topicId": "e5b9c989-fb18-59fd-b606-4fe3ca0fec01",
+    "title": "Number Series",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-e5b9c989-fb18-59fd-b606-4fe3ca0fec01-q1",
+        "prompt": "Each term is twice the previous term. What comes next in 3, 6, 12, 24, ...?",
+        "options": [
+          "30",
+          "36",
+          "48",
+          "60"
+        ],
+        "correctOption": 2,
+        "explanation": "The rule is multiplication by 2. Therefore, the next term is 24 × 2 = 48."
+      },
+      {
+        "id": "starter-e5b9c989-fb18-59fd-b606-4fe3ca0fec01-q2",
+        "prompt": "Starting from 2, successive odd numbers 3, 5, 7, 9, ... are added. What comes next in 2, 5, 10, 17, ...?",
+        "options": [
+          "24",
+          "26",
+          "28",
+          "34"
+        ],
+        "correctOption": 1,
+        "explanation": "The differences are 3, 5 and 7. The next difference is 9, so the next term is 17 + 9 = 26."
+      }
+    ]
+  },
+  {
+    "topicId": "d359b19d-ac0d-59fa-abcb-307fd6a4e560",
+    "title": "Number System and Simplification",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-d359b19d-ac0d-59fa-abcb-307fd6a4e560-q1",
+        "prompt": "Using the usual order of operations, what is 18 + 24 ÷ 6 × 3?",
+        "options": [
+          "21",
+          "27",
+          "42",
+          "30"
+        ],
+        "correctOption": 3,
+        "explanation": "Division and multiplication have equal priority and are evaluated left to right: 24 ÷ 6 × 3 = 12. Then 18 + 12 = 30."
+      },
+      {
+        "id": "starter-d359b19d-ac0d-59fa-abcb-307fd6a4e560-q2",
+        "prompt": "What is the greatest common divisor of 36 and 48?",
+        "options": [
+          "12",
+          "6",
+          "18",
+          "24"
+        ],
+        "correctOption": 0,
+        "explanation": "36 = 3 × 12 and 48 = 4 × 12. No integer larger than 12 divides both numbers."
+      }
+    ]
+  },
+  {
+    "topicId": "f539c7f2-8e94-520a-91e8-2f9e384df266",
+    "title": "Percentages",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-f539c7f2-8e94-520a-91e8-2f9e384df266-q1",
+        "prompt": "What is 20% of 240?",
+        "options": [
+          "24",
+          "40",
+          "48",
+          "60"
+        ],
+        "correctOption": 2,
+        "explanation": "20% of 240 is 20/100 × 240 = 48."
+      },
+      {
+        "id": "starter-f539c7f2-8e94-520a-91e8-2f9e384df266-q2",
+        "prompt": "A price of ₹500 is increased by 20%. What is the new price?",
+        "options": [
+          "₹520",
+          "₹600",
+          "₹625",
+          "₹700"
+        ],
+        "correctOption": 1,
+        "explanation": "The increase is 20% of ₹500, which is ₹100. The new price is ₹500 + ₹100 = ₹600."
+      }
+    ]
+  },
+  {
+    "topicId": "fda8b88e-775c-5205-ad71-bf7e04b01507",
+    "title": "Permutations and Combinations",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-fda8b88e-775c-5205-ad71-bf7e04b01507-q1",
+        "prompt": "In how many different orders can three distinct books be arranged in a row?",
+        "options": [
+          "3",
+          "9",
+          "12",
+          "6"
+        ],
+        "correctOption": 3,
+        "explanation": "There are 3 choices for the first position, 2 for the second and 1 for the third: 3 × 2 × 1 = 6."
+      },
+      {
+        "id": "starter-fda8b88e-775c-5205-ad71-bf7e04b01507-q2",
+        "prompt": "A committee of 2 students is chosen from 5 distinct students. No roles are assigned, so order does not matter. How many committees are possible?",
+        "options": [
+          "10",
+          "20",
+          "5",
+          "25"
+        ],
+        "correctOption": 0,
+        "explanation": "The number of unordered pairs is 5 choose 2 = (5 × 4)/(2 × 1) = 10."
+      }
+    ]
+  },
+  {
+    "topicId": "46818ce7-c49f-5291-872b-f0502e212e31",
+    "title": "Problems on Ages",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-46818ce7-c49f-5291-872b-f0502e212e31-q1",
+        "prompt": "Neha is 24 years old and Ravi is 12 years old. What will be the ratio of their ages, Neha to Ravi, after 6 years?",
+        "options": [
+          "2:1",
+          "3:2",
+          "5:3",
+          "4:3"
+        ],
+        "correctOption": 2,
+        "explanation": "After 6 years their ages will be 30 and 18. The ratio 30:18 simplifies to 5:3."
+      },
+      {
+        "id": "starter-46818ce7-c49f-5291-872b-f0502e212e31-q2",
+        "prompt": "The sum of two siblings’ ages is 40 years. The older sibling is 8 years older than the younger. How old is the older sibling?",
+        "options": [
+          "20 years",
+          "24 years",
+          "28 years",
+          "32 years"
+        ],
+        "correctOption": 1,
+        "explanation": "If the older age is x, the younger is x − 8. Then 2x − 8 = 40, so x = 24."
+      }
+    ]
+  },
+  {
+    "topicId": "38fe7c7b-2a04-54f0-8db5-2479535fffa9",
+    "title": "Profit, Loss and Discounts",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-38fe7c7b-2a04-54f0-8db5-2479535fffa9-q1",
+        "prompt": "An item costs ₹800 and is sold for ₹1,000. What is the profit percentage calculated on cost price?",
+        "options": [
+          "20%",
+          "22.5%",
+          "30%",
+          "25%"
+        ],
+        "correctOption": 3,
+        "explanation": "Profit is ₹1,000 − ₹800 = ₹200. Profit percentage is 200/800 × 100 = 25%."
+      },
+      {
+        "id": "starter-38fe7c7b-2a04-54f0-8db5-2479535fffa9-q2",
+        "prompt": "An item has a marked price of ₹1,500. A discount of 20% is applied, with no other charges. What amount does the customer pay?",
+        "options": [
+          "₹1,200",
+          "₹1,250",
+          "₹1,300",
+          "₹1,350"
+        ],
+        "correctOption": 0,
+        "explanation": "The discount is 20% of ₹1,500 = ₹300. The payable amount is ₹1,500 − ₹300 = ₹1,200."
+      }
+    ]
+  },
+  {
+    "topicId": "0a489796-f135-5830-a84f-d73a629b2d39",
+    "title": "Ratio and Proportion",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-0a489796-f135-5830-a84f-d73a629b2d39-q1",
+        "prompt": "₹64 is divided between A and B in the ratio 3:5. What is A’s share?",
+        "options": [
+          "₹16",
+          "₹20",
+          "₹24",
+          "₹40"
+        ],
+        "correctOption": 2,
+        "explanation": "There are 3 + 5 = 8 equal parts. Each part is ₹64/8 = ₹8, so A receives 3 × ₹8 = ₹24."
+      },
+      {
+        "id": "starter-0a489796-f135-5830-a84f-d73a629b2d39-q2",
+        "prompt": "Seven identical notebooks cost ₹84. At the same price per notebook, how much do five notebooks cost?",
+        "options": [
+          "₹48",
+          "₹60",
+          "₹70",
+          "₹72"
+        ],
+        "correctOption": 1,
+        "explanation": "Each notebook costs ₹84/7 = ₹12. Five notebooks cost 5 × ₹12 = ₹60."
+      }
+    ]
+  },
+  {
+    "topicId": "1a886916-4403-58c8-9df5-9483c2903544",
+    "title": "Simple and Compound Interest",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-1a886916-4403-58c8-9df5-9483c2903544-q1",
+        "prompt": "What is the simple interest on ₹5,000 at 8% per year for 2 years?",
+        "options": [
+          "₹400",
+          "₹600",
+          "₹832",
+          "₹800"
+        ],
+        "correctOption": 3,
+        "explanation": "Simple interest = principal × rate × time / 100 = 5,000 × 8 × 2 / 100 = ₹800."
+      },
+      {
+        "id": "starter-1a886916-4403-58c8-9df5-9483c2903544-q2",
+        "prompt": "₹1,000 earns 10% compound interest per year, compounded annually. What is the total amount after 2 years?",
+        "options": [
+          "₹1,210",
+          "₹1,200",
+          "₹1,100",
+          "₹1,220"
+        ],
+        "correctOption": 0,
+        "explanation": "The amount is ₹1,000 × 1.10 × 1.10 = ₹1,210, including the principal."
+      }
+    ]
+  },
+  {
+    "topicId": "d6c671e5-cfcb-5302-b17b-8bdb88e73000",
+    "title": "Time and Work",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-d6c671e5-cfcb-5302-b17b-8bdb88e73000-q1",
+        "prompt": "A completes a job alone in 6 days and B completes the same job alone in 12 days. They work together at constant independent rates. How many days do they need?",
+        "options": [
+          "3 days",
+          "6 days",
+          "4 days",
+          "9 days"
+        ],
+        "correctOption": 2,
+        "explanation": "Their combined daily rate is 1/6 + 1/12 = 1/4 of the job. Therefore, the full job takes 4 days."
+      },
+      {
+        "id": "starter-d6c671e5-cfcb-5302-b17b-8bdb88e73000-q2",
+        "prompt": "Six workers complete a job in 10 days. How many days would 15 equally productive workers take, assuming the same working hours and no interference?",
+        "options": [
+          "3 days",
+          "4 days",
+          "5 days",
+          "6 days"
+        ],
+        "correctOption": 1,
+        "explanation": "The job requires 6 × 10 = 60 worker-days. With 15 workers, it takes 60/15 = 4 days."
+      }
+    ]
+  },
+  {
+    "topicId": "c559ae5e-8d05-5a8f-b099-fe27fbb2c4cd",
+    "title": "Time, Speed and Distance",
+    "subjectId": "quantitative",
+    "questions": [
+      {
+        "id": "starter-c559ae5e-8d05-5a8f-b099-fe27fbb2c4cd-q1",
+        "prompt": "A car travels 150 km in 3 hours at a constant speed. What is its speed?",
+        "options": [
+          "30 km/h",
+          "45 km/h",
+          "60 km/h",
+          "50 km/h"
+        ],
+        "correctOption": 3,
+        "explanation": "Speed = distance/time = 150/3 = 50 km/h."
+      },
+      {
+        "id": "starter-c559ae5e-8d05-5a8f-b099-fe27fbb2c4cd-q2",
+        "prompt": "A train 180 metres long travels at 72 km/h. How long does it take to pass a stationary pole completely?",
+        "options": [
+          "9 seconds",
+          "10 seconds",
+          "12 seconds",
+          "18 seconds"
+        ],
+        "correctOption": 0,
+        "explanation": "72 km/h equals 72 × 5/18 = 20 m/s. The train must cover its own length, so time = 180/20 = 9 seconds."
+      }
+    ]
+  },
+  {
+    "topicId": "9f64059c-bdf7-5728-98da-229cb607aa68",
+    "title": "Analogy and Classification",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-9f64059c-bdf7-5728-98da-229cb607aa68-q1",
+        "prompt": "Use the relation “polygon to number of sides”: triangle is to 3 as hexagon is to what?",
+        "options": [
+          "4",
+          "5",
+          "6",
+          "8"
+        ],
+        "correctOption": 2,
+        "explanation": "A triangle has 3 sides, and a hexagon has 6 sides."
+      },
+      {
+        "id": "starter-9f64059c-bdf7-5728-98da-229cb607aa68-q2",
+        "prompt": "Which number does not belong to the group if the rule is “prime numbers”?",
+        "options": [
+          "2",
+          "9",
+          "3",
+          "5"
+        ],
+        "correctOption": 1,
+        "explanation": "9 is divisible by 3 and is not prime. The other three numbers have exactly two positive divisors."
+      }
+    ]
+  },
+  {
+    "topicId": "8709f643-73d5-525f-af96-1e7495ff0b9e",
+    "title": "Blood Relations",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-8709f643-73d5-525f-af96-1e7495ff0b9e-q1",
+        "prompt": "Asha is Bina’s mother. Bina is Chirag’s mother. What is Asha’s relationship to Chirag?",
+        "options": [
+          "Aunt",
+          "Sister",
+          "Mother",
+          "Grandmother"
+        ],
+        "correctOption": 3,
+        "explanation": "Asha is the mother of Chirag’s mother, so she is his grandmother."
+      },
+      {
+        "id": "starter-8709f643-73d5-525f-af96-1e7495ff0b9e-q2",
+        "prompt": "Raj is Mina’s father. Arun is Mina’s brother, and Arun and Mina have the same parents. What is Arun’s relationship to Raj?",
+        "options": [
+          "Son",
+          "Father",
+          "Uncle",
+          "Nephew"
+        ],
+        "correctOption": 0,
+        "explanation": "Because Arun and Mina have the same parents, Raj is also Arun’s father. Arun is Raj’s son."
+      }
+    ]
+  },
+  {
+    "topicId": "ab94e49d-bc15-53c2-945d-a725cb757d79",
+    "title": "Cause and Effect",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-ab94e49d-bc15-53c2-945d-a725cb757d79-q1",
+        "prompt": "In a machine, a broken fuse stops all power to the motor. The motor was running, the fuse then broke, and the motor immediately stopped. Under this stated rule, what directly caused the motor to stop?",
+        "options": [
+          "The motor starting earlier",
+          "The broken fuse",
+          "The time of day",
+          "The motor’s paint color"
+        ],
+        "correctOption": 1,
+        "explanation": "The question states that a broken fuse stops the motor’s power. This directly explains the motor stopping."
+      },
+      {
+        "id": "starter-ab94e49d-bc15-53c2-945d-a725cb757d79-q2",
+        "prompt": "A school observes that students who attend an optional workshop have higher average scores. No random assignment or other information is available. Which conclusion is justified?",
+        "options": [
+          "The workshop certainly caused every score increase.",
+          "Higher scores cannot be related to the workshop.",
+          "Attendance and scores are associated, but this alone does not establish causation.",
+          "Every student who missed the workshop scored lower than every attendee."
+        ],
+        "correctOption": 2,
+        "explanation": "An observed association can have other explanations, such as prior preparation or motivation. It does not by itself prove cause and effect."
+      }
+    ]
+  },
+  {
+    "topicId": "b64920d2-134b-5383-b08e-28a2af74f99d",
+    "title": "Coding and Decoding",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-b64920d2-134b-5383-b08e-28a2af74f99d-q1",
+        "prompt": "A code replaces each English letter with the next letter in the alphabet: A becomes B, B becomes C, and so on. How is CAT coded?",
+        "options": [
+          "DBU",
+          "CBU",
+          "DBT",
+          "ECV"
+        ],
+        "correctOption": 0,
+        "explanation": "C becomes D, A becomes B and T becomes U, producing DBU."
+      },
+      {
+        "id": "starter-b64920d2-134b-5383-b08e-28a2af74f99d-q2",
+        "prompt": "A code writes each word’s letters in reverse order. If STOP becomes POTS, how does DOG appear?",
+        "options": [
+          "ODG",
+          "DGO",
+          "OGD",
+          "GOD"
+        ],
+        "correctOption": 3,
+        "explanation": "Reversing D, O, G gives G, O, D: GOD."
+      }
+    ]
+  },
+  {
+    "topicId": "11bec937-cf07-5841-bb18-ace28e59ebcf",
+    "title": "Counting Figures",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-11bec937-cf07-5841-bb18-ace28e59ebcf-q1",
+        "prompt": "A square is divided by one horizontal and one vertical line through its center into four equal smaller squares. Counting squares of every size formed by these lines, how many squares are present?",
+        "options": [
+          "4",
+          "5",
+          "6",
+          "8"
+        ],
+        "correctOption": 1,
+        "explanation": "There are 4 small squares and 1 outer square, giving 5 in total."
+      },
+      {
+        "id": "starter-11bec937-cf07-5841-bb18-ace28e59ebcf-q2",
+        "prompt": "A rectangle is divided into a grid with 3 columns and 2 rows. How many axis-aligned rectangles of all sizes are formed by the grid lines?",
+        "options": [
+          "6",
+          "12",
+          "18",
+          "24"
+        ],
+        "correctOption": 2,
+        "explanation": "Choose 2 of the 4 vertical boundary lines and 2 of the 3 horizontal boundary lines: 6 × 3 = 18 rectangles."
+      }
+    ]
+  },
+  {
+    "topicId": "f5d0358f-539a-536a-841c-de9529976eb6",
+    "title": "Critical Thinking and Problem-Solving",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-f5d0358f-539a-536a-841c-de9529976eb6-q1",
+        "prompt": "An app became slow just after a new version was installed. To test whether that version caused the slowdown, which comparison is most informative?",
+        "options": [
+          "Run the old and new versions on the same device with the same data and workload.",
+          "Compare the new version on a busy phone with the old version on an idle laptop.",
+          "Ask whether the new icon looks better.",
+          "Assume the timing proves the cause without testing."
+        ],
+        "correctOption": 0,
+        "explanation": "Keeping the device, data and workload the same helps isolate the app version as the variable being tested."
+      },
+      {
+        "id": "starter-f5d0358f-539a-536a-841c-de9529976eb6-q2",
+        "prompt": "A report says 80% of students passed, but gives no number of students tested. What additional information is necessary to calculate how many passed?",
+        "options": [
+          "The name of the classroom",
+          "The duration of lunch",
+          "The students’ favorite subjects",
+          "The total number of students tested"
+        ],
+        "correctOption": 3,
+        "explanation": "The number who passed equals 80% of the total tested. Without the total, the count cannot be determined."
+      }
+    ]
+  },
+  {
+    "topicId": "a06c17c3-d61a-5efa-b969-5b5bc720c198",
+    "title": "Cubes and Dice",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-a06c17c3-d61a-5efa-b969-5b5bc720c198-q1",
+        "prompt": "A solid cube is painted on all six outer faces, then cut into 27 equal smaller cubes in a 3 × 3 × 3 arrangement. How many small cubes have exactly three painted faces?",
+        "options": [
+          "6",
+          "8",
+          "12",
+          "9"
+        ],
+        "correctOption": 1,
+        "explanation": "Only the 8 corner cubes touch three outer faces of the original cube."
+      },
+      {
+        "id": "starter-a06c17c3-d61a-5efa-b969-5b5bc720c198-q2",
+        "prompt": "A die is numbered 1 to 6, with each pair of opposite faces summing to 7. If the top face is 2, which number is on the bottom face?",
+        "options": [
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "correctOption": 2,
+        "explanation": "The bottom is opposite the top. Its value is 7 − 2 = 5."
+      }
+    ]
+  },
+  {
+    "topicId": "51103d76-11f5-5924-939e-19b821fd475c",
+    "title": "Data Sufficiency",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-51103d76-11f5-5924-939e-19b821fd475c-q1",
+        "prompt": "Question: What is x? Statement I: x + y = 10. Statement II: x − y = 2. The variables are real numbers. Which information is sufficient to determine x uniquely?",
+        "options": [
+          "Both statements together, but neither alone",
+          "Statement I alone, but not II alone",
+          "Statement II alone, but not I alone",
+          "Even both statements together are insufficient"
+        ],
+        "correctOption": 0,
+        "explanation": "Neither equation alone determines x. Adding both gives 2x = 12, so x = 6 uniquely."
+      },
+      {
+        "id": "starter-51103d76-11f5-5924-939e-19b821fd475c-q2",
+        "prompt": "Question: What is the area of a rectangle? Statement I: Its length is 5 cm. Statement II: Its width is 3 cm. Which information is sufficient?",
+        "options": [
+          "Statement I alone, but not II alone",
+          "Statement II alone, but not I alone",
+          "Either statement alone",
+          "Both statements together, but neither alone"
+        ],
+        "correctOption": 3,
+        "explanation": "Area is length × width. Both dimensions are required here; together they give 5 × 3 = 15 square cm."
+      }
+    ]
+  },
+  {
+    "topicId": "e751f1d8-011b-5d21-b521-2a02b74ec8dc",
+    "title": "Direction Sense",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-e751f1d8-011b-5d21-b521-2a02b74ec8dc-q1",
+        "prompt": "From a starting point, Riya walks 3 km east and then 4 km north. What is her straight-line distance from the starting point?",
+        "options": [
+          "1 km",
+          "5 km",
+          "7 km",
+          "12 km"
+        ],
+        "correctOption": 1,
+        "explanation": "The east and north movements are perpendicular. The distance is √(3² + 4²) = √25 = 5 km."
+      },
+      {
+        "id": "starter-e751f1d8-011b-5d21-b521-2a02b74ec8dc-q2",
+        "prompt": "A person faces north, turns right by 90 degrees, then right by 90 degrees, then left by 90 degrees. Which direction are they facing?",
+        "options": [
+          "North",
+          "South",
+          "East",
+          "West"
+        ],
+        "correctOption": 2,
+        "explanation": "The directions after the turns are east, south and then east."
+      }
+    ]
+  },
+  {
+    "topicId": "cd56e971-61c1-5e45-ad6f-7382984d662b",
+    "title": "Embedded Figures",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-cd56e971-61c1-5e45-ad6f-7382984d662b-q1",
+        "prompt": "A square ABCD is named clockwise. Both diagonals AC and BD are drawn and intersect at O. Which triangle is formed entirely by segments already drawn?",
+        "options": [
+          "Triangle ABO",
+          "Triangle ABP, where P is outside the square and no lines to P are drawn",
+          "Triangle ABE, where E is outside the square and no lines to E are drawn",
+          "Triangle ABF, where F is outside the square and no lines to F are drawn"
+        ],
+        "correctOption": 0,
+        "explanation": "AB is a side of the square. AO and BO are parts of its diagonals, so all three sides of triangle ABO are present."
+      },
+      {
+        "id": "starter-cd56e971-61c1-5e45-ad6f-7382984d662b-q2",
+        "prompt": "A diagram consists only of the segments joining (0,0) to (0,2), (0,0) to (1,0), and (0,2) to (1,2). Without rotating or adding lines, which pair of segments forms an embedded L with its corner at (0,0)?",
+        "options": [
+          "The top horizontal segment and a diagonal",
+          "Two horizontal segments only",
+          "Two vertical segments only",
+          "The vertical segment and the bottom horizontal segment"
+        ],
+        "correctOption": 3,
+        "explanation": "The vertical line from (0,0) to (0,2) and the bottom horizontal line from (0,0) to (1,0) meet at a right angle at (0,0)."
+      }
+    ]
+  },
+  {
+    "topicId": "a917e665-7c0a-506b-ad15-d3ecdcfafe53",
+    "title": "Figure Analogy",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-a917e665-7c0a-506b-ad15-d3ecdcfafe53-q1",
+        "prompt": "An arrow pointing right becomes an arrow pointing down after a 90-degree clockwise rotation. Applying the same transformation to an arrow pointing up gives which direction?",
+        "options": [
+          "Left",
+          "Right",
+          "Up",
+          "Down"
+        ],
+        "correctOption": 1,
+        "explanation": "A 90-degree clockwise rotation moves up to right, just as it moves right to down."
+      },
+      {
+        "id": "starter-a917e665-7c0a-506b-ad15-d3ecdcfafe53-q2",
+        "prompt": "A transformation changes a hollow circle into a filled circle, keeping its shape and size unchanged. Applied to a hollow triangle, what is the result?",
+        "options": [
+          "A hollow square",
+          "A larger hollow triangle",
+          "A filled triangle of the same size",
+          "A filled circle"
+        ],
+        "correctOption": 2,
+        "explanation": "The transformation changes only the fill, so a hollow triangle becomes a filled triangle of the same size."
+      }
+    ]
+  },
+  {
+    "topicId": "a731af5a-b6b2-5440-8781-3f31f0c18c18",
+    "title": "Figure Classification",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-a731af5a-b6b2-5440-8781-3f31f0c18c18-q1",
+        "prompt": "Which figure belongs to the class “polygons with exactly four sides”?",
+        "options": [
+          "A square",
+          "A triangle",
+          "A regular pentagon",
+          "A regular hexagon"
+        ],
+        "correctOption": 0,
+        "explanation": "A square has exactly 4 straight sides. The other polygons have 3, 5 and 6 sides respectively."
+      },
+      {
+        "id": "starter-a731af5a-b6b2-5440-8781-3f31f0c18c18-q2",
+        "prompt": "Which figure belongs to the class “closed curves with no straight sides or corners”?",
+        "options": [
+          "A rectangle",
+          "A triangle",
+          "A square",
+          "A circle"
+        ],
+        "correctOption": 3,
+        "explanation": "A circle is a closed curve with no straight sides or corners. The other figures are polygons."
+      }
+    ]
+  },
+  {
+    "topicId": "762d2050-c2e9-54b0-bf70-62244ab12a8e",
+    "title": "Figure Completion",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-762d2050-c2e9-54b0-bf70-62244ab12a8e-q1",
+        "prompt": "Three sides of a square are drawn: (0,0)–(0,2), (0,2)–(2,2), and (2,2)–(2,0). Which segment completes the square?",
+        "options": [
+          "(0,0)–(2,2)",
+          "(0,0)–(2,0)",
+          "(0,2)–(2,0)",
+          "(1,0)–(1,2)"
+        ],
+        "correctOption": 1,
+        "explanation": "The missing side is the bottom edge joining (0,0) and (2,0). The other options are diagonals or an interior line."
+      },
+      {
+        "id": "starter-762d2050-c2e9-54b0-bf70-62244ab12a8e-q2",
+        "prompt": "A circle is split into four equal quadrants by a vertical and a horizontal diameter. The upper-left, upper-right and lower-right quadrants are shaded. Which quadrant must be shaded to make the entire circle shaded?",
+        "options": [
+          "Upper-left",
+          "Upper-right",
+          "Lower-left",
+          "Lower-right"
+        ],
+        "correctOption": 2,
+        "explanation": "The lower-left quadrant is the only one not yet shaded."
+      }
+    ]
+  },
+  {
+    "topicId": "6e9a9634-b7b4-5254-92b9-f231115638a0",
+    "title": "Figure Series",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-6e9a9634-b7b4-5254-92b9-f231115638a0-q1",
+        "prompt": "A sequence shows 1 dot, then 3 dots, then 5 dots. The rule adds exactly 2 dots at each step. How many dots are in the next figure?",
+        "options": [
+          "7",
+          "6",
+          "8",
+          "10"
+        ],
+        "correctOption": 0,
+        "explanation": "Adding 2 dots to the current 5 gives 7."
+      },
+      {
+        "id": "starter-6e9a9634-b7b4-5254-92b9-f231115638a0-q2",
+        "prompt": "An arrow rotates 90 degrees clockwise at each step: up, right, down, ... . Which direction comes next?",
+        "options": [
+          "Up",
+          "Right",
+          "Down",
+          "Left"
+        ],
+        "correctOption": 3,
+        "explanation": "A 90-degree clockwise rotation from down points left."
+      }
+    ]
+  },
+  {
+    "topicId": "916ee023-dfb1-5b91-8134-ff347b5fdab1",
+    "title": "Logical Puzzles",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-916ee023-dfb1-5b91-8134-ff347b5fdab1-q1",
+        "prompt": "A, B and C each receive one different color: red, blue or green. A receives red and B does not receive blue. Which color does B receive?",
+        "options": [
+          "Red",
+          "Green",
+          "Blue",
+          "Cannot be determined"
+        ],
+        "correctOption": 1,
+        "explanation": "Red is already assigned to A. Of the remaining colors, B cannot have blue, so B must have green."
+      },
+      {
+        "id": "starter-916ee023-dfb1-5b91-8134-ff347b5fdab1-q2",
+        "prompt": "Three tasks X, Y and Z are completed one at a time, each exactly once. X must be before Y, and Y must be before Z. Which task must be second?",
+        "options": [
+          "X",
+          "Z",
+          "Y",
+          "Any of the three"
+        ],
+        "correctOption": 2,
+        "explanation": "The constraints force the only possible order X, Y, Z. Therefore, Y is second."
+      }
+    ]
+  },
+  {
+    "topicId": "643c5a55-df38-5d61-b8ba-62e2c938cab7",
+    "title": "Mirror Images",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-643c5a55-df38-5d61-b8ba-62e2c938cab7-q1",
+        "prompt": "A point at (2,3) is reflected in the vertical y-axis, like a mirror placed along x = 0. What are the reflected coordinates?",
+        "options": [
+          "(-2,3)",
+          "(2,-3)",
+          "(-2,-3)",
+          "(3,2)"
+        ],
+        "correctOption": 0,
+        "explanation": "Reflection in the vertical y-axis changes the sign of the x-coordinate and keeps y unchanged."
+      },
+      {
+        "id": "starter-643c5a55-df38-5d61-b8ba-62e2c938cab7-q2",
+        "prompt": "An analog clock displays exactly 3:00. What time does its image appear to show in a vertical mirror?",
+        "options": [
+          "3:00",
+          "6:00",
+          "12:00",
+          "9:00"
+        ],
+        "correctOption": 3,
+        "explanation": "The minute hand remains at 12. The hour hand pointing to 3 is reflected to the 9 position."
+      }
+    ]
+  },
+  {
+    "topicId": "b87ee6d6-5429-5f31-8a94-55b52662c43c",
+    "title": "Number and Alphabet Series",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-b87ee6d6-5429-5f31-8a94-55b52662c43c-q1",
+        "prompt": "The sequence takes every second letter of the English alphabet, starting with A: A, C, E, G, ... . Which letter comes next?",
+        "options": [
+          "H",
+          "I",
+          "J",
+          "K"
+        ],
+        "correctOption": 1,
+        "explanation": "The letter positions are 1, 3, 5 and 7. The next is position 9, which is I."
+      },
+      {
+        "id": "starter-b87ee6d6-5429-5f31-8a94-55b52662c43c-q2",
+        "prompt": "A sequence is defined by term n = 3n + 1 for n = 1, 2, 3, ... . What is the fifth term of the sequence 4, 7, 10, 13, ...?",
+        "options": [
+          "14",
+          "15",
+          "16",
+          "17"
+        ],
+        "correctOption": 2,
+        "explanation": "For n = 5, the term is 3 × 5 + 1 = 16."
+      }
+    ]
+  },
+  {
+    "topicId": "5a8dffeb-5c98-5f72-b6af-44627f992f5d",
+    "title": "Odd Figure Out",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-5a8dffeb-5c98-5f72-b6af-44627f992f5d-q1",
+        "prompt": "Which figure is the odd one out under the rule “having at least one corner”?",
+        "options": [
+          "A rectangle",
+          "A circle",
+          "An ellipse",
+          "A smooth oval"
+        ],
+        "correctOption": 0,
+        "explanation": "Only the rectangle has corners. A circle, ellipse and smooth oval have none."
+      },
+      {
+        "id": "starter-5a8dffeb-5c98-5f72-b6af-44627f992f5d-q2",
+        "prompt": "Three of these figures have exactly four sides. Which is the odd one out?",
+        "options": [
+          "A square",
+          "A rectangle",
+          "A trapezoid",
+          "A triangle"
+        ],
+        "correctOption": 3,
+        "explanation": "A triangle has 3 sides. A square, rectangle and trapezoid each have 4 sides."
+      }
+    ]
+  },
+  {
+    "topicId": "878a947a-2244-52ae-b641-fbe5d519ea3c",
+    "title": "Paper Folding and Cutting",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-878a947a-2244-52ae-b641-fbe5d519ea3c-q1",
+        "prompt": "A rectangular sheet occupies 0 ≤ x ≤ 20 and 0 ≤ y ≤ 10. Its left half is folded onto its right half along x = 10. One small hole is punched through both layers at (15,3). Where are the holes after unfolding?",
+        "options": [
+          "(15,3) only",
+          "(5,3) and (15,3)",
+          "(15,3) and (15,7)",
+          "(5,7) and (15,3)"
+        ],
+        "correctOption": 1,
+        "explanation": "Unfolding reflects the punched point across x = 10. The reflected x-coordinate is 20 − 15 = 5, while y remains 3."
+      },
+      {
+        "id": "starter-878a947a-2244-52ae-b641-fbe5d519ea3c-q2",
+        "prompt": "A square sheet is folded exactly in half vertically, then exactly in half horizontally, making four overlapping layers. A single small hole is punched through all layers away from every fold and edge. How many distinct holes appear when fully unfolded?",
+        "options": [
+          "1",
+          "2",
+          "4",
+          "8"
+        ],
+        "correctOption": 2,
+        "explanation": "The punch passes through 4 layers. Because it is away from folds and edges, it produces 4 distinct holes after unfolding."
+      }
+    ]
+  },
+  {
+    "topicId": "450cf9ec-3410-5e77-b5ed-480379a82423",
+    "title": "Pattern Completion",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-450cf9ec-3410-5e77-b5ed-480379a82423-q1",
+        "prompt": "The repeating block is red, blue, blue. The displayed pattern is red, blue, blue, red, blue, blue, red, ... . What color comes next?",
+        "options": [
+          "Blue",
+          "Red",
+          "Green",
+          "Yellow"
+        ],
+        "correctOption": 0,
+        "explanation": "Each three-color block is red, blue, blue. After the first red in the next block, blue follows."
+      },
+      {
+        "id": "starter-450cf9ec-3410-5e77-b5ed-480379a82423-q2",
+        "prompt": "Every row in a number grid must sum to 10. Its rows are (2,3,5), (4,1,5) and (3,2,?). What number replaces the question mark?",
+        "options": [
+          "3",
+          "4",
+          "6",
+          "5"
+        ],
+        "correctOption": 3,
+        "explanation": "The last row must satisfy 3 + 2 + ? = 10. Therefore, ? = 5."
+      }
+    ]
+  },
+  {
+    "topicId": "a9e46300-b655-5d4e-96a2-c3142aa6688e",
+    "title": "Ranking and Ordering",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-a9e46300-b655-5d4e-96a2-c3142aa6688e-q1",
+        "prompt": "In a class with no tied ranks, a student is 3rd from the top and 18th from the bottom. How many students are in the class?",
+        "options": [
+          "19",
+          "20",
+          "21",
+          "22"
+        ],
+        "correctOption": 1,
+        "explanation": "Total students = rank from top + rank from bottom − 1 = 3 + 18 − 1 = 20. The student is counted in both ranks."
+      },
+      {
+        "id": "starter-a9e46300-b655-5d4e-96a2-c3142aa6688e-q2",
+        "prompt": "Dana is taller than Bala, Bala is taller than Charu, and Charu is taller than Asha. Who is the tallest?",
+        "options": [
+          "Asha",
+          "Bala",
+          "Dana",
+          "Charu"
+        ],
+        "correctOption": 2,
+        "explanation": "The height order is Dana > Bala > Charu > Asha, so Dana is tallest."
+      }
+    ]
+  },
+  {
+    "topicId": "75538145-86c4-5484-85cb-17ee730853a2",
+    "title": "Rotation and Reflection",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-75538145-86c4-5484-85cb-17ee730853a2-q1",
+        "prompt": "Using standard Cartesian axes, rotate the point (2,1) clockwise by 90 degrees about the origin. What are its new coordinates?",
+        "options": [
+          "(1,-2)",
+          "(-1,2)",
+          "(-2,-1)",
+          "(2,-1)"
+        ],
+        "correctOption": 0,
+        "explanation": "A 90-degree clockwise rotation maps (x,y) to (y,−x), giving (1,−2)."
+      },
+      {
+        "id": "starter-75538145-86c4-5484-85cb-17ee730853a2-q2",
+        "prompt": "An arrow points horizontally right. It is reflected in a vertical mirror line. Which direction does the reflected arrow point?",
+        "options": [
+          "Up",
+          "Down",
+          "Right",
+          "Left"
+        ],
+        "correctOption": 3,
+        "explanation": "A reflection across a vertical line reverses the horizontal direction, so right becomes left."
+      }
+    ]
+  },
+  {
+    "topicId": "05943001-b70e-53ce-afa3-cb8519b1b54c",
+    "title": "Seating Arrangements",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-05943001-b70e-53ce-afa3-cb8519b1b54c-q1",
+        "prompt": "Three people occupy three seats in a straight row. Using the viewer’s left and right, Ana sits to the left of Ben, and Ben sits to the left of Chirag. Who occupies the middle seat?",
+        "options": [
+          "Ana",
+          "Ben",
+          "Chirag",
+          "Cannot be determined"
+        ],
+        "correctOption": 1,
+        "explanation": "The constraints force the left-to-right order Ana, Ben, Chirag. Ben is in the middle."
+      },
+      {
+        "id": "starter-05943001-b70e-53ce-afa3-cb8519b1b54c-q2",
+        "prompt": "P, Q, R and S occupy four seats from the viewer’s left to right. P is at the left end, Q is immediately to P’s right, and S is at the right end. Who sits third from the left?",
+        "options": [
+          "P",
+          "Q",
+          "R",
+          "S"
+        ],
+        "correctOption": 2,
+        "explanation": "The first, second and fourth seats are P, Q and S. The remaining third seat belongs to R."
+      }
+    ]
+  },
+  {
+    "topicId": "dd1127c7-5202-5382-adde-7a7bbc089b39",
+    "title": "Spatial Visualization",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-dd1127c7-5202-5382-adde-7a7bbc089b39-q1",
+        "prompt": "A solid rectangular block is built without gaps from unit cubes, with 3 cubes along its length, 2 along its width and 2 along its height. How many unit cubes are used?",
+        "options": [
+          "12",
+          "7",
+          "10",
+          "18"
+        ],
+        "correctOption": 0,
+        "explanation": "The number of cubes is length × width × height = 3 × 2 × 2 = 12."
+      },
+      {
+        "id": "starter-dd1127c7-5202-5382-adde-7a7bbc089b39-q2",
+        "prompt": "Three vertical stacks of unit cubes stand in one straight row on three adjacent square positions. Their heights are 1, 3 and 2 cubes. Viewed directly from above, how many unit squares form the visible footprint?",
+        "options": [
+          "1",
+          "2",
+          "6",
+          "3"
+        ],
+        "correctOption": 3,
+        "explanation": "Each stack occupies one distinct square position when viewed from above. Stack height does not add to the footprint, so there are 3 squares."
+      }
+    ]
+  },
+  {
+    "topicId": "e6ac0455-a395-5cef-ae94-3c8e930ffc65",
+    "title": "Statement and Argument",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-e6ac0455-a395-5cef-ae94-3c8e930ffc65-q1",
+        "prompt": "Proposal: “Adopt a new form layout to reduce data-entry errors.” Which argument most directly supports this stated objective?",
+        "options": [
+          "The layout uses the manager’s favorite color.",
+          "In a controlled comparison, users made fewer errors with the new layout than with the old one.",
+          "The new layout has a different file name.",
+          "A different department has more computers."
+        ],
+        "correctOption": 1,
+        "explanation": "A controlled comparison showing fewer errors directly supports the objective of reducing data-entry errors."
+      },
+      {
+        "id": "starter-e6ac0455-a395-5cef-ae94-3c8e930ffc65-q2",
+        "prompt": "Claim: “A notice sent by email reached every student.” Which finding is a direct argument against this claim?",
+        "options": [
+          "Many students read their emails.",
+          "The email was sent on Monday.",
+          "One enrolled student did not receive the email.",
+          "The subject line was short."
+        ],
+        "correctOption": 2,
+        "explanation": "The claim says every student was reached. A single enrolled student who did not receive the email is a counterexample."
+      }
+    ]
+  },
+  {
+    "topicId": "8ffc809b-d946-5cc8-a19b-3c48a4403215",
+    "title": "Statement and Assumption",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-8ffc809b-d946-5cc8-a19b-3c48a4403215-q1",
+        "prompt": "A student plans: “I will board the bus at 7:00 a.m. and arrive at the exam venue by 8:00 a.m.” Assume boarding takes no extra time. Which assumption about travel is necessary for this plan to work?",
+        "options": [
+          "The journey takes no more than one hour.",
+          "The bus has exactly 30 seats.",
+          "The student has taken the bus before.",
+          "The exam lasts two hours."
+        ],
+        "correctOption": 0,
+        "explanation": "Only one hour is available between departure and the required arrival time. The journey must therefore take no more than one hour."
+      },
+      {
+        "id": "starter-8ffc809b-d946-5cc8-a19b-3c48a4403215-q2",
+        "prompt": "An organizer says: “We will send the changed meeting time only by email, so every attendee will know it before the meeting.” Which assumption is necessary?",
+        "options": [
+          "Every attendee uses the same phone brand.",
+          "The meeting will be held outdoors.",
+          "The email will have an attachment.",
+          "Every attendee will receive and read the email before the meeting."
+        ],
+        "correctOption": 3,
+        "explanation": "For email alone to inform every attendee in time, each attendee must receive and read it before the meeting."
+      }
+    ]
+  },
+  {
+    "topicId": "e87d4ac7-e6fa-520e-95c7-ec1bb177f3d0",
+    "title": "Statement and Conclusion",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-e87d4ac7-e6fa-520e-95c7-ec1bb177f3d0-q1",
+        "prompt": "Statements: Every employee in Company X has an ID card. Priya is an employee in Company X. Which conclusion necessarily follows?",
+        "options": [
+          "Priya manages Company X.",
+          "Priya has an ID card.",
+          "Everyone with an ID card works for Company X.",
+          "Priya has exactly two ID cards."
+        ],
+        "correctOption": 1,
+        "explanation": "The rule applies to every employee of Company X, including Priya, so she must have an ID card."
+      },
+      {
+        "id": "starter-e87d4ac7-e6fa-520e-95c7-ec1bb177f3d0-q2",
+        "prompt": "Statements: No fully electric car uses petrol as fuel. Car A is fully electric. Which conclusion follows?",
+        "options": [
+          "Car A has no wheels.",
+          "Car A never needs energy.",
+          "Car A does not use petrol as fuel.",
+          "Every car is fully electric."
+        ],
+        "correctOption": 2,
+        "explanation": "Car A belongs to the group covered by the first statement, so it does not use petrol as fuel."
+      }
+    ]
+  },
+  {
+    "topicId": "2c153dae-d0bd-5c85-a34f-ad117efa3807",
+    "title": "Syllogisms",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-2c153dae-d0bd-5c85-a34f-ad117efa3807-q1",
+        "prompt": "Premises: All roses are flowers. Some flowers fade quickly. Which conclusion must follow?",
+        "options": [
+          "All roses are flowers; whether any roses fade quickly is not established.",
+          "All roses fade quickly.",
+          "Some roses definitely fade quickly.",
+          "No roses fade quickly."
+        ],
+        "correctOption": 0,
+        "explanation": "The quickly fading flowers may or may not include roses. The premises do not establish which roses, if any, fade quickly."
+      },
+      {
+        "id": "starter-2c153dae-d0bd-5c85-a34f-ad117efa3807-q2",
+        "prompt": "Premises: All members of Team A are trained. All trained people passed the safety test. Which conclusion must follow?",
+        "options": [
+          "Everyone who passed is in Team A.",
+          "No member of Team A passed.",
+          "Only members of Team A are trained.",
+          "All members of Team A passed the safety test."
+        ],
+        "correctOption": 3,
+        "explanation": "Membership in Team A implies being trained, and being trained implies passing the test. Therefore, every Team A member passed."
+      }
+    ]
+  },
+  {
+    "topicId": "ad211589-7bd3-5214-a7d1-dfd8c6d52b31",
+    "title": "Water Images",
+    "subjectId": "reasoning",
+    "questions": [
+      {
+        "id": "starter-ad211589-7bd3-5214-a7d1-dfd8c6d52b31-q1",
+        "prompt": "A point at (2,3) is reflected in the horizontal x-axis, as in a water image across y = 0. What are its reflected coordinates?",
+        "options": [
+          "(-2,3)",
+          "(2,-3)",
+          "(-2,-3)",
+          "(3,2)"
+        ],
+        "correctOption": 1,
+        "explanation": "Reflection in the horizontal x-axis keeps x unchanged and reverses the sign of y, producing (2,−3)."
+      },
+      {
+        "id": "starter-ad211589-7bd3-5214-a7d1-dfd8c6d52b31-q2",
+        "prompt": "An arrow points vertically upward. What direction does its water image point when reflected across a horizontal line?",
+        "options": [
+          "Up",
+          "Right",
+          "Down",
+          "Left"
+        ],
+        "correctOption": 2,
+        "explanation": "Reflection across a horizontal line reverses the vertical direction, so an upward arrow becomes downward."
+      }
+    ]
+  }
+]

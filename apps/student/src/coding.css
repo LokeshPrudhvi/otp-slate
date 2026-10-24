@@ -1,0 +1,1186 @@
+/* Coding has its own palette. The rest of the student portal stays unchanged. */
+.student-app .competitive-coding {
+  --coding-canvas: #edf2f8;
+  --coding-panel: #fff;
+  --coding-inset: #f3f6fb;
+  --coding-hover: #eaf1fb;
+  --coding-line: #d4dfed;
+  --coding-text: #172e4d;
+  --coding-muted: #60738c;
+  --coding-accent: #315f98;
+  --coding-accent-soft: #e7effb;
+  --coding-good: #18765b;
+  --coding-warn: #916300;
+  --coding-hard: #b44356;
+  --coding-shadow: 0 3px 16px #12345b0a;
+  background: var(--coding-canvas);
+  color: var(--coding-text);
+  color-scheme: light;
+  min-height: calc(100vh - 48px);
+}
+/* Neutral charcoal surfaces with restrained colour accents. */
+.student-app .competitive-coding[data-theme="dark"] {
+  --coding-canvas: #212121;
+  --coding-panel: #2b2b2b;
+  --coding-inset: #303030;
+  --coding-hover: #383838;
+  --coding-line: #464646;
+  --coding-text: #f3f3f3;
+  --coding-muted: #b8b8b8;
+  --coding-accent: #83dfbd;
+  --coding-accent-soft: #263f35;
+  --coding-good: #83dfbd;
+  --coding-warn: #f0c481;
+  --coding-hard: #f2a0b0;
+  --coding-violet: #c5b2ee;
+  --coding-violet-soft: #383044;
+  --coding-amber-soft: #433a2c;
+  --coding-rose-soft: #432f35;
+  --coding-shadow: 0 3px 16px #00000020;
+  color-scheme: dark;
+}
+.student-app .coding-problem-page:has([data-theme="dark"]) {
+  background: #212121;
+}
+.student-app .competitive-coding :is(h1, h2, h3, h4, strong) {
+  color: var(--coding-text);
+}
+.student-app
+  .competitive-coding
+  :is(button, input, select, textarea, a, summary):focus-visible {
+  outline: 3px solid var(--coding-accent);
+  outline-offset: 3px;
+}
+.student-app .competitive-coding :is(input, select, textarea) {
+  color: var(--coding-text);
+  background: var(--coding-panel);
+  border-color: var(--coding-line);
+}
+.student-app .competitive-coding :is(input, textarea)::placeholder {
+  color: var(--coding-muted);
+  opacity: 0.9;
+}
+.student-app .competitive-coding option {
+  color: var(--coding-text);
+  background: var(--coding-panel);
+}
+.student-app
+  .competitive-coding
+  :is(
+    label,
+    .hub-note,
+    .coding-pagination,
+    .coding-problem-nav,
+    .coding-workspace-note,
+    .coding-editor-top span,
+    .coding-engine-status,
+    .coding-self-progress small
+  ) {
+  color: var(--coding-muted);
+}
+.student-app .competitive-coding .a-btn {
+  background: var(--coding-panel);
+  border-color: var(--coding-line);
+  color: var(--coding-accent);
+  border-radius: 8px;
+}
+.student-app .competitive-coding .a-btn:hover:not(:disabled) {
+  background: var(--coding-hover);
+}
+.student-app .competitive-coding .a-btn.pri {
+  background: #315f98;
+  color: #fff;
+  border-color: #315f98;
+}
+.student-app .competitive-coding .a-btn.pri:hover:not(:disabled) {
+  background: #234c80;
+}
+.student-app .competitive-coding button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.student-app .competitive-coding :is(.a-tag, .a-pill) {
+  background: var(--coding-inset);
+  color: var(--coding-muted);
+  border-color: var(--coding-line);
+}
+.student-app .competitive-coding .a-pill.on {
+  background: var(--coding-accent-soft);
+  color: var(--coding-accent);
+  border-color: var(--coding-accent);
+}
+.student-app .competitive-coding .coding-library-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+.student-app .competitive-coding .coding-hero-copy {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+.student-app .competitive-coding .coding-hero-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 64px;
+  height: 64px;
+  border-radius: 18px;
+  color: #fff;
+  background: #315f98;
+  box-shadow: 0 7px 18px #315f9824;
+}
+.student-app .competitive-coding .coding-hero-icon svg {
+  width: 31px;
+  height: 31px;
+}
+.student-app .competitive-coding .coding-eyebrow {
+  color: var(--coding-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+.student-app .competitive-coding .coding-library-hero h1 {
+  font-size: clamp(25px, 2.3vw, 34px);
+  line-height: 1.25;
+  font-weight: 800;
+  margin: 7px 0 8px;
+  letter-spacing: -0.025em;
+}
+.student-app .competitive-coding .coding-library-hero p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--coding-muted);
+}
+.student-app .competitive-coding .coding-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+.student-app .competitive-coding .coding-library-total {
+  color: var(--coding-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.student-app .competitive-coding .coding-library-total strong {
+  font-size: 20px;
+  margin-right: 4px;
+}
+.student-app .competitive-coding .coding-theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 10px;
+  border: 1px solid var(--coding-line);
+  border-radius: 13px;
+  color: var(--coding-accent);
+  background: var(--coding-panel);
+  box-shadow: var(--coding-shadow);
+  cursor: pointer;
+}
+.student-app .competitive-coding .coding-theme-toggle:hover {
+  background: var(--coding-hover);
+}
+.student-app .competitive-coding .coding-theme-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+.student-app .competitive-coding .coding-planning {
+  padding: 0;
+  margin: 0 0 26px;
+  border-radius: 20px;
+  border: 1px solid var(--coding-line);
+  background: var(--coding-inset);
+  box-shadow: var(--coding-shadow);
+  overflow: hidden;
+}
+.student-app .competitive-coding .coding-planning > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  color: var(--coding-text);
+  list-style: none;
+  background: linear-gradient(115deg, #e5f4ed 0%, #f4f5fc 58%, #ede8f8 100%);
+}
+.student-app
+  .competitive-coding
+  .coding-planning
+  > summary::-webkit-details-marker {
+  display: none;
+}
+.student-app .competitive-coding .coding-planning summary span {
+  float: none;
+  margin: 0;
+  color: inherit;
+}
+.student-app .competitive-coding .coding-planning-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.student-app .competitive-coding .coding-planning-heading strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.student-app .competitive-coding .coding-planning-heading small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--coding-muted);
+  font-weight: 400;
+}
+.student-app .competitive-coding .coding-section-icon {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  color: var(--coding-accent);
+  background: var(--coding-accent-soft);
+}
+.student-app .competitive-coding .coding-section-icon svg {
+  width: 19px;
+  height: 19px;
+}
+.student-app .competitive-coding .coding-planning-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: var(--coding-muted);
+  font-size: 12px;
+}
+.student-app .competitive-coding .coding-planning-summary b {
+  color: var(--coding-text);
+}
+.student-app .competitive-coding .coding-planning-summary svg {
+  width: 19px;
+  height: 19px;
+  margin-left: 13px;
+  transition: transform 0.15s ease;
+}
+.student-app
+  .competitive-coding
+  .coding-planning[open]
+  .coding-planning-summary
+  svg {
+  transform: rotate(180deg);
+}
+.student-app .competitive-coding .coding-planning[open] > summary {
+  border-bottom: 1px solid var(--coding-line);
+}
+.student-app .competitive-coding .coding-planning-content {
+  padding: 22px 22px 17px;
+}
+.student-app .competitive-coding .coding-top-grid {
+  grid-template-columns: 1.05fr 1fr;
+  margin: 0 0 24px;
+}
+.student-app
+  .competitive-coding
+  :is(.coding-progress-card, .coding-daily-card, .coding-list-panel) {
+  background: var(--coding-panel);
+  border: 1px solid var(--coding-line);
+  box-shadow: var(--coding-shadow);
+  border-radius: 12px;
+  padding: 21px;
+}
+.student-app .competitive-coding .coding-card-heading {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+}
+.student-app .competitive-coding .coding-card-heading .coding-section-icon {
+  width: 29px;
+  height: 29px;
+  border-radius: 8px;
+}
+.student-app .competitive-coding .coding-card-heading h2 {
+  margin: 0;
+  color: var(--coding-text);
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+.student-app .competitive-coding .coding-local-badge {
+  font-size: 10px;
+  color: var(--coding-muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+.student-app .competitive-coding .coding-progress-value {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.student-app .competitive-coding .coding-progress-value strong {
+  font-size: 39px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.student-app .competitive-coding .coding-progress-value span {
+  color: var(--coding-muted);
+  font-size: 13px;
+}
+.student-app .competitive-coding .coding-progress-value > small {
+  margin-top: 3px;
+  color: var(--coding-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.student-app .competitive-coding .coding-progress-card {
+  --coding-text: #123d32;
+  --coding-muted: #4c6e64;
+  --coding-accent: #167d60;
+  --coding-accent-soft: #ffffffa6;
+  --progress-ring-fill: #169874;
+  --progress-ring-track: #c4e6d9;
+  --progress-ring-inner: #f0fbf5;
+  background: linear-gradient(135deg, #e3f8ed 0%, #f4fcf8 45%, #dcefeb 100%);
+  border-color: #aed9c8;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px #2173570b;
+}
+.student-app .competitive-coding .coding-progress-overview {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin: 21px 0;
+}
+.student-app .competitive-coding .coding-progress-ring {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 108px;
+  height: 108px;
+  flex: 0 0 108px;
+  padding: 8px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from -90deg,
+    var(--progress-ring-fill) 0deg var(--coding-progress-angle),
+    var(--progress-ring-track) var(--coding-progress-angle) 360deg
+  );
+  box-shadow: 0 0 0 1px #ffffff45;
+}
+.student-app .competitive-coding .coding-progress-ring > span {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--progress-ring-inner);
+}
+.student-app .competitive-coding .coding-progress-ring strong {
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -0.04em;
+}
+.student-app .competitive-coding .coding-progress-ring small {
+  margin-top: 3px;
+  color: var(--coding-muted);
+  font-size: 10px;
+}
+.student-app .competitive-coding .coding-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+.student-app .competitive-coding .coding-counts > span {
+  --difficulty-accent: #18765b;
+  --difficulty-track: #b5decb;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #f8fffbba;
+  border: 1px solid #ffffff60;
+  border-radius: 10px;
+  color: var(--difficulty-accent);
+}
+.student-app .competitive-coding .coding-counts > .medium {
+  --difficulty-accent: #956000;
+  --difficulty-track: #ead6a3;
+  background: #fff8e6d4;
+}
+.student-app .competitive-coding .coding-counts > .hard {
+  --difficulty-accent: #b44356;
+  --difficulty-track: #e6bec6;
+  background: #fff1f4d4;
+}
+.student-app .competitive-coding .coding-difficulty-track {
+  display: block;
+  height: 4px;
+  margin-top: 3px;
+  border-radius: 9px;
+  background: var(--difficulty-track);
+  overflow: hidden;
+}
+.student-app .competitive-coding .coding-difficulty-track > i {
+  display: block;
+  height: 100%;
+  background: var(--difficulty-accent);
+  border-radius: inherit;
+}
+.student-app .competitive-coding .coding-counts b {
+  color: var(--coding-text);
+  font-size: 16px;
+  margin: 0;
+}
+.student-app .competitive-coding .coding-counts small {
+  color: var(--coding-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+.student-app .competitive-coding .difficulty.easy {
+  color: var(--coding-good);
+}
+.student-app .competitive-coding .difficulty.medium {
+  color: var(--coding-warn);
+}
+.student-app .competitive-coding .difficulty.hard {
+  color: var(--coding-hard);
+}
+.student-app .competitive-coding .coding-daily-card {
+  --coding-text: #382659;
+  --coding-muted: #6d5b82;
+  --coding-accent: #7651ac;
+  --coding-accent-soft: #ffffffa3;
+  background:
+    radial-gradient(ellipse at 100% 100%, #ffdcd675, transparent 60%),
+    linear-gradient(125deg, #f4edff, #ede5fa 64%, #e9ddf7);
+  border-color: #d2bfe9;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px #6542910c;
+}
+.student-app .competitive-coding .coding-daily-card .difficulty {
+  margin-left: auto;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: #ffffff9c;
+  border: 1px solid #ffffff65;
+}
+.student-app .competitive-coding .coding-challenge-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 24px 0 22px;
+  flex: 1;
+}
+.student-app .competitive-coding .coding-challenge-copy {
+  min-width: 0;
+}
+.student-app .competitive-coding .coding-challenge-label {
+  color: var(--coding-accent);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.student-app .competitive-coding .coding-challenge-art {
+  display: grid;
+  place-items: center;
+  color: #9464c5;
+  background: radial-gradient(ellipse, #bca1e93b, transparent 70%);
+  width: 112px;
+  height: 112px;
+}
+.student-app .competitive-coding .coding-challenge-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.student-app .competitive-coding .coding-daily-card h3 {
+  font-size: 23px;
+  line-height: 1.35;
+  font-weight: 800;
+  margin: 9px 0;
+  overflow-wrap: anywhere;
+}
+.student-app .competitive-coding .coding-daily-card p {
+  color: var(--coding-muted);
+  font-size: 13px;
+  margin: 0;
+}
+.student-app .competitive-coding .coding-daily-card .a-btn {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 13px;
+  min-height: 38px;
+}
+.student-app .competitive-coding .coding-daily-card .a-btn.pri {
+  color: #fff;
+  border-color: #7752a8;
+  background: linear-gradient(110deg, #7752a8, #5d3c8e);
+  box-shadow: 0 3px 10px #6341891c;
+}
+.student-app
+  .competitive-coding
+  .coding-daily-card
+  .a-btn.pri:hover:not(:disabled) {
+  background: linear-gradient(110deg, #684497, #4f307d);
+}
+.student-app .competitive-coding .coding-study-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.student-app .competitive-coding .coding-study-heading h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+.student-app .competitive-coding .coding-study-heading p {
+  margin: 4px 0 0;
+  color: var(--coding-muted);
+  font-size: 12px;
+}
+.student-app .competitive-coding .coding-plans {
+  gap: 12px;
+  margin: 0;
+}
+.student-app .competitive-coding .coding-plan {
+  --plan-accent: #18765b;
+  --plan-surface: #ffffff94;
+  --plan-line: #acd6c4;
+  --plan-meter: #bcdfd0;
+  --plan-fill: linear-gradient(90deg, #1b9872, #4cb9a2);
+  --coding-text: #203f36;
+  --coding-muted: #4b665d;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: linear-gradient(130deg, #e2f4e9, #effaf6 54%, #dcefe8);
+  border: 1px solid var(--plan-line);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 12px #1c443306;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.student-app .competitive-coding .coding-plan[data-plan="interview"] {
+  --plan-accent: #7750a9;
+  --plan-line: #d5bfe9;
+  --plan-meter: #dfcfee;
+  --plan-fill: linear-gradient(90deg, #8c5ec8, #b58cdc);
+  --coding-text: #3b2c55;
+  --coding-muted: #665577;
+  background: linear-gradient(130deg, #eee3fa, #f6effc 54%, #e7def6);
+}
+.student-app .competitive-coding .coding-plan[data-plan="advanced"] {
+  --plan-accent: #9d4d28;
+  --plan-line: #edc3a9;
+  --plan-meter: #ecd0b7;
+  --plan-fill: linear-gradient(90deg, #d17746, #e6ad6b);
+  --coding-text: #57351f;
+  --coding-muted: #795943;
+  background: linear-gradient(130deg, #fce8dc, #fff4e8 54%, #f9e7d4);
+}
+.student-app .competitive-coding .coding-plan:hover {
+  border-color: var(--plan-accent);
+  box-shadow: 0 5px 18px #18283814;
+}
+.student-app .competitive-coding .coding-plan.selected {
+  border-color: var(--plan-accent);
+  box-shadow: inset 0 0 0 1px var(--plan-accent);
+}
+.student-app .competitive-coding .coding-plan:focus-visible {
+  outline-color: var(--plan-accent);
+}
+.student-app .competitive-coding .coding-plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.student-app .competitive-coding .coding-plan-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+.student-app .competitive-coding .coding-plan-number {
+  color: var(--plan-accent);
+  font-size: 10px;
+  font-weight: 800;
+  background: var(--plan-surface);
+  border: 1px solid var(--plan-line);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.student-app .competitive-coding .coding-plan-symbol {
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  border-radius: 10px;
+  color: var(--plan-accent);
+  background: var(--plan-surface);
+}
+.student-app .competitive-coding .coding-plan-symbol svg {
+  width: 20px;
+  height: 20px;
+}
+.student-app .competitive-coding .coding-plan-title strong {
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.4;
+}
+.student-app .competitive-coding .coding-plan-check {
+  margin-left: auto;
+  color: var(--plan-accent);
+  font-size: 15px;
+}
+.student-app .competitive-coding .coding-plan-description {
+  color: var(--coding-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.student-app .competitive-coding .coding-plan small {
+  padding: 0;
+  margin: 0;
+  color: var(--plan-accent);
+  font-weight: 700;
+  font-size: 11px;
+}
+.student-app .competitive-coding .coding-plan-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding-top: 15px;
+  margin-top: auto;
+}
+.student-app .competitive-coding .coding-plan-meter {
+  display: block;
+  flex: 1;
+  height: 5px;
+  min-width: 25px;
+  border-radius: 8px;
+  background: var(--plan-meter);
+  overflow: hidden;
+}
+.student-app .competitive-coding .coding-plan-meter > i {
+  display: block;
+  height: 100%;
+  background: var(--plan-fill);
+  border-radius: inherit;
+}
+.student-app .competitive-coding .coding-save-note {
+  margin: 16px 0 0;
+  font-size: 11px;
+  color: var(--coding-muted);
+  text-align: right;
+  line-height: 1.6;
+}
+.student-app .competitive-coding .coding-list-panel {
+  padding: 24px;
+}
+.student-app .competitive-coding .coding-list-top h2 {
+  color: var(--coding-text);
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+.student-app .competitive-coding .coding-list-tools {
+  border-color: var(--coding-line);
+}
+.student-app .competitive-coding .coding-table th {
+  background: var(--coding-inset);
+  color: var(--coding-muted);
+  border-color: var(--coding-line);
+}
+.student-app .competitive-coding .coding-table td {
+  border-color: var(--coding-line);
+}
+.student-app .competitive-coding .coding-table tr:hover {
+  background: var(--coding-hover);
+}
+.student-app .competitive-coding .coding-table a {
+  color: var(--coding-text);
+}
+.student-app .competitive-coding .coding-table a:hover {
+  color: var(--coding-accent);
+}
+.student-app
+  .competitive-coding
+  :is(.coding-number, .coding-star, .coding-status) {
+  color: var(--coding-muted);
+}
+.student-app
+  .competitive-coding
+  :is(.coding-star[aria-pressed="true"], .coding-status.attempted) {
+  color: var(--coding-warn);
+}
+.student-app .competitive-coding .coding-status.solved {
+  color: var(--coding-good);
+}
+.student-app .competitive-coding .coding-table td:last-child {
+  text-align: center;
+}
+.student-app .competitive-coding .coding-star {
+  min-width: 36px;
+  min-height: 36px;
+}
+/* Colour helps distinguish progress, the daily challenge and each study plan. */
+.student-app .competitive-coding[data-theme="dark"] .a-btn {
+  color: var(--coding-text);
+}
+.student-app .competitive-coding[data-theme="dark"] .a-btn.pri {
+  background: #ececec;
+  border-color: #ececec;
+  color: #202020;
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .a-btn.pri:hover:not(:disabled) {
+  background: #d6d6d6;
+  border-color: #d6d6d6;
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-hero-icon {
+  color: var(--coding-accent);
+  background: linear-gradient(140deg, #284438, #383044);
+  border: 1px solid #4e5b50;
+  box-shadow: 0 5px 18px #00000020;
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-eyebrow {
+  color: var(--coding-muted);
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-theme-toggle {
+  color: var(--coding-warn);
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-planning {
+  background: linear-gradient(150deg, #292e2c, #2b2b30 55%, #2c2b29);
+  border-color: #4a4d4b;
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-planning > summary {
+  background: linear-gradient(110deg, #2b3f35 0%, #303236 55%, #3b3048 100%);
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-planning
+  summary
+  .coding-section-icon {
+  color: var(--coding-accent);
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-progress-card {
+  --coding-text: #edfff6;
+  --coding-muted: #c2e0d3;
+  --coding-accent: #8ee7bf;
+  --coding-accent-soft: #a2f6ce16;
+  --progress-ring-fill: #8decc0;
+  --progress-ring-track: #47755f;
+  --progress-ring-inner: #214e3e;
+  background:
+    radial-gradient(ellipse at 100% 0%, #287e5f77, transparent 72%),
+    linear-gradient(135deg, #1f4e3a, #243f39 60%, #24373b);
+  border-color: #487d64;
+  box-shadow: 0 7px 22px #00000020;
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-counts > .easy {
+  --difficulty-accent: #a2ecc8;
+  --difficulty-track: #46745c;
+  background: #2b5e469e;
+  border-color: #88dfb626;
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-counts > .medium {
+  --difficulty-accent: #f3d493;
+  --difficulty-track: #7c693d;
+  background: #5e5034bd;
+  border-color: #ebcb8b26;
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-counts > .hard {
+  --difficulty-accent: #ffb9ca;
+  --difficulty-track: #805763;
+  background: #653e4abd;
+  border-color: #f3a7bd26;
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-counts
+  > .difficulty {
+  color: var(--difficulty-accent);
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-daily-card {
+  --coding-text: #fbf5ff;
+  --coding-muted: #d1bedf;
+  --coding-accent: #e0c1ff;
+  --coding-accent-soft: #d6b3ff17;
+  background:
+    radial-gradient(ellipse at 100% 100%, #b9676440, transparent 63%),
+    linear-gradient(125deg, #463261, #3f2c54 60%, #503454);
+  border-color: #785a91;
+  box-shadow: 0 7px 22px #00000020;
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-daily-card
+  .coding-section-icon {
+  color: var(--coding-accent);
+  background: var(--coding-accent-soft);
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-daily-card
+  .difficulty {
+  background: #ffffff0b;
+  border-color: #ffffff18;
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-challenge-art {
+  color: #d2a6fa;
+  background: radial-gradient(ellipse, #b584e329, transparent 70%);
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-daily-card
+  .a-btn.pri {
+  color: #43295e;
+  border-color: #f0e4ff;
+  background: linear-gradient(110deg, #f2e7ff, #e7d1fd);
+  box-shadow: 0 3px 12px #1c122633;
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-daily-card
+  .a-btn.pri:hover:not(:disabled) {
+  background: linear-gradient(110deg, #fff, #e3c9fc);
+  border-color: #fff;
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-study-heading
+  .coding-section-icon {
+  color: var(--coding-violet);
+  background: var(--coding-violet-soft);
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-plan {
+  --plan-accent: #a3e8c5;
+  --plan-surface: #9be5be18;
+  --plan-line: #456d58;
+  --plan-meter: #426751;
+  --plan-fill: linear-gradient(90deg, #61c395, #a5ebcd);
+  --coding-text: #edf9f3;
+  --coding-muted: #b6cbbf;
+  background: linear-gradient(135deg, #304f3e, #293e35 54%, #2c4440);
+  box-shadow: 0 5px 15px #00000015;
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-plan[data-plan="interview"] {
+  --plan-accent: #ddbeff;
+  --plan-surface: #d3a6ff18;
+  --plan-line: #6c5384;
+  --plan-meter: #654d79;
+  --plan-fill: linear-gradient(90deg, #b186e1, #ddbeff);
+  --coding-text: #f6efff;
+  --coding-muted: #ccbed8;
+  background: linear-gradient(135deg, #4b385e, #3d314e 54%, #443548);
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-plan[data-plan="advanced"] {
+  --plan-accent: #f8c59a;
+  --plan-surface: #f3b88c17;
+  --plan-line: #82614b;
+  --plan-meter: #795d49;
+  --plan-fill: linear-gradient(90deg, #dd9b70, #f3cd8b);
+  --coding-text: #fff4ea;
+  --coding-muted: #d9c5b4;
+  background: linear-gradient(135deg, #5c4234, #46382f 54%, #514733);
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-plan:hover {
+  border-color: var(--plan-accent);
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-plan.selected {
+  border-color: var(--plan-accent);
+  box-shadow: inset 0 0 0 1px var(--plan-accent);
+}
+.student-app .competitive-coding[data-theme="dark"] .coding-table .difficulty {
+  display: inline-flex;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: var(--coding-accent-soft);
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-table
+  .difficulty.medium {
+  background: var(--coding-amber-soft);
+}
+.student-app
+  .competitive-coding[data-theme="dark"]
+  .coding-table
+  .difficulty.hard {
+  background: var(--coding-rose-soft);
+}
+
+/* Keep the full problem workspace, including its console, in the same palette. */
+.student-app .competitive-coding .coding-split {
+  background: var(--coding-inset);
+}
+.student-app
+  .competitive-coding
+  :is(.coding-description-panel, .coding-editor-panel) {
+  background: var(--coding-panel);
+  border-color: var(--coding-line);
+  box-shadow: var(--coding-shadow);
+}
+.student-app
+  .competitive-coding
+  :is(
+    .coding-panel-tabs,
+    .coding-editor-top,
+    .coding-settings,
+    .coding-run-row,
+    .coding-line-numbers
+  ) {
+  background: var(--coding-inset);
+  border-color: var(--coding-line);
+}
+.student-app .competitive-coding .coding-panel-tabs button {
+  color: var(--coding-muted);
+}
+.student-app
+  .competitive-coding
+  .coding-panel-tabs
+  button[aria-selected="true"] {
+  color: var(--coding-accent);
+  border-bottom-color: var(--coding-accent);
+}
+.student-app
+  .competitive-coding
+  :is(.coding-editor-tools, .coding-self-progress, .coding-hint) {
+  border-color: var(--coding-line);
+}
+.student-app
+  .competitive-coding
+  :is(.coding-code-input, .coding-console-body textarea) {
+  color: var(--coding-text);
+  background: var(--coding-panel);
+  border-color: var(--coding-line);
+}
+.student-app .competitive-coding .coding-line-numbers {
+  color: var(--coding-muted);
+}
+.student-app .competitive-coding .coding-description-body h1 {
+  color: var(--coding-text);
+}
+.student-app
+  .competitive-coding
+  :is(.demo-example, .coding-discussion, .coding-verdict-card, .coding-io-box) {
+  background: var(--coding-inset);
+  border-color: var(--coding-line);
+  color: var(--coding-text);
+}
+.student-app .competitive-coding .demo-example pre {
+  color: var(--coding-text);
+  background: transparent;
+}
+.student-app
+  .competitive-coding
+  :is(.coding-discussion strong, .coding-add-list a) {
+  color: var(--coding-accent);
+}
+.student-app .competitive-coding .coding-verdict-header {
+  border-color: var(--coding-line);
+}
+.student-app
+  .competitive-coding
+  :is(
+    .coding-verdict-metrics,
+    .coding-io-box label,
+    .coding-empty-result,
+    .coding-executing-box
+  ) {
+  color: var(--coding-muted);
+}
+.student-app
+  .competitive-coding
+  :is(.coding-verdict-metrics span strong, .coding-io-box pre) {
+  color: var(--coding-text);
+}
+.student-app .competitive-coding .coding-test-pill {
+  background: var(--coding-panel);
+  border-color: var(--coding-line);
+  color: var(--coding-text);
+}
+.student-app .competitive-coding .coding-test-pill:hover {
+  background: var(--coding-hover);
+}
+.student-app .competitive-coding .coding-test-pill.selected {
+  background: var(--coding-accent-soft);
+  color: var(--coding-accent);
+  border-color: var(--coding-accent);
+}
+.student-app
+  .competitive-coding
+  :is(.coding-verdict-title.accepted, .coding-test-pill .pill-badge.pass) {
+  color: var(--coding-good);
+}
+.student-app
+  .competitive-coding
+  :is(
+    .coding-verdict-title.rejected,
+    .coding-verdict-title.error,
+    .coding-test-pill .pill-badge.fail,
+    .coding-io-box.io-error pre
+  ) {
+  color: var(--coding-hard);
+}
+.student-app .competitive-coding .coding-io-box.io-error {
+  background: var(--coding-inset);
+  border-color: var(--coding-hard);
+}
+.student-app .competitive-coding .coding-run-row {
+  flex-wrap: wrap;
+}
+@media (max-width: 1000px) {
+  .student-app .competitive-coding .coding-hero-copy {
+    gap: 12px;
+  }
+  .student-app .competitive-coding .coding-hero-icon {
+    flex-basis: 48px;
+    height: 48px;
+    border-radius: 13px;
+  }
+  .student-app .competitive-coding .coding-hero-icon svg {
+    width: 25px;
+    height: 25px;
+  }
+  .student-app .competitive-coding .coding-library-total {
+    display: none;
+  }
+  .student-app .competitive-coding .coding-top-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-app .competitive-coding .coding-plans {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .student-app .competitive-coding .coding-library-hero {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .student-app .competitive-coding .coding-hero-icon {
+    display: none;
+  }
+  .student-app .competitive-coding .coding-library-hero h1 {
+    font-size: 26px;
+  }
+  .student-app .competitive-coding .coding-library-hero p {
+    font-size: 13px;
+  }
+  .student-app .competitive-coding .coding-planning > summary {
+    align-items: flex-start;
+    padding: 16px 14px;
+  }
+  .student-app .competitive-coding .coding-planning-heading strong {
+    font-size: 16px;
+  }
+  .student-app .competitive-coding .coding-planning-heading small {
+    max-width: 180px;
+    line-height: 1.5;
+  }
+  .student-app .competitive-coding .coding-planning-summary {
+    font-size: 0;
+    gap: 0;
+  }
+  .student-app .competitive-coding .coding-planning-summary b {
+    display: none;
+  }
+  .student-app .competitive-coding .coding-planning-summary svg {
+    margin-left: 0;
+    margin-top: 7px;
+  }
+  .student-app .competitive-coding .coding-planning-content {
+    padding: 14px;
+  }
+  .student-app
+    .competitive-coding
+    :is(.coding-progress-card, .coding-daily-card) {
+    padding: 16px;
+  }
+  .student-app .competitive-coding .coding-card-heading {
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .student-app .competitive-coding .coding-local-badge {
+    font-size: 9px;
+  }
+  .student-app .competitive-coding .coding-progress-overview {
+    gap: 16px;
+    margin: 19px 0;
+  }
+  .student-app .competitive-coding .coding-progress-ring {
+    width: 92px;
+    height: 92px;
+    flex-basis: 92px;
+    padding: 7px;
+  }
+  .student-app .competitive-coding .coding-progress-value strong {
+    font-size: 32px;
+  }
+  .student-app .competitive-coding .coding-progress-value span {
+    font-size: 12px;
+  }
+  .student-app .competitive-coding .coding-challenge-body {
+    grid-template-columns: 1fr;
+    margin: 21px 0;
+  }
+  .student-app .competitive-coding .coding-challenge-art {
+    display: none;
+  }
+  .student-app .competitive-coding .coding-counts > span {
+    padding: 9px;
+  }
+  .student-app .competitive-coding .coding-list-panel {
+    padding: 16px;
+  }
+  .student-app .competitive-coding .coding-filter-row label {
+    flex: 1 1 110px;
+    min-width: 0;
+  }
+  .student-app .competitive-coding .coding-workspace-top .a-tag {
+    display: none;
+  }
+  .student-app .competitive-coding .coding-save-note {
+    text-align: left;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .student-app .competitive-coding * {
+    transition-duration: 0s;
+  }
+}
+
+.student-app .competitive-coding .coding-test-pill .pill-badge {
+  background: var(--coding-inset);
+}
+.student-app .competitive-coding .coding-io-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}

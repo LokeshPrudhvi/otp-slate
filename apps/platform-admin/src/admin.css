@@ -1,4 +1,4 @@
-.platform-admin { display:grid; grid-template-columns:224px minmax(0,1fr); min-height:100dvh; background:#f5f7fb; }
+.platform-admin { display:grid; grid-template-columns:224px minmax(0,1fr); min-height:100dvh; background:var(--surface-canvas); }
 .admin-sidebar { position:sticky; top:0; height:100dvh; display:flex; flex-direction:column; overflow:auto; background:#102744; color:#dbe5f2; padding:24px 14px 14px; }
 .admin-brand { display:flex; align-items:center; gap:11px; padding:0 8px 28px; text-decoration:none; color:white; font-size:18px; font-weight:800; }
 .admin-brand .logo-mark { width:38px; height:43px; font-size:16px; }
@@ -39,8 +39,9 @@
 .admin-count { display:inline-flex; white-space:nowrap; background:#eaf0f8; border:1px solid #dfe7f2; border-radius:20px; padding:4px 9px; font-size:11px; color:#4d6788; }
 .platform-admin .btn { border-radius:6px; min-height:38px; gap:8px; }
 .platform-admin button:disabled { cursor:not-allowed; }
-.platform-admin .panel { border-color:#e0e6ef; border-radius:10px; box-shadow:0 2px 3px #142c4903; }
-.platform-admin .panel-head { padding:18px 22px; background:#f7f9fc; border-radius:10px 10px 0 0; }
+.platform-admin .panel { border-color:var(--surface-border); border-radius:10px; box-shadow:var(--surface-shadow); }
+.platform-admin :is(.panel,.card) :is(.panel,.card,.metric) { box-shadow:none; }
+.platform-admin .panel-head { padding:18px 22px; background:#f3f6fa; border-bottom-color:#dce5ef; border-radius:10px 10px 0 0; }
 .platform-admin .panel-head h2 { font-size:15px; }
 .platform-admin .panel-body { padding:20px 22px; }
 .platform-admin .panel-body>.empty { padding:30px 16px; }
@@ -73,7 +74,7 @@
 .admin-create-panel .panel-head { background:#edf4fd; }
 .admin-create-panel .admin-form-dismiss { display:flex; justify-content:flex-end; margin-bottom:8px; }
 .admin-organizations-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)); gap:16px; }
-.platform-admin .admin-organizations-grid .card { padding:21px; border-color:#e2e8f1; }
+.platform-admin .admin-organizations-grid .card { padding:21px; border-color:var(--surface-border); }
 .platform-admin .admin-organizations-grid .card h2 { font-size:17px; }
 .platform-admin .admin-organizations-grid .actions { margin-top:auto; }
 .platform-admin .admin-organizations-grid .actions .btn { font-size:12px; }
@@ -156,7 +157,7 @@
 .platform-admin .admin-dashboard-metric:nth-child(2) { background:#f0f7f5; border-color:#d7e8e2; }
 .platform-admin .admin-dashboard-metric:nth-child(3) { background:#f5f3fa; border-color:#e3ddf0; }
 .platform-admin .admin-dashboard-metric:nth-child(4) { background:#fbf6ee; border-color:#eadfce; }
-.platform-admin .admin-dashboard-panel-head { background:#f7f9fc; }
+.platform-admin .admin-dashboard-panel-head { background:#f3f6fa; }
 
 .admin-jobs-layout { display:grid; grid-template-columns:minmax(320px,.85fr) minmax(0,1.15fr); gap:24px; align-items:start; }
 .admin-jobs fieldset { border:0; padding:0; margin:0; min-width:0; }
@@ -170,7 +171,7 @@
 .admin-job-details-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
 .admin-job-details-row .field { min-width:0; }
 .admin-job-list { display:grid; gap:14px; }
-.admin-job-card { padding:18px; background:#fff; border:1px solid #e0e7f0; border-radius:8px; min-width:0; overflow-wrap:anywhere; }
+.admin-job-card { padding:18px; background:#f7f9fc; border:1px solid var(--surface-border); border-radius:8px; min-width:0; overflow-wrap:anywhere; }
 .admin-job-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 .admin-job-meta .eyebrow { margin:0; font-size:10px; }
 .admin-job-meta time { color:#708198; font-size:11px; white-space:nowrap; }

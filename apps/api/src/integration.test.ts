@@ -675,6 +675,85 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         assert.equal(changed.body.revision, 2);
         const restored = await student.request("/api/v1/student/resume");
         assert.deepEqual(restored.body.data, expanded);
+        const structured = {
+          ...expanded,
+          projects: [
+            {
+              id: "portal",
+              title: "Student portal",
+              description: "A learning portal.",
+              url: "https://example.test/portal",
+              bullets: ["Built course search", "Improved navigation"],
+            },
+            {
+              id: "tracker",
+              title: "Study tracker",
+              description: "Track study goals.",
+              url: "",
+              bullets: ["Added weekly summaries"],
+            },
+          ],
+          experience: [
+            {
+              id: "intern",
+              title: "Software intern",
+              company: "Example",
+              startDate: "2025-06",
+              endDate: "",
+              current: true,
+              description: "Product development.",
+              bullets: ["Built new features"],
+            },
+          ],
+          skills: ["TypeScript", "SQL", "Problem solving"],
+          education: [
+            {
+              id: "college",
+              institution: "Example College",
+              degree: "B.Tech",
+              fieldOfStudy: "CSE",
+              startDate: "2022-08",
+              endDate: "2026-06",
+              current: false,
+              grade: "8.8 CGPA",
+              description: "Developer club volunteer.",
+            },
+          ],
+          certifications: [
+            {
+              id: "cert",
+              name: "Cloud fundamentals",
+              issuer: "Example Academy",
+              issuedDate: "2025-12",
+              credentialId: "CERT-001",
+              url: "https://example.test/certificate",
+              description: "Foundations of cloud computing.",
+            },
+          ],
+        };
+        const structuredSave = await student.request("/api/v1/student/resume", "PUT", {
+          data: structured,
+          revision: 2,
+        });
+        assert.equal(structuredSave.status, 200, JSON.stringify(structuredSave.body));
+        assert.equal(structuredSave.body.revision, 3);
+        assert.deepEqual(
+          (await student.request("/api/v1/student/resume")).body.data,
+          structured,
+        );
+        assert.equal(
+          (
+            await student.request("/api/v1/student/resume", "PUT", {
+              data: expanded,
+              revision: 2,
+            })
+          ).status,
+          409,
+        );
+        assert.deepEqual(
+          (await student.request("/api/v1/student/resume")).body.data,
+          structured,
+        );
         assert.equal(
           (
             await student.request("/api/v1/student/resume", "PUT", {
@@ -1080,15 +1159,15 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
           6,
         );
         const practice = await demoStudent.request("/api/v1/student/practice");
-        assert.equal(practice.body.length, 212);
+        assert.equal(practice.body.length, 600);
         const coding = practice.body.filter(
           (activity: any) => activity.kind === "coding",
         );
-        assert.equal(coding.length, 200);
-        assert.equal(new Set(coding.map((item: any) => item.id)).size, 200);
+        assert.equal(coding.length, 600);
+        assert.equal(new Set(coding.map((item: any) => item.id)).size, 600);
         assert.equal(
           new Set(coding.flatMap((item: any) => item.topics)).size,
-          20,
+          23,
         );
         assert.deepEqual(
           new Set(coding.map((item: any) => item.difficulty)),
@@ -1105,7 +1184,7 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         }
         assert.equal(
           new Set(practice.body.map((activity: any) => activity.kind)).size,
-          5,
+          1,
         );
         assert.ok(practice.body.every((activity: any) => activity.sample));
         const exams = await demoStudent.request("/api/v1/student/exams");

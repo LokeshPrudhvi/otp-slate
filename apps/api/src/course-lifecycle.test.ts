@@ -62,7 +62,7 @@ test("course lifecycle protects enrolled learning and permits only safe draft de
       { courseId: withVersion.id, number: 1, title: withVersion.title, description: withVersion.description, lessons: [firstLesson] },
       { courseId: withGrant.id, number: 1, title: withGrant.title, description: withGrant.description, lessons: [firstLesson] },
     ]).returning();
-    const policy: AccessPolicy = { features: ["courses"], courseIds: [course.id], practiceModuleIds: [], toolkitTrackIds: [] };
+    const policy: AccessPolicy = { features: ["courses"], courseIds: [course.id], practiceModuleIds: [] };
     await tx.insert(s.accessPolicies).values([
       { organizationId: org.id, scope: "organization", targetKey: "organization", policy, courseVersions: { [course.id]: first.id } },
       { organizationId: org.id, scope: "branch", targetKey: "CSE", branchName: "Computer Science", policy: { ...inheritPolicy(), courseIds: [course.id] }, courseVersions: { [course.id]: first.id } },

@@ -78,9 +78,9 @@ CREATE POLICY crt_attempt_boundary ON crt_attempts USING (
 );
 ALTER TABLE lesson_uploads DROP CONSTRAINT IF EXISTS lesson_upload_purpose;
 ALTER TABLE lesson_uploads DROP CONSTRAINT IF EXISTS lesson_upload_scope;
-ALTER TABLE lesson_uploads ADD CONSTRAINT lesson_upload_purpose CHECK(purpose IN ('video','assignment','question_image','crt_pdf'));
+ALTER TABLE lesson_uploads ADD CONSTRAINT lesson_upload_purpose CHECK(purpose IN ('video','assignment','question_image','crt_pdf','course_cover'));
 ALTER TABLE lesson_uploads ADD CONSTRAINT lesson_upload_scope CHECK (
- (purpose IN ('video','question_image','crt_pdf') AND org_id IS NULL) OR
+ (purpose IN ('video','question_image','crt_pdf','course_cover') AND org_id IS NULL) OR
  (purpose='assignment' AND org_id IS NOT NULL AND course_id IS NOT NULL AND version_id IS NOT NULL AND lesson_id IS NOT NULL)
 );
 DROP POLICY IF EXISTS crt_pdf_read ON lesson_uploads;

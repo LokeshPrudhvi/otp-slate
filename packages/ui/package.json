@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./loading": "./src/loading.tsx",
     "./styles.css": "./src/styles.css",
+    "./surfaces.css": "./src/surfaces.css",
     "./lesson-content.css": "./src/lesson-content.css",
     "./select.css": "./src/select.css"
   },

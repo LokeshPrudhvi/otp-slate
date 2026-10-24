@@ -749,9 +749,8 @@ html, body {
 .hub-eyebrow{font-size:11px;font-weight:900;letter-spacing:.12em;color:#617084;margin:0 0 12px}
 .hub-banner{background:#eef3f9;border:1px solid #dce4ee;border-radius:6px;padding:26px 30px;display:flex;align-items:center;justify-content:space-between;gap:24px}.hub-banner h2{font-size:28px;font-weight:400;color:#0f2747;margin:0 0 10px}.hub-banner p:last-child{margin:0;max-width:65ch;color:#4b5b73}.hub-symbol{font-size:66px;color:#24497d;padding:0 20px}.hub-note{font-size:13px;color:#617084;margin:18px 0 24px}
 .hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:20px}.hub-card{border:1px solid #d4dbe3;border-radius:6px;padding:22px;display:flex;flex-direction:column;box-shadow:0 2px 4px #0f274708}.hub-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.hub-card h2{font-size:19px;margin:20px 0 8px}.hub-card p{color:#4b5b73;margin:0 0 12px}.hub-card small{color:#6b7780;margin-bottom:24px}.hub-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.hub-actions .a-btn{font-size:13px}
-.hub-shortcuts{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px}.hub-shortcuts button{border:1px solid #d4dbe3;background:#f5f7fa;border-radius:5px;display:flex;align-items:center;gap:10px;padding:14px;text-align:left;font-size:13px}.hub-shortcuts button:hover{border-color:#0f2747;background:#eef3f9}.hub-shortcuts button>span:first-child{color:#24497d;font-size:23px}.hub-shortcuts button>span:last-child{margin-left:auto;color:#617084}
 .a-login{position:fixed;overflow:auto}.lg-form{min-height:100%;max-width:100%;}.login-demo{background:#f5f7fa;border-left:3px solid #ffe066;padding:12px 16px;font-size:13px;color:#4b5b73}#loginForm label{display:block;font-size:14px;font-weight:700;margin-bottom:8px}#loginForm .lg-btn{width:100%}.login-code{width:100%;border:1px solid #c7cdd1;border-radius:4px;padding:12px;font-size:24px;letter-spacing:.3em}.lg-ph input{min-width:0;width:100%}
-@media(max-width:640px){.hub-banner{padding:20px}.hub-banner h2{font-size:24px}.hub-symbol{display:none}.hub-card{padding:18px}.lg-form{padding:32px 24px}.hub-shortcuts{grid-template-columns:1fr}.a-nav{padding:9px 2px}}
+@media(max-width:640px){.hub-banner{padding:20px}.hub-banner h2{font-size:24px}.hub-symbol{display:none}.hub-card{padding:18px}.lg-form{padding:32px 24px}.a-nav{padding:9px 2px}}
 
 
 /* Course learning view: focused overview and progressive module accordions. */
@@ -787,7 +786,7 @@ html, body {
     <button class="a-nav" data-act="tray" data-t="account" data-nav="account"><span class="a-av">AS</span>Account</button>
     <button class="a-nav on" data-act="go" data-go="dashboard" data-nav="dashboard"><svg viewBox="0 0 24 24"><path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4.5-5"/><circle cx="12" cy="16" r="1.3"/><path d="M6.5 11.5l1 .6M12 8v1.2M17.5 11.5l-1 .6"/></svg>Dashboard</button>
     <button class="a-nav" data-act="go" data-go="courses" data-nav="courses"><svg viewBox="0 0 24 24"><path d="M6 3h11a1 1 0 0 1 1 1v16H7a2 2 0 0 1-2-2V5a2 2 0 0 1 1-2z"/><path d="M5 18a2 2 0 0 1 2-2h11"/><path d="M9 7h6M9 10h4"/></svg>Courses</button>
-    <button class="a-nav" data-act="go" data-go="toolkit" data-nav="toolkit"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v3h4v-3"/></svg>Toolkit</button>
+    <button class="a-nav" data-act="go" data-go="crt" data-nav="crt"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>CRT</button>
     <button class="a-nav" data-act="go" data-go="compiler" data-nav="compiler"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="16 18 22 12 16 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><polyline points="8 6 2 12 8 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><line x1="14" y1="4" x2="10" y2="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Compiler</button>
     <button class="a-nav" data-act="go" data-go="practice" data-nav="practice"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5H5v15h14V5h-3M9 3h6v4H9zM8 12l2 2 5-5M8 17h7"/></svg>Practice</button>
     <button class="a-nav" data-act="go" data-go="live-exams" data-nav="live-exams"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M4 9h16"/><circle cx="12" cy="15" r="3"/><path d="M12 13v2l1 1"/></svg>Live Exams</button>
@@ -1171,9 +1170,8 @@ WALKS.html = {ide:'vs', lang:'html', langName:'HTML', file:'index.html', project
 .hub-eyebrow{font-size:11px;font-weight:900;letter-spacing:.12em;color:#617084;margin:0 0 12px}
 .hub-banner{background:#eef3f9;border:1px solid #dce4ee;border-radius:6px;padding:26px 30px;display:flex;align-items:center;justify-content:space-between;gap:24px}.hub-banner h2{font-size:28px;font-weight:400;color:#0f2747;margin:0 0 10px}.hub-banner p:last-child{margin:0;max-width:65ch;color:#4b5b73}.hub-symbol{font-size:66px;color:#24497d;padding:0 20px}.hub-note{font-size:13px;color:#617084;margin:18px 0 24px}
 .hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:20px}.hub-card{border:1px solid #d4dbe3;border-radius:6px;padding:22px;display:flex;flex-direction:column;box-shadow:0 2px 4px #0f274708}.hub-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.hub-card h2{font-size:19px;margin:20px 0 8px}.hub-card p{color:#4b5b73;margin:0 0 12px}.hub-card small{color:#6b7780;margin-bottom:24px}.hub-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.hub-actions .a-btn{font-size:13px}
-.hub-shortcuts{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px}.hub-shortcuts button{border:1px solid #d4dbe3;background:#f5f7fa;border-radius:5px;display:flex;align-items:center;gap:10px;padding:14px;text-align:left;font-size:13px}.hub-shortcuts button:hover{border-color:#0f2747;background:#eef3f9}.hub-shortcuts button>span:first-child{color:#24497d;font-size:23px}.hub-shortcuts button>span:last-child{margin-left:auto;color:#617084}
 .a-login{position:fixed;overflow:auto}.lg-form{min-height:100%;max-width:100%;}.login-demo{background:#f5f7fa;border-left:3px solid #ffe066;padding:12px 16px;font-size:13px;color:#4b5b73}#loginForm label{display:block;font-size:14px;font-weight:700;margin-bottom:8px}#loginForm .lg-btn{width:100%}.login-code{width:100%;border:1px solid #c7cdd1;border-radius:4px;padding:12px;font-size:24px;letter-spacing:.3em}.lg-ph input{min-width:0;width:100%}
-@media(max-width:640px){.hub-banner{padding:20px}.hub-banner h2{font-size:24px}.hub-symbol{display:none}.hub-card{padding:18px}.lg-form{padding:32px 24px}.hub-shortcuts{grid-template-columns:1fr}.a-nav{padding:9px 2px}}
+@media(max-width:640px){.hub-banner{padding:20px}.hub-banner h2{font-size:24px}.hub-symbol{display:none}.hub-card{padding:18px}.lg-form{padding:32px 24px}.a-nav{padding:9px 2px}}
 
 
 /* Course learning view: focused overview and progressive module accordions. */
@@ -1839,7 +1837,7 @@ function openWalk(key, ctx = {}){
 /* lms/app.js: The OTP Slate LMS shell: state (S), module items and unlock rules, router (go/render), views (dashboard, catalog, course, item pages, calendar, inbox, grades), trays and the click handler. */
 /* ===================== LMS app ===================== */
 const APP = $('#app'), MAIN = $('#amain'), TRAY = $('#tray');
-const S = {view:'dashboard', course:'py', mod:0, item:0, tab:'modules', cat:'tracks', q:'', calY:2026, calM:9, calView:'month', calSel:null, calF:{class:true, deadline:true, exam:true, project:true}, ibF:'all', msg:1, compose:null, unlock:false, closed:{}, done:new Set(), tray:null, qc:{}, wk:0};
+const S = {view:'dashboard', course:'py', mod:0, item:0, tab:'modules', cat:'all', q:'', calY:2026, calM:9, calView:'month', calSel:null, calF:{class:true, deadline:true, exam:true, project:true}, ibF:'all', msg:1, compose:null, unlock:false, closed:{}, done:new Set(), tray:null, qc:{}, wk:0};
 let PENDING_MOUNT = null, VIEW_CLEANUP = null;
 [['py', [[0, 4], [1, 2]]], ['java', [[0, 4]]], ['dsa', [[0, 3]]], ['quant', [[0, 4], [1, 4]]], ['sql', [[0, 1]]]].forEach(([cid, mods]) => mods.forEach(([mi, n]) => { for (let k = 0; k < n; k++) S.done.add(`${cid}:${mi}:${k}`); }));
 const PAT = [
@@ -1883,18 +1881,18 @@ const upcoming = () => EVENTS_RAW.map(([d, type, cid, title, time]) => { const [
 const fmtDate = d => `${DOW[d.getDay()]}, ${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}`;
 const slug = c => c.code.toLowerCase().replace(/\s+/g, '');
 
-function go(view, p = {}){ if(view === 'calendar') view = 'dashboard'; if (!signedIn) { showLogin(); return; } if (view === 'courses') { S.cat = 'tracks'; S.q = ''; } Object.assign(S, {view, compose:null}, p); if (!studentCanView(view)) { render(); return; } closeTray(); render(); MAIN.scrollTop = 0; }
+function go(view, p = {}){ if(view === 'calendar') view = 'dashboard'; if (!signedIn) { showLogin(); return; } if (view === 'courses') { S.cat = 'all'; S.q = ''; } Object.assign(S, {view, compose:null}, p); if (!studentCanView(view)) { render(); return; } closeTray(); render(); MAIN.scrollTop = 0; }
 function setURL(){
   const c = CO[S.course];
-  const u = {jobs:'jobs',resume:'resume',compiler:'compiler',practice:'practice','live-exams':'live-exams', toolkit:'toolkit', dashboard:'dashboard', courses:'courses', course:`courses/${slug(c)}/modules`, lesson:`courses/${slug(c)}/modules/items/${S.mod + 1}-${S.item + 1}`, calendar:'calendar', inbox:'conversations', grades:'grades'}[S.view];
+  const u = {jobs:'jobs',resume:'resume',compiler:'compiler',practice:'practice','live-exams':'live-exams', crt:'crt', dashboard:'dashboard', courses:'courses', course:`courses/${slug(c)}/modules`, lesson:`courses/${slug(c)}/modules/items/${S.mod + 1}-${S.item + 1}`, calendar:'calendar', inbox:'conversations', grades:'grades'}[S.view];
   const urlEl = $('#url'); if (urlEl) urlEl.textContent = 'slate.otp/' + u;
 }
 function render(){
-  const nav = ['hiring','crt','dsa','fullstack','cc'].includes(S.view) || ['course','lesson'].includes(S.view) && ['hiring','crt','dsa','fullstack','cc'].includes(CO[S.course].cat) ? 'toolkit' : {jobs:'jobs',resume:'resume',compiler:'compiler',practice:'practice','live-exams':'live-exams', toolkit:'toolkit', dashboard:'dashboard', grades:'dashboard', courses:'courses', course:'courses', lesson:'courses', calendar:'calendar', inbox:'inbox'}[S.view];
+  const nav = ['course','lesson'].includes(S.view) && CO[S.course].cat === 'crt' ? 'crt' : {jobs:'jobs',resume:'resume',compiler:'compiler',practice:'practice','live-exams':'live-exams',crt:'crt', dashboard:'dashboard', grades:'dashboard', courses:'courses', course:'courses', lesson:'courses', calendar:'calendar', inbox:'inbox'}[S.view];
   $$('.a-nav[data-nav]', APP).forEach(b => b.classList.toggle('on', S.tray ? b.dataset.nav === S.tray : b.dataset.nav === nav));
   if (VIEW_CLEANUP) { VIEW_CLEANUP(); VIEW_CLEANUP = null; }
   PENDING_MOUNT = null;
-  MAIN.innerHTML = signedIn && !studentCanView(S.view) ? accessEmpty() : ({dashboard:vDash, courses:vCourses, course:vCourse, lesson:vLesson, calendar:vCal, inbox:vInbox, grades:vGrades, toolkit:vToolkit, compiler:vCompiler, 'live-exams':vLiveExams, practice:vPractice, jobs:vJobs, resume:vResume, hiring:vHub, crt:vHub, dsa:vHub, fullstack:vHub, cc:vHub})[S.view]();
+  MAIN.innerHTML = signedIn && !studentCanView(S.view) ? accessEmpty() : ({dashboard:vDash, courses:vCourses, course:vCourse, lesson:vLesson, calendar:vCal, inbox:vInbox, grades:vGrades, compiler:vCompiler, 'live-exams':vLiveExams, practice:vPractice, jobs:vJobs, resume:vResume, crt:vCrt})[S.view]();
   if (PENDING_MOUNT) { VIEW_CLEANUP = PENDING_MOUNT() || null; PENDING_MOUNT = null; }
   $('#ibCount').textContent = MSGS.filter(m => m.unread).length || '';
   $('#ibCount').hidden = !MSGS.some(m => m.unread);
@@ -1906,7 +1904,7 @@ function render(){
 function vDash(){
   const cards = studentCourseList().map((id, i) => { const c = CO[id]; const ann = MSGS.filter(m => m.cid === id && m.unread).length;
     return `<article class="a-card" data-act="course" data-id="${id}" tabindex="0" aria-label="Open ${esc(c.name)}"><div class="a-hero" style="${heroBg(c.color, i)}"><span class="a-glyph">${esc(c.glyph)}</span><button class="a-kebab" data-act="noop" aria-label="Card options">⋮</button></div><div class="a-cbody"><div class="a-ctitle" style="color:${shade(c.color, -12)}">${esc(c.name)}</div><div class="a-ccode">${esc(c.code)} A 2026F</div><div class="a-cterm">2026 Fall</div></div><div class="a-cicons"><span title="Announcements">${IC.ann}${ann ? `<b>${ann}</b>` : ''}</span><span title="Assignments">${IC.asg}</span><span title="Discussions">${IC.disc}</span></div></article>`; }).join('');
-  return `<div class="a-page"><div class="a-dash"><div><div class="a-head"><h1 class="a-h1">Dashboard</h1><span class="sp"></span><button class="a-btn" data-act="go" data-go="courses">All courses</button><button class="a-btn" data-act="noop" aria-label="Dashboard options">⋮</button></div>${hubShortcuts()}${liveExamShortcut()}<h2 style="font-size:20px;font-weight:400;margin:24px 0 16px">Continue learning</h2><div class="a-cards">${cards}</div></div>
+  return `<div class="a-page"><div class="a-dash"><div><div class="a-head"><h1 class="a-h1">Dashboard</h1><span class="sp"></span><button class="a-btn" data-act="go" data-go="courses">All courses</button><button class="a-btn" data-act="noop" aria-label="Dashboard options">⋮</button></div>${liveExamShortcut()}<h2 style="font-size:20px;font-weight:400;margin:24px 0 16px">Continue learning</h2><div class="a-cards">${cards}</div></div>
   <aside class="a-aside rankings-panel">${rankingsHTML()}
   </aside></div></div>`;
 }
@@ -1915,7 +1913,7 @@ function rowHTML(c){ return `<button class="a-row" data-act="course" data-id="${
 function catalogHTML(){
   const q = S.q.trim().toLowerCase();
   const match = c => !q || (c.name + ' ' + c.code + ' ' + c.mods.map(m => m.name).join(' ')).toLowerCase().includes(q);
-  const html = CATS.filter(cat => S.cat === 'all' || S.cat === cat.id).map(cat => {
+  const html = CATS.filter(cat => cat.id !== 'crt' && (S.cat === 'all' || S.cat === cat.id)).map(cat => {
     const list = COURSES.filter(c => c.cat === cat.id && studentHasCourse(c.id) && match(c));
     if (!list.length) return '';
     if (cat.id === 'pyq') { const c = list[0]; return `<section class="a-cat"><h2>${cat.name}</h2><p>${cat.blurb} ${c.mods.filter(m => !m.soon).length} of ${c.mods.length} available.</p><div class="co-grid">${c.mods.map((m, mi) => `<button class="co${m.soon ? ' soon' : ''}" data-act="${m.soon ? 'soon' : 'pyq'}" data-m="${mi}">${esc(m.name)}<small>${m.soon ? 'Coming soon' : 'Previous-year paper'}</small></button>`).join('')}</div></section>`; }
@@ -1925,8 +1923,8 @@ function catalogHTML(){
   return html || '<p style="color:#6b7780">No courses match that search. Try a language or a topic, such as "SQL" or "Recursion".</p>';
 }
 function vCourses(){
-  const pills = [['tracks', 'Programming & technologies'], ['pyq', 'Company PYQs']].map(([id, n]) => `<button class="a-pill${S.cat === id ? ' on' : ''}" data-act="cat" data-c="${id}">${esc(n)}</button>`).join('');
-  return `<div class="a-page"><div class="a-head"><h1 class="a-h1">Courses</h1><span class="sp"></span><span style="font-size:14px;color:#6b7780">${COURSES.filter(c => ['tracks','pyq'].includes(c.cat) && studentHasCourse(c.id)).length} courses you can open</span></div><div class="a-filters">${pills}<input class="a-search" type="search" placeholder="Search courses or topics" value="${esc(S.q)}" aria-label="Search courses"></div><div id="catalog">${catalogHTML()}</div></div>`;
+  const pills = [['all', 'All courses'], ...CATS.filter(cat => cat.id !== 'crt').map(cat => [cat.id, cat.name])].map(([id, n]) => `<button class="a-pill${S.cat === id ? ' on' : ''}" data-act="cat" data-c="${id}">${esc(n)}</button>`).join('');
+  return `<div class="a-page"><div class="a-head"><h1 class="a-h1">Courses</h1><span class="sp"></span><span style="font-size:14px;color:#6b7780">${COURSES.filter(c => c.cat !== 'crt' && studentHasCourse(c.id)).length} courses you can open</span></div><div class="a-filters">${pills}<input class="a-search" type="search" placeholder="Search courses or topics" value="${esc(S.q)}" aria-label="Search courses"></div><div id="catalog">${catalogHTML()}</div></div>`;
 }
 
 function itemRow(c, mi, k, it, locked, nu){
@@ -1937,7 +1935,7 @@ function vCourse(){
   const c = CO[S.course], seq = flatSeq(c), dn = seq.filter(x => isDone(c.id, x.mi, x.k)).length, nu = nextUp(c);
   const percent = Math.round(dn / seq.length * 100), completed = c.mods.filter((_,i) => studentHasModule(c.id,i)&&modDone(c,i)).length;
   const assignedModuleCount=c.mods.filter((_,i)=>studentHasModule(c.id,i)).length, firstAssigned=c.mods.findIndex((_,i)=>studentHasModule(c.id,i));
-  const group = HUBS[c.cat], back = group ? c.cat : 'courses';
+  const group = CATS.find(category => category.id === c.cat), back = c.cat === 'crt' ? 'crt' : 'courses';
   const body = c.mods.map((m, mi) => {
     if (!studentHasModule(c.id,mi)) return '';
     const items = modItems(c, mi), done = items.filter((_,k) => isDone(c.id,mi,k)).length;
@@ -1946,8 +1944,8 @@ function vCourse(){
     const status = m.soon ? 'Coming soon' : done === items.length ? 'Completed' : locked ? 'Locked' : done ? 'In progress' : 'Ready to start';
     return `<section class="a-mod learn-module${locked ? ' locked' : ''}"><button class="a-mod-h" data-act="mod" data-m="${mi}" aria-expanded="${!closed}" aria-controls="module-${mi}"><span class="module-number${done === items.length ? ' complete' : ''}">${done === items.length ? '✓' : String(mi+1).padStart(2,'0')}</span><span class="module-title"><small>MODULE ${mi+1}</small><b>${esc(m.name)}</b><span>${items.length} activities · ${done} completed</span></span><span class="module-status">${status}</span><span class="module-chevron" aria-hidden="true">${closed ? '+' : '−'}</span></button><div id="module-${mi}"${closed ? ' hidden' : ''}><p class="module-intro">${m.soon ? 'This module is being prepared.' : locked ? `Complete Module ${mi} to unlock these activities.` : 'Learn the concepts, put them into practice, then check your understanding.'}</p>${items.map((it,k) => itemRow(c,mi,k,it,locked,nu)).join('')}</div></section>`;
   }).join('');
-  return `<div class="a-page learn-page"><div class="a-crumbs"><button data-act="go" data-go="dashboard">Dashboard</button><span>›</span><button data-act="go" data-go="${back}">${group ? group.name : 'Courses'}</button><span>›</span><span>${esc(c.name)}</span></div>
-    <header class="learn-heading"><span class="hub-eyebrow">OTP SLATE · YOUR LEARNING JOURNEY</span><h1>${esc(c.name)}</h1><p>${group ? group.desc : 'Build practical skills through guided lessons, hands-on practice and knowledge checks.'}</p><div class="learn-meta"><span class="instructor-avatar" aria-hidden="true">${esc(c.staff.replace(/^(Prof\.|Ms\.) /,'').split(' ').map(n=>n[0]).slice(0,2).join(''))}</span><span>Instructor <b>${esc(c.staff)}</b></span><span class="learn-divider"></span><span>${assignedModuleCount} modules</span><span>Self-paced learning</span></div></header>
+  return `<div class="a-page learn-page"><div class="a-crumbs"><button data-act="go" data-go="dashboard">Dashboard</button><span>›</span><button data-act="go" data-go="${back}">${back === 'crt' ? 'CRT' : 'Courses'}</button><span>›</span><span>${esc(c.name)}</span></div>
+    <header class="learn-heading"><span class="hub-eyebrow">OTP SLATE · YOUR LEARNING JOURNEY</span><h1>${esc(c.name)}</h1><p>${group ? group.blurb : 'Build practical skills through guided lessons, hands-on practice and knowledge checks.'}</p><div class="learn-meta"><span class="instructor-avatar" aria-hidden="true">${esc(c.staff.replace(/^(Prof\.|Ms\.) /,'').split(' ').map(n=>n[0]).slice(0,2).join(''))}</span><span>Instructor <b>${esc(c.staff)}</b></span><span class="learn-divider"></span><span>${assignedModuleCount} modules</span><span>Self-paced learning</span></div></header>
     <div class="learn-layout"><main class="learn-content"><section class="learn-resume"><div><span class="hub-eyebrow">${nu ? 'YOUR NEXT STEP' : 'WELL DONE'}</span><h2>${nu ? esc(nu.it.n) : 'You have completed this course'}</h2><p>${nu ? `Module ${nu.mi+1} · ${esc(c.mods[nu.mi].name)}` : 'Revisit any module to keep your skills sharp.'}</p></div>${nu ? `<button class="a-btn pri" data-act="item" data-m="${nu.mi}" data-k="${nu.k}">${dn ? 'Resume learning' : 'Start learning'} <span aria-hidden="true">→</span></button>` : ''}</section><div class="learn-section-heading"><h2>Course content</h2><span>${completed} of ${assignedModuleCount} modules complete</span></div>${body}</main>
     <aside class="learn-sidebar"><section class="learn-progress"><h2>Your progress</h2><div class="learn-percent">${percent}<span>%</span></div><div class="learn-progress-track" role="progressbar" aria-label="Course completion" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${percent}%"></span></div><p>${dn} of ${seq.length} activities completed</p><div class="learn-progress-detail"><b>${completed} / ${assignedModuleCount}</b><span>Modules completed</span></div></section><section class="learn-support"><h2>Learn by doing</h2><p>${c.kind === 'w' ? 'Follow guided lessons, then put your skills to work in coding exercises.' : 'Explore each concept, practise with interactive activities and check what you have learned.'}</p><p>Complete the activities in each module to unlock the next one.</p><button class="a-btn" data-act="item" data-m="${firstAssigned}" data-k="0">Revisit the first lesson</button></section></aside></div></div>`;
 }
@@ -2477,7 +2475,7 @@ function showLogin(){
 function signOut(){
   signedIn = false;
   try { sessionStorage.removeItem(SESSION_KEY); } catch (_) {}
-  S.view = 'dashboard'; S.q = ''; S.cat = 'tracks';
+  S.view = 'dashboard'; S.q = ''; S.cat = 'all';
   showLogin();
 }
 function loginError(message) { $('#loginError').textContent = message; }
@@ -2805,20 +2803,6 @@ function openWorkspace(key, ctx = {}){
 
 
 
-const HUBS = {
- hiring: {name:'Hiring Assessments', short:'Assessments', glyph:'✓', intro:'Get ready for the next round.', desc:'Build confidence with aptitude, typing, coding and web development assessments.', note:'Practice at your pace. Live rounds below are simulations for this UI preview.'},
- crt: {name:'CRT Modules', short:'CRT Modules', glyph:'◎', intro:'Prepare for campus placements.', desc:'A focused path through aptitude, reasoning, competitive programming and interview skills.', note:'Start with the fundamentals, then work through each module at your own pace.'},
- dsa: {name:'Advanced DSA', short:'Advanced DSA', glyph:'⋈', intro:'Turn concepts into solutions.', desc:'Explore data structures and algorithms, from arrays and trees to dynamic programming.', note:'Recommended preparation: familiarity with one programming language.'},
- fullstack: {name:'Full Stack Development', short:'Full Stack', glyph:'▤', intro:'Build from front to back.', desc:'Choose your stack and learn to deliver complete web applications.', note:'Each path includes front-end development, back-end APIs, databases and a capstone project.'},
- cc: {name:'Competitive Coding', short:'Coding', glyph:'⌘', intro:'A hundred ways to get better.', desc:'Work through 100-program learning paths in C++, Java and Python.', note:'Each path groups programs by topic and difficulty. This preview includes sample exercises.'}
-};
-const HUB_DETAILS = {
- aptitude:['Sharpen numerical and problem-solving skills.','Practice test'], typing:['Build speed without sacrificing accuracy.','Start typing test'], live:['Rehearse a timed assessment before the real round.','Try sample test'], practice:['Solve problems with an interactive code workspace.','Start practice'], livecode:['Practise a timed coding round in your language.','Try sample round'], webdev:['Create layouts and interactive pages in the browser.','Open workspace'],
- quant:['Master the numbers behind placement questions.','Try aptitude lab'], logic:['Spot patterns and strengthen your reasoning.','Try reasoning lab'], cp:['Build a toolkit for programming contests.','Start practice'], interview:['Structure clear answers with the STAR method.','Practise an answer'],
- dsa:['Arrays, linked lists, stacks, trees, heaps and graphs.','Explore modules'], algo:['Search, sort, backtrack and optimise solutions.','Explore modules'], mern:['MongoDB, Express, React and Node.js.','Explore path'], javafs:['Spring Boot, REST APIs, databases and React.','Explore path'], pyfs:['Django, REST APIs and front-end integration.','Explore path'], cpp100:['From C++ basics and patterns to mixed challenges.','Explore 100 programs'], java100:['Strengthen Java through progressive problem solving.','Explore 100 programs'], py100:['Build Python fluency, one problem at a time.','Explore 100 programs']
-};
-function hubShortcuts(){ return `<section aria-label="Explore learning paths"><p class="hub-eyebrow">YOUR PLACEMENT TOOLKIT</p><div class="hub-shortcuts">${assignedHubEntries().map(([id,h]) => `<button data-act="go" data-go="${id}"><span>${h.glyph}</span><b>${h.name}</b><span aria-hidden="true">↗</span></button>`).join('')}</div></section>`; }
-
 // Sample records until the student roster and jobs database are connected.
 const STUDENT_RANKINGS = [
  ['Diya Patel',980],['Kabir Mehta',955],['Ananya Reddy',930],['Aarav Sharma',910],['Ishaan Gupta',895],['Meera Nair',880],['Rohan Kumar',865],['Sneha Rao',850],['Arjun Das',835],['Priya Shah',820],['Vikram Singh',805],['Kavya Menon',790]
@@ -2900,19 +2884,14 @@ function startLiveExam(){
  MODAL.open(`<div class="mc-head"><div class="ttl"><b>Live exam · Sample</b><span>${SAMPLE_LIVE_EXAM.title}</span></div><button class="mc-x" aria-label="Close sample exam">×</button></div><div class="mc-body"><div class="lab"></div></div>`);
  MODAL.cleanup = labMCQ($('.lab',MODAL.mc), SAMPLE_LIVE_EXAM.title, {qs:MCQ_APT.slice(0,SAMPLE_LIVE_EXAM.questions),timed:true,singleAttempt:true,onComplete(result){liveExamResult=result;render();}});
 }
-function vToolkit(){
- return `<div class="a-page"><div class="a-head"><h1 class="a-h1">Your Placement Toolkit</h1><span class="sp"></span><span class="a-tag">${assignedHubEntries().length} ways to prepare</span></div><section class="hub-banner"><div><p class="hub-eyebrow">LEARN · PRACTISE · GET HIRED</p><h2>Get ready for your next opportunity.</h2><p>Everything you need for placement preparation, from your first practice test to full stack development.</p></div><span class="hub-symbol" aria-hidden="true">⌘</span></section><div class="hub-grid" style="margin-top:24px">${assignedHubEntries().map(([id,h]) => `<article class="hub-card"><div class="hub-card-top"><span class="rail-glyph" aria-hidden="true">${h.glyph}</span><span class="a-tag">${COURSES.filter(c=>c.cat===id && studentHasCourse(c.id)).length} ${id==='hiring'?'assessment types':'learning paths'}</span></div><h2>${h.name}</h2><p>${h.desc}</p><div class="hub-actions"><button class="a-btn pri" data-act="go" data-go="${id}">Explore ${h.name} <span aria-hidden="true">→</span></button></div></article>`).join('')}</div></div>`;
-}
 function vCompiler(){
   return `<div class="compiler-fullscreen-container" style="height:100%;min-height:100dvh;width:100%;background:#0d1117;display:flex;flex-direction:column;position:relative;">
     <iframe src="https://onecompiler.com/embed?theme=dark" width="100%" height="100%" style="flex:1 1 auto;width:100%;height:100%;min-height:100dvh;border:none;display:block;" frameborder="0" allow="clipboard-write; clipboard-read; run-scripts; fullscreen"></iframe>
   </div>`;
 }
-function vHub(){
- const h=HUBS[S.view], list=COURSES.filter(c=>c.cat===S.view && studentHasCourse(c.id));
- return `<div class="a-page"><div class="a-crumbs"><button data-act="go" data-go="toolkit">Your Placement Toolkit</button><span>›</span><span>${h.name}</span></div><div class="a-head"><h1 class="a-h1">${h.name}</h1><span class="sp"></span><span class="a-tag">${list.length} ${S.view==='hiring'?'assessment types':'learning paths'}</span></div>
- <section class="hub-banner"><div><p class="hub-eyebrow">LEARN · PRACTISE · GET HIRED</p><h2>${h.intro}</h2><p>${h.desc}</p></div><span class="hub-symbol" aria-hidden="true">${h.glyph}</span></section>
- <p class="hub-note">${h.note}</p><div class="hub-grid">${list.map(c=>{const d=HUB_DETAILS[c.id]; return `<article class="hub-card"><div class="hub-card-top"><span class="a-sw" style="background:${c.color}">${esc(c.glyph)}</span><span class="a-tag">${c.mods.length} modules</span></div><h2>${esc(c.name)}</h2><p>${d[0]}</p><small>${esc(c.mods.slice(0,3).map(m=>m.name).join(' · '))}</small><div class="hub-actions"><button class="a-btn pri" data-act="launch" data-id="${c.id}" ${['hiring','crt'].includes(S.view)&&!studentHasPractice(c.id)?'disabled title="Practice not assigned by your admin"':''}>${d[1]} <span aria-hidden="true">→</span></button>${['hiring','crt'].includes(S.view)?`<button class="a-btn" data-act="course" data-id="${c.id}">View modules</button>`:''}</div></article>`;}).join('')}</div></div>`;
+function vCrt(){
+ const list=COURSES.filter(c=>c.cat==='crt' && studentHasCourse(c.id));
+ return `<div class="a-page"><div class="a-head"><h1 class="a-h1">CRT</h1><span class="sp"></span><span class="a-tag">${list.length} courses</span></div><section class="hub-banner"><div><p class="hub-eyebrow">CAMPUS RECRUITMENT TRAINING</p><h2>Prepare for campus placements.</h2><p>Learn aptitude, reasoning, competitive programming and interview skills.</p></div></section><div class="a-cgrid" style="margin-top:24px">${list.map(rowHTML).join('')}</div></div>`;
 }
 function launchActivity(id){
  if (!studentHasPractice(id)) {toast('Your admin has not assigned this practice.');return;}

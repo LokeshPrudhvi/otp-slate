@@ -1,0 +1,276 @@
+.student-app .jobs-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+  gap: 22px;
+  align-items: stretch;
+  max-width: 1600px;
+}
+.student-app .job-opportunity {
+  --job-tint: #ffe3cd;
+  --job-tint-end: #ffdbbf;
+  --job-edge: #e8c8af;
+  --job-ink: #452d21;
+  --job-muted: #6d5241;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 400px;
+  padding: 8px;
+  border: 1px solid #cbd5df;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 4px 14px #1c324309;
+  transition:
+    border-color 0.16s,
+    box-shadow 0.16s;
+  box-sizing: border-box;
+}
+.student-app .job-opportunity--1 {
+  --job-tint: #e3eee4;
+  --job-tint-end: #d7e8da;
+  --job-edge: #bdd4c3;
+  --job-ink: #203f32;
+  --job-muted: #496b59;
+}
+.student-app .job-opportunity--2 {
+  --job-tint: #eee4f8;
+  --job-tint-end: #e4d6f5;
+  --job-edge: #d0bce5;
+  --job-ink: #3d2d54;
+  --job-muted: #69547c;
+}
+.student-app .job-opportunity--3 {
+  --job-tint: #e1ebfa;
+  --job-tint-end: #d2e2f6;
+  --job-edge: #b8cee7;
+  --job-ink: #243d5a;
+  --job-muted: #455f7b;
+}
+.student-app .job-opportunity:hover {
+  border-color: #95aabb;
+  box-shadow: 0 9px 25px #1c324313;
+}
+.student-app .job-opportunity-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 22px;
+  background: linear-gradient(145deg, var(--job-tint), var(--job-tint-end));
+  border-radius: 20px;
+  color: var(--job-ink);
+  min-height: 278px;
+}
+.student-app .job-opportunity-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
+}
+.student-app .job-opportunity-top time {
+  display: inline-flex;
+  padding: 9px 13px;
+  background: #ffffffd6;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.student-app .job-save {
+  width: 39px;
+  height: 39px;
+  padding: 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: #ffffffe3;
+  color: var(--job-ink);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.student-app .job-save svg,
+.student-app .job-saved-filter svg {
+  width: 18px;
+  height: 18px;
+}
+.student-app .job-save:hover,
+.student-app .job-save.is-saved {
+  background: #fff;
+  border-color: var(--job-edge);
+}
+.student-app .job-opportunity-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.student-app .job-opportunity-heading > div {
+  min-width: 0;
+}
+.student-app .job-opportunity .job-company-name {
+  margin: 0 0 7px;
+  color: var(--job-ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.student-app .job-opportunity h2 {
+  font-size: clamp(22px, 1.8vw, 27px);
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  margin: 0;
+  color: var(--job-ink);
+  overflow-wrap: anywhere;
+}
+.student-app .job-company-logo {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #ffffffa6;
+  color: var(--job-ink);
+  box-shadow: 0 2px 8px #1a253508;
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 800;
+}
+.student-app .job-company-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 7px;
+  box-sizing: border-box;
+}
+.student-app .job-opportunity-description {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--job-muted);
+  margin: 0 0 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.student-app .job-opportunity-tags {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.student-app .job-opportunity-tags span {
+  border: 1px solid var(--job-edge);
+  border-radius: 22px;
+  padding: 6px 10px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--job-ink);
+  background: #ffffff24;
+}
+.student-app .job-opportunity-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 13px 15px;
+}
+.student-app .job-opportunity-footer > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.student-app .job-opportunity-footer b {
+  font-size: 12px;
+  color: #23394c;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.student-app .job-opportunity-footer > div > span {
+  color: #647387;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.student-app .job-opportunity-footer a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 11px 16px;
+  border-radius: 26px;
+  background: #1b242e;
+  color: #fff;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background-color 0.15s;
+}
+.student-app .job-opportunity-footer a:hover {
+  background: #344557;
+}
+.student-app .job-opportunity :is(button, a):focus-visible {
+  outline: 3px solid #315f98;
+  outline-offset: 3px;
+}
+.student-app .job-catalog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1600px;
+  margin: 8px 0 18px;
+}
+.student-app .job-catalog-toolbar p {
+  font-size: 12px;
+  color: #61738a;
+  margin: 0;
+}
+.student-app .job-saved-filter {
+  font-size: 12px;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.student-app .job-saved-filter.on {
+  background: #e3edf9;
+  border-color: #8aabc9;
+  color: #244c7d;
+}
+.student-app .job-empty-saved {
+  padding: 24px;
+  border: 1px dashed #b8c8db;
+  border-radius: 16px;
+  color: #60738c;
+  background: #f6f9fd;
+}
+@media (max-width: 600px) {
+  .student-app .jobs-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-app .job-opportunity {
+    max-width: 100%;
+  }
+  .student-app .job-opportunity h2 {
+    font-size: 25px;
+  }
+  .student-app .job-opportunity-body {
+    min-height: 250px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .student-app .job-opportunity,
+  .student-app .job-opportunity-footer a {
+    transition: none;
+  }
+}

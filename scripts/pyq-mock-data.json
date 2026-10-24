@@ -1,0 +1,154 @@
+[
+  {
+    "kind": "company",
+    "title": "Northstar Tech",
+    "provider": "Northstar Tech",
+    "description": "Mock company guide: explore a sample hiring process, model paper and guided practice. Fictional company; demonstration content.",
+    "logoUrl": "/api/v1/placement-samples/northstar-tech.svg",
+    "url": "",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Fictional company; demonstration only.\n\n01. Aptitude screening\nPractise numerical reasoning, logical thinking and clear communication.\n\n02. Technical discussion\nReview core concepts and explain a solution step by step.\n\n03. Project conversation\nDiscuss your contribution, trade-offs and lessons learned.\n\n04. Behavioural interview\nUse specific examples to explain collaboration and decision-making.",
+    "papers": [
+      {
+        "title": "Northstar Tech - Sample model paper",
+        "url": "/api/v1/placement-samples/northstar-tech-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "A team completes 3 modules every 2 days. How many modules can it complete in 10 days?",
+        "answer": "15 modules. Ten days contain five two-day periods; 5 x 3 = 15."
+      },
+      {
+        "question": "Find the next number: 2, 6, 12, 20, 30, ...",
+        "answer": "42. Consecutive terms are n(n+1), so the next term is 6 x 7."
+      },
+      {
+        "question": "What data structure detects repeated values in a list efficiently?",
+        "answer": "A hash set. Insert each value and check whether it is already present. Expected O(n) time."
+      },
+      {
+        "question": "What is the difference between an INNER JOIN and a LEFT JOIN?",
+        "answer": "An INNER JOIN returns matching rows only. A LEFT JOIN also retains unmatched rows from the left table."
+      },
+      {
+        "question": "Describe a project decision you would change after receiving feedback.",
+        "answer": "Use a specific situation, your original decision, the feedback, the change and a measurable outcome."
+      }
+    ],
+    "status": "published"
+  },
+  {
+    "kind": "company",
+    "title": "Apex Digital",
+    "provider": "Apex Digital",
+    "description": "Mock company guide: explore a sample hiring process, model paper and guided practice. Fictional company; demonstration content.",
+    "logoUrl": "/api/v1/placement-samples/apex-digital.svg",
+    "url": "",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Fictional company; demonstration only.\n\n01. Aptitude screening\nPractise numerical reasoning, logical thinking and clear communication.\n\n02. Technical discussion\nReview core concepts and explain a solution step by step.\n\n03. Project conversation\nDiscuss your contribution, trade-offs and lessons learned.\n\n04. Behavioural interview\nUse specific examples to explain collaboration and decision-making.",
+    "papers": [
+      {
+        "title": "Apex Digital - Sample model paper",
+        "url": "/api/v1/placement-samples/apex-digital-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item costs INR 800 and is discounted by 15%. What is the sale price?",
+        "answer": "INR 680. The discount is 800 x 0.15 = 120."
+      },
+      {
+        "question": "All APIs are interfaces. Some interfaces are public. Must all APIs be public?",
+        "answer": "No. The premises do not establish that all APIs belong to the public subset."
+      },
+      {
+        "question": "Explain the difference between HTTP GET and POST.",
+        "answer": "GET retrieves a representation and should be safe. POST submits data for processing and may change server state."
+      },
+      {
+        "question": "How would you make a web form accessible?",
+        "answer": "Use associated labels, keyboard access, clear error messages, visible focus indicators and appropriate input types."
+      },
+      {
+        "question": "How would you handle a disagreement during a team project?",
+        "answer": "Explain how you would clarify the goal, hear both views, compare evidence and agree on an action."
+      }
+    ],
+    "status": "published"
+  },
+  {
+    "kind": "company",
+    "title": "Meridian Systems",
+    "provider": "Meridian Systems",
+    "description": "Mock company guide: explore a sample hiring process, model paper and guided practice. Fictional company; demonstration content.",
+    "logoUrl": "/api/v1/placement-samples/meridian-systems.svg",
+    "url": "",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Fictional company; demonstration only.\n\n01. Aptitude screening\nPractise numerical reasoning, logical thinking and clear communication.\n\n02. Technical discussion\nReview core concepts and explain a solution step by step.\n\n03. Project conversation\nDiscuss your contribution, trade-offs and lessons learned.\n\n04. Behavioural interview\nUse specific examples to explain collaboration and decision-making.",
+    "papers": [
+      {
+        "title": "Meridian Systems - Sample model paper",
+        "url": "/api/v1/placement-samples/meridian-systems-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "The ratio of frontend to backend developers is 3:2. There are 25 developers. How many work on backend?",
+        "answer": "10. There are 5 ratio units, each worth 5 developers. Backend has 2 units."
+      },
+      {
+        "question": "A train travels 150 km in 2.5 hours. What is its average speed?",
+        "answer": "60 km/h. Average speed = distance / time = 150 / 2.5."
+      },
+      {
+        "question": "Explain why a database transaction is useful when transferring money.",
+        "answer": "The debit and credit must both succeed or both roll back, preventing a partially completed transfer."
+      },
+      {
+        "question": "What is the time complexity of binary search on a sorted array?",
+        "answer": "O(log n), because each comparison halves the remaining search interval."
+      },
+      {
+        "question": "What would you do if a production incident occurred during your shift?",
+        "answer": "Assess impact, communicate, follow the incident process, mitigate safely and preserve evidence for a review."
+      }
+    ],
+    "status": "published"
+  },
+  {
+    "kind": "company",
+    "title": "Vertex Labs",
+    "provider": "Vertex Labs",
+    "description": "Mock company guide: explore a sample hiring process, model paper and guided practice. Fictional company; demonstration content.",
+    "logoUrl": "/api/v1/placement-samples/vertex-labs.svg",
+    "url": "",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Fictional company; demonstration only.\n\n01. Aptitude screening\nPractise numerical reasoning, logical thinking and clear communication.\n\n02. Technical discussion\nReview core concepts and explain a solution step by step.\n\n03. Project conversation\nDiscuss your contribution, trade-offs and lessons learned.\n\n04. Behavioural interview\nUse specific examples to explain collaboration and decision-making.",
+    "papers": [
+      {
+        "title": "Vertex Labs - Sample model paper",
+        "url": "/api/v1/placement-samples/vertex-labs-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "A value increases from 40 to 50. What is the percentage increase?",
+        "answer": "25%. The increase is 10; 10 / 40 x 100 = 25."
+      },
+      {
+        "question": "A bag has 3 red and 2 blue balls. What is the probability of drawing blue?",
+        "answer": "2/5. Two of the five equally likely balls are blue."
+      },
+      {
+        "question": "Why should a machine-learning dataset be split into training and test sets?",
+        "answer": "To evaluate generalization on data the model did not use for fitting."
+      },
+      {
+        "question": "What does a unit test check?",
+        "answer": "A small unit of behavior in isolation, using controlled inputs and explicit expected outcomes."
+      },
+      {
+        "question": "How would you explain a technical result to a non-technical teammate?",
+        "answer": "State the business question, the result in plain language, its limitations and the next decision."
+      }
+    ],
+    "status": "published"
+  }
+]

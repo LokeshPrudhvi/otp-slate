@@ -17,6 +17,16 @@ export function CompilerPage() {
 
   return (
     <div className="compiler-fullscreen-container">
+      <div className="compiler-credit">
+        Code Studio{" "}
+        <a
+          href="https://onecompiler.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Powered by OneCompiler ↗
+        </a>
+      </div>
       {loading && (
         <div className="compiler-loading-screen">
           <div className="compiler-spinner" />

@@ -11,10 +11,9 @@ function studentCanView(view){
  const s=assignedStudent();if(!s||s.status!=='Active'||studentAdminData.orgs.find(o=>o.id===s.org)?.status!=='Active')return false;
  if(['course','lesson'].includes(view))return studentHasCourse(S.course)&&(view!=='lesson'||studentHasModule(S.course,S.mod));
  if(['jobs','resume'].includes(view))return studentGrants().features.includes(view);
- if(['hiring','crt','dsa','fullstack','cc'].includes(view))return COURSES.some(c=>c.cat===view&&studentHasCourse(c.id));
+ if(view==='crt')return COURSES.some(c=>c.cat==='crt'&&studentHasCourse(c.id));
  return true;
 }
-function assignedHubEntries(){return Object.entries(HUBS).filter(([id])=>COURSES.some(c=>c.cat===id&&studentHasCourse(c.id)));}
 function accessEmpty(){return `<div class="a-page"><div class="a-head"><h1 class="a-h1">Access not assigned</h1></div><section class="exam-empty"><h2>Your admin manages your learning access.</h2><p>This resource is not assigned to your account. Contact Platform Admin to request learning access.</p><button class="a-btn" data-act="go" data-go="dashboard">Back to dashboard</button></section></div>`;}
 function studentPublishedExams(){const s=assignedStudent();if(!s||s.status!=='Active'||studentAdminData.orgs.find(o=>o.id===s.org)?.status!=='Active')return [];return studentAdminData.exams.filter(e=>e.org===s.org&&e.status==='Published'&&(!e.cohort||e.cohort===s.cohort)&&(!e.deadline||new Date(e.deadline)>new Date()));}
 function assignedExamsHTML(){const exams=studentPublishedExams();if(!exams.length)return null;return `<div class="a-page"><div class="a-head"><h1 class="a-h1">Live Exams</h1><span class="sp"></span><span class="a-tag">${exams.length} available</span></div><p class="hub-note">Released by Platform Admin.</p><div class="hub-grid">${exams.map(e=>`<article class="hub-card"><div class="hub-card-top"><span class="live-status">Available</span><span class="a-tag">${e.kind==='coding'?'Coding':'Aptitude'}</span></div><h2>${esc(e.title)}</h2><p>${e.duration} minutes · ${e.kind==='coding'?'1 sample problem':'5 sample questions'}</p><small>${e.deadline?'Closes '+new Date(e.deadline).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' IST':'No closing time'}</small><div class="hub-actions"><button class="a-btn pri" data-act="admin-exam" data-id="${e.id}">Start exam →</button></div></article>`).join('')}</div></div>`;}

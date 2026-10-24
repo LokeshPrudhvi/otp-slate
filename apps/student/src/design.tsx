@@ -2,13 +2,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient, useMe } from "@slate/ui";
+import { LoadingState, type LoadingVariant } from "@slate/ui/loading";
 import type { Course } from "@slate/contracts";
 import { referenceArt } from "./reference-art";
-import {
-  hasAccess,
-  hasToolkitTrack,
-  useStudentData as useData,
-} from "./access";
+import { hasAccess, hasCodingAccess } from "./access";
 
 export function Artwork({ name }: { name: keyof typeof referenceArt }) {
   // Artwork is generated only from the static local reference, never API content.
@@ -22,49 +19,81 @@ export function Artwork({ name }: { name: keyof typeof referenceArt }) {
 const iconPaths: Record<string, ReactNode> = {
   dashboard: (
     <>
-      <path d="M4 16a8 8 0 1 1 16 0" />
-      <path d="M12 16l4.5-5" />
-      <circle cx="12" cy="16" r="1.3" />
-      <path d="M6.5 11.5l1 .6M12 8v1.2M17.5 11.5l-1 .6" />
+      <rect
+        x="3"
+        y="3"
+        width="7"
+        height="7"
+        rx="2"
+        fill="currentColor"
+        fillOpacity=".15"
+      />
+      <rect x="14" y="3" width="7" height="11" rx="2" />
+      <rect x="3" y="14" width="7" height="7" rx="2" />
+      <rect
+        x="14"
+        y="18"
+        width="7"
+        height="3"
+        rx="1.5"
+        fill="currentColor"
+        fillOpacity=".15"
+      />
     </>
   ),
   courses: (
     <>
-      <path d="M6 3h11a1 1 0 0 1 1 1v16H7a2 2 0 0 1-2-2V5a2 2 0 0 1 1-2z" />
-      <path d="M5 18a2 2 0 0 1 2-2h11" />
-      <path d="M9 7h6M9 10h4" />
-    </>
-  ),
-  toolkit: (
-    <>
-      <rect x="3" y="7" width="18" height="14" rx="2" />
-      <path d="M8 7V4h8v3M3 12h18M10 12v3h4v-3" />
+      <path d="M12 6c-2.6-2-5.7-2.4-9-1.5v14c3.3-.9 6.4-.5 9 1.5 2.6-2 5.7-2.4 9-1.5v-14c-3.3-.9-6.4-.5-9 1.5Z" />
+      <path d="M12 6v14M6 8.5l3 .5M6 12l3 .5M15 9l3-.5M15 12.5l3-.5" />
     </>
   ),
   compiler: (
     <>
-      <polyline points="16 18 22 12 16 6" />
-      <polyline points="8 6 2 12 8 18" />
-      <line x1="14" y1="4" x2="10" y2="20" />
+      <rect x="2.5" y="4" width="19" height="16" rx="3" />
+      <path d="M2.5 8.5h19M6.5 12l2.5 2-2.5 2M12 16h4" />
+      <circle cx="6" cy="6.3" r=".6" fill="currentColor" stroke="none" />
+      <circle cx="8.5" cy="6.3" r=".6" fill="currentColor" stroke="none" />
     </>
   ),
-  practice: (
+  competitive: (
     <>
-      <path d="M8 5H5v15h14V5h-3M9 3h6v4H9zM8 12l2 2 5-5M8 17h7" />
+      <path
+        d="m8 3 4 2 4-2v6a4 4 0 0 1-8 0V3Z"
+        fill="currentColor"
+        fillOpacity=".12"
+      />
+      <path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 13v3M9 17h6M8 21l-3-2 3-2M16 17l3 2-3 2" />
     </>
   ),
+  crt: (
+    <>
+      <path
+        d="m2 8 10-5 10 5-10 5L2 8Z"
+        fill="currentColor"
+        fillOpacity=".12"
+      />
+      <path d="M6 10v6c3.4 3 8.6 3 12 0v-6M22 8v7M20.5 18l1.5-3 1.5 3" />
+    </>
+  ),
+  practice: <path d="M8 5H5v15h14V5h-3M9 3h6v4H9zM8 12l2 2 5-5M8 17h7" />,
   exams: (
     <>
-      <rect x="4" y="4" width="16" height="17" rx="2" />
-      <path d="M8 2v4M16 2v4M4 9h16" />
-      <circle cx="12" cy="15" r="3" />
-      <path d="M12 13v2l1 1" />
+      <rect x="3" y="5" width="18" height="16" rx="3" />
+      <path d="M7 3v4M17 3v4M3 10h18" />
+      <circle cx="12" cy="15.5" r="3" fill="currentColor" fillOpacity=".12" />
+      <path d="M12 14v1.5l1 .7" />
     </>
   ),
   jobs: (
     <>
-      <rect x="3" y="7" width="18" height="14" rx="2" />
-      <path d="M8 7V3h8v4M3 12h18M10 12v3h4v-3" />
+      <rect x="3" y="7" width="18" height="14" rx="3" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12c5.6 3 12.4 3 18 0M10 13v3h4v-3" />
+    </>
+  ),
+  pyq: (
+    <>
+      <path d="M4 19H2V5a2 2 0 0 1 2-2h9v2M7 7h13v14H7V7Z" />
+      <path d="M11 21v-4h5v4M10.5 10.5h1M15.5 10.5h1M10.5 13.5h1M15.5 13.5h1" />
     </>
   ),
   resume: (
@@ -74,8 +103,8 @@ const iconPaths: Record<string, ReactNode> = {
   ),
   inbox: (
     <>
-      <path d="M4 13.5L6.2 5h11.6l2.2 8.5V19H4z" />
-      <path d="M4 13.5h5l1.2 2.2h3.6l1.2-2.2h5" />
+      <rect x="3" y="5" width="18" height="14" rx="3" />
+      <path d="m4 7 6.7 5.2a2.2 2.2 0 0 0 2.6 0L20 7M4 17l5-4M20 17l-5-4" />
     </>
   ),
   help: (
@@ -137,68 +166,37 @@ export function StudentIcon({ name }: { name: string }) {
     </svg>
   );
 }
-export const tracks = [
-  {
-    id: "hiring",
-    name: "Hiring Assessments",
-    glyph: "✓",
-    intro: "Get ready for the next round.",
-    description:
-      "Build confidence with aptitude, typing, coding and web development assessments.",
-    note: "Practice at your pace with activities assigned by your placement team.",
-  },
-  {
-    id: "crt",
-    name: "CRT Modules",
-    glyph: "◎",
-    intro: "Prepare for campus placements.",
-    description:
-      "A focused path through aptitude, reasoning, competitive programming and interview skills.",
-    note: "Start with the fundamentals, then work through each module at your own pace.",
-  },
-  {
-    id: "dsa",
-    name: "Advanced DSA",
-    glyph: "⋈",
-    intro: "Turn concepts into solutions.",
-    description:
-      "Explore data structures and algorithms, from arrays and trees to dynamic programming.",
-    note: "Recommended preparation: familiarity with one programming language.",
-  },
-  {
-    id: "fullstack",
-    name: "Full Stack Development",
-    glyph: "▤",
-    intro: "Build from front to back.",
-    description:
-      "Choose your stack and learn to deliver complete web applications.",
-    note: "Each path includes front-end development, back-end APIs, databases and a capstone project.",
-  },
-  {
-    id: "competitive",
-    name: "Competitive Coding",
-    glyph: "⌘",
-    intro: "A hundred ways to get better.",
-    description:
-      "Build programming fluency with learning paths in C++, Java and Python.",
-    note: "Work through the problem collections assigned by your placement team.",
-  },
-] as const;
+export const courseTrackNames: Record<string, string> = {
+  hiring: "Hiring Assessments",
+  crt: "CRT Modules",
+  dsa: "Advanced DSA",
+  fullstack: "Full Stack Development",
+  competitive: "Competitive Coding",
+};
 const navigation = [
   { to: "/", label: "Dashboard", icon: "dashboard" },
   { to: "/courses", label: "Courses", icon: "courses", feature: "courses" },
-  { to: "/crt", label: "CRT", icon: "practice", feature: "crt" },
-  { to: "/toolkit", label: "Toolkit", icon: "toolkit", feature: "toolkit" },
+  { to: "/crt", label: "CRT", icon: "crt", feature: "crt" },
   { to: "/compiler", label: "Compiler", icon: "compiler", feature: "compiler" },
-  { to: "/practice", label: "Practice", icon: "practice", feature: "practice" },
+  {
+    to: "/competitive-programming",
+    label: "Coding",
+    icon: "competitive",
+    feature: "practice",
+  },
   {
     to: "/live-exams",
     label: "Live Exams",
     icon: "exams",
     feature: "live-exams",
   },
-  { to: "/jobs", label: "Jobs", icon: "jobs", feature: "jobs" },
-  { to: "/resume", label: "Resume", icon: "resume", feature: "resume" },
+  {
+    to: "/career-opportunities",
+    label: "Careers",
+    icon: "jobs",
+    feature: "jobs",
+  },
+  { to: "/pyq", label: "PYQ", icon: "pyq", feature: "pyq" },
   { to: "/inbox", label: "Inbox", icon: "inbox", feature: "inbox" },
   {
     to: "/announcements",
@@ -217,19 +215,8 @@ export function StudentShell() {
   const examAttempt = /^\/live-exams\/[^/]+\/attempt\/[^/]+\/?$/.test(
     location.pathname,
   );
-  const courseId = location.pathname.match(/^\/courses\/([^/]+)/)?.[1];
-  const courses = useData<Course[]>(
-    "courses",
-    "student/courses",
-    Boolean(courseId),
-  );
-  const currentCourse = courses.data?.find((course) => course.id === courseId);
   const selectedNav =
-    currentCourse && hasToolkitTrack(me.data, currentCourse.track)
-      ? "/toolkit"
-      : location.pathname === "/"
-        ? "/"
-        : `/${location.pathname.split("/")[1]}`;
+    location.pathname === "/" ? "/" : `/${location.pathname.split("/")[1]}`;
   const identity = me.data!;
   const lastAccessRevision = useRef(identity.access?.revision);
   useEffect(() => {
@@ -294,6 +281,7 @@ export function StudentShell() {
       >
         <Link to="/" className="a-logo" aria-label="OTP Slate dashboard">
           <Artwork name="logo" />
+          <span className="rail-brand-name">OTP Slate</span>
         </Link>
         <button
           ref={account}
@@ -309,7 +297,11 @@ export function StudentShell() {
         {navigation
           .filter(
             (item) =>
-              (!item.feature || identity.features.includes(item.feature)) &&
+              (!item.feature ||
+                identity.features.includes(item.feature) ||
+                (item.to === "/career-opportunities" &&
+                  identity.features.includes("resume"))) &&
+              (item.feature !== "practice" || hasCodingAccess(identity)) &&
               (!item.unlessFeature ||
                 !identity.features.includes(item.unlessFeature)),
           )
@@ -320,8 +312,11 @@ export function StudentShell() {
               className={`a-nav${!tray && selectedNav === item.to ? " on" : ""}`}
               aria-current={selectedNav === item.to ? "page" : undefined}
               aria-label={item.label}
+              data-nav-icon={item.icon}
             >
-              <StudentIcon name={item.icon} />
+              <span className="rail-icon" aria-hidden="true">
+                <StudentIcon name={item.icon} />
+              </span>
               <span className="rail-label">{item.label}</span>
             </Link>
           ))}
@@ -333,6 +328,7 @@ export function StudentShell() {
           onClick={() => setCollapsed(!collapsed)}
         >
           <StudentIcon name="collapse" />
+          <span className="rail-label">Collapse sidebar</span>
         </button>
       </nav>
       <main className="a-main" id="student-content" ref={main} tabIndex={-1}>
@@ -390,7 +386,7 @@ export function StudentShell() {
             )}
             {identity.features.includes("resume") && (
               <li>
-                <button onClick={() => go("/resume")}>
+                <button onClick={() => go("/career-opportunities/resume")}>
                   Resume
                   <small>Your details, templates and saved draft</small>
                 </button>
@@ -476,18 +472,16 @@ export function StudentShell() {
           <div className="otto-shortcuts">
             {[
               ["/courses", "Continue learning", "courses"],
-              [
-                "/toolkit",
-                identity.access?.display.toolkitTitle ||
-                  "Your learning toolkit",
-                "toolkit",
-              ],
-              ["/practice", "Find practice", "practice"],
+              ["/competitive-programming", "Solve coding problems", "practice"],
               ["/live-exams", "Check live exams", "live-exams"],
               ["/help", "Get help"],
             ]
               .filter(
-                ([, , feature]) => !feature || hasAccess(identity, feature),
+                ([, , feature]) =>
+                  !feature ||
+                  (feature === "practice"
+                    ? hasCodingAccess(identity)
+                    : hasAccess(identity, feature)),
               )
               .map(([path, label]) => (
                 <button key={path} className="a-btn" onClick={() => go(path)}>
@@ -518,14 +512,16 @@ export function Heading({
 export function Status({
   pending,
   error,
+  label = "Loading your content",
+  variant = "content",
 }: {
   pending?: boolean;
   error?: unknown;
+  label?: string;
+  variant?: LoadingVariant;
 }) {
   return pending ? (
-    <p className="hub-note" role="status">
-      Loading…
-    </p>
+    <LoadingState label={label} variant={variant} />
   ) : error ? (
     <p className="student-error" role="alert">
       {error instanceof Error ? error.message : "Please retry."}

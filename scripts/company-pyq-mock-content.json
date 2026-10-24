@@ -1,0 +1,478 @@
+[
+  {
+    "companyName": "TCS",
+    "slug": "tcs",
+    "description": "Mock preparation guide for TCS: original model questions focused on IT services and delivery. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent TCS's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on IT services and delivery. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "TCS - Mock model paper",
+        "url": "/api/v1/placement-samples/tcs-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 800 is discounted by 10%. What is its sale price?",
+        "answer": "INR 720. The discount is 800 x 10/100 = 80; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 90 km in 2 hours. What is its average speed?",
+        "answer": "45 km/h. Average speed = distance / time = 90 / 2."
+      },
+      {
+        "question": "How would you find the second-largest distinct number in an array in one pass?",
+        "answer": "Track the largest and second-largest distinct values while scanning. Ignore duplicates. This uses O(n) time and O(1) extra space."
+      },
+      {
+        "question": "What is the difference between a primary key and a foreign key?",
+        "answer": "A primary key uniquely identifies a row. A foreign key references a key in another table and enforces referential integrity."
+      },
+      {
+        "question": "A client changes a requirement near a deadline. How would you respond?",
+        "answer": "Clarify the change, assess impact, agree on priorities and document a revised plan with the team and client."
+      }
+    ]
+  },
+  {
+    "companyName": "Infosys",
+    "slug": "infosys",
+    "description": "Mock preparation guide for Infosys: original model questions focused on software fundamentals. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Infosys's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on software fundamentals. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Infosys - Mock model paper",
+        "url": "/api/v1/placement-samples/infosys-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 840 is discounted by 15%. What is its sale price?",
+        "answer": "INR 714. The discount is 840 x 15/100 = 126; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 144 km in 3 hours. What is its average speed?",
+        "answer": "48 km/h. Average speed = distance / time = 144 / 3."
+      },
+      {
+        "question": "Explain encapsulation with a bank-account example.",
+        "answer": "Keep the balance private and expose deposit and withdrawal methods that validate inputs and enforce balance rules."
+      },
+      {
+        "question": "What makes a database table reach second normal form?",
+        "answer": "It must be in first normal form, and every non-key attribute must depend on the whole of each candidate key, not only part of a composite key."
+      },
+      {
+        "question": "How would you explain a technical delay to a client?",
+        "answer": "Describe the impact in plain language, explain what is known, propose alternatives and agree on a realistic next update."
+      }
+    ]
+  },
+  {
+    "companyName": "Wipro",
+    "slug": "wipro",
+    "description": "Mock preparation guide for Wipro: original model questions focused on testing and application support. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Wipro's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on testing and application support. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Wipro - Mock model paper",
+        "url": "/api/v1/placement-samples/wipro-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 880 is discounted by 20%. What is its sale price?",
+        "answer": "INR 704. The discount is 880 x 20/100 = 176; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 204 km in 4 hours. What is its average speed?",
+        "answer": "51 km/h. Average speed = distance / time = 204 / 4."
+      },
+      {
+        "question": "How do unit tests differ from integration tests?",
+        "answer": "Unit tests isolate a small unit of behavior. Integration tests check that multiple components interact correctly."
+      },
+      {
+        "question": "A service is slow but returns no errors. What would you check first?",
+        "answer": "Measure request timings, resource use, database query duration and downstream dependencies. Use traces or logs to identify the bottleneck before changing code."
+      },
+      {
+        "question": "Describe the difference between a process and a thread.",
+        "answer": "A process has its own address space. Threads within a process share its memory and resources while maintaining separate execution stacks."
+      }
+    ]
+  },
+  {
+    "companyName": "HCL",
+    "slug": "hcl",
+    "description": "Mock preparation guide for HCL: original model questions focused on systems and networking. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent HCL's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on systems and networking. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "HCL - Mock model paper",
+        "url": "/api/v1/placement-samples/hcl-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 920 is discounted by 25%. What is its sale price?",
+        "answer": "INR 690. The discount is 920 x 25/100 = 230; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 108 km in 2 hours. What is its average speed?",
+        "answer": "54 km/h. Average speed = distance / time = 108 / 2."
+      },
+      {
+        "question": "What is a deadlock, and name one way to prevent it?",
+        "answer": "Deadlock occurs when tasks wait indefinitely for resources held by each other. A consistent lock acquisition order can remove circular waiting."
+      },
+      {
+        "question": "How do TCP and UDP differ?",
+        "answer": "TCP provides an ordered, reliable byte stream with connection management. UDP sends independent datagrams without guaranteeing delivery or order."
+      },
+      {
+        "question": "What should an incident handover include?",
+        "answer": "Impact, timeline, evidence, actions taken, current status, known risks and the owner of the next action."
+      }
+    ]
+  },
+  {
+    "companyName": "Reliance",
+    "slug": "relianceindustrieslimited",
+    "description": "Mock preparation guide for Reliance: original model questions focused on digital platforms and scale. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Reliance's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on digital platforms and scale. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Reliance - Mock model paper",
+        "url": "/api/v1/placement-samples/relianceindustrieslimited-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 960 is discounted by 10%. What is its sale price?",
+        "answer": "INR 864. The discount is 960 x 10/100 = 96; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 171 km in 3 hours. What is its average speed?",
+        "answer": "57 km/h. Average speed = distance / time = 171 / 3."
+      },
+      {
+        "question": "Why might a product catalogue use a cache?",
+        "answer": "To reduce latency and database load for frequently read products. Invalidation or expiry is needed to keep cached values sufficiently fresh."
+      },
+      {
+        "question": "Explain horizontal scaling.",
+        "answer": "Add more application instances and distribute traffic across them. Shared state and database capacity must also be considered."
+      },
+      {
+        "question": "How would you keep a stock update consistent with a purchase?",
+        "answer": "Use a transaction or atomic conditional update so stock cannot fall below zero, and make retries idempotent."
+      }
+    ]
+  },
+  {
+    "companyName": "Airtel",
+    "slug": "airtel",
+    "description": "Mock preparation guide for Airtel: original model questions focused on telecom and service reliability. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Airtel's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on telecom and service reliability. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Airtel - Mock model paper",
+        "url": "/api/v1/placement-samples/airtel-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1000 is discounted by 15%. What is its sale price?",
+        "answer": "INR 850. The discount is 1000 x 15/100 = 150; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 240 km in 4 hours. What is its average speed?",
+        "answer": "60 km/h. Average speed = distance / time = 240 / 4."
+      },
+      {
+        "question": "What does DNS do when a user opens a website?",
+        "answer": "DNS resolves the hostname into an address that the client can use to connect to the service."
+      },
+      {
+        "question": "How do latency and bandwidth differ?",
+        "answer": "Latency is the time needed for data to travel or a request to complete. Bandwidth is the rate at which data can be transferred."
+      },
+      {
+        "question": "How would you investigate intermittent connection failures?",
+        "answer": "Correlate timestamps, affected locations, network paths, packet loss and service logs; compare failing and healthy sessions."
+      }
+    ]
+  },
+  {
+    "companyName": "Swiggy",
+    "slug": "swiggy",
+    "description": "Mock preparation guide for Swiggy: original model questions focused on delivery and real-time systems. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Swiggy's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on delivery and real-time systems. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Swiggy - Mock model paper",
+        "url": "/api/v1/placement-samples/swiggy-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1040 is discounted by 20%. What is its sale price?",
+        "answer": "INR 832. The discount is 1040 x 20/100 = 208; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 126 km in 2 hours. What is its average speed?",
+        "answer": "63 km/h. Average speed = distance / time = 126 / 2."
+      },
+      {
+        "question": "Which algorithm finds the shortest path when all road weights are non-negative?",
+        "answer": "Dijkstra's algorithm finds shortest paths for non-negative edge weights. A priority queue improves efficiency."
+      },
+      {
+        "question": "A user taps Place order twice. How can you prevent duplicate orders?",
+        "answer": "Use an idempotency key and a server-side uniqueness constraint so repeated requests return the same operation result."
+      },
+      {
+        "question": "Why should a delivery estimate show a range rather than a guaranteed minute?",
+        "answer": "Traffic, preparation time and travel conditions vary. A range communicates uncertainty more accurately."
+      }
+    ]
+  },
+  {
+    "companyName": "Zomato",
+    "slug": "zomato",
+    "description": "Mock preparation guide for Zomato: original model questions focused on search and order platforms. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Zomato's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on search and order platforms. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Zomato - Mock model paper",
+        "url": "/api/v1/placement-samples/zomato-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1080 is discounted by 25%. What is its sale price?",
+        "answer": "INR 810. The discount is 1080 x 25/100 = 270; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 198 km in 3 hours. What is its average speed?",
+        "answer": "66 km/h. Average speed = distance / time = 198 / 3."
+      },
+      {
+        "question": "How can you efficiently search restaurants by city and cuisine?",
+        "answer": "Use indexes aligned to the filter patterns, such as a composite index on city and cuisine, and check the query plan with representative data."
+      },
+      {
+        "question": "What is pagination, and why does it help an order list?",
+        "answer": "Pagination retrieves a bounded portion of a result set, reducing response size, memory use and rendering work."
+      },
+      {
+        "question": "How would you design fair handling for a failed payment on an order?",
+        "answer": "Track payment and order states, use idempotent callbacks, reconcile uncertain results and communicate the status clearly to the customer."
+      }
+    ]
+  },
+  {
+    "companyName": "Razorpay",
+    "slug": "razorpay",
+    "description": "Mock preparation guide for Razorpay: original model questions focused on payments and API correctness. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Razorpay's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on payments and API correctness. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Razorpay - Mock model paper",
+        "url": "/api/v1/placement-samples/razorpay-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1120 is discounted by 10%. What is its sale price?",
+        "answer": "INR 1008. The discount is 1120 x 10/100 = 112; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 276 km in 4 hours. What is its average speed?",
+        "answer": "69 km/h. Average speed = distance / time = 276 / 4."
+      },
+      {
+        "question": "Why is idempotency especially useful for payment requests?",
+        "answer": "A client may retry after a timeout without knowing whether a charge succeeded. Idempotency ensures the same operation does not create multiple charges."
+      },
+      {
+        "question": "What should a service do with an invalid webhook signature?",
+        "answer": "Reject the request without applying the event. Verify signatures using the provider's documented method and keep replay protection in place."
+      },
+      {
+        "question": "Why should monetary values avoid binary floating-point arithmetic?",
+        "answer": "Many decimal fractions are not represented exactly in binary. Integer minor units or an appropriate decimal type help preserve exact amounts."
+      }
+    ]
+  },
+  {
+    "companyName": "Zerodha",
+    "slug": "zerodha",
+    "description": "Mock preparation guide for Zerodha: original model questions focused on financial data and reliability. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Zerodha's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on financial data and reliability. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Zerodha - Mock model paper",
+        "url": "/api/v1/placement-samples/zerodha-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1160 is discounted by 15%. What is its sale price?",
+        "answer": "INR 986. The discount is 1160 x 15/100 = 174; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 144 km in 2 hours. What is its average speed?",
+        "answer": "72 km/h. Average speed = distance / time = 144 / 2."
+      },
+      {
+        "question": "How can a database transaction protect a ledger entry?",
+        "answer": "It can ensure related records are committed together or all rolled back, avoiding a partially recorded operation."
+      },
+      {
+        "question": "What is the difference between authentication and authorization?",
+        "answer": "Authentication establishes who the user is. Authorization determines which actions or resources that identity may access."
+      },
+      {
+        "question": "How would you display delayed market data responsibly?",
+        "answer": "Show the timestamp and delayed status prominently, avoid implying that the data is live, and handle stale data explicitly."
+      }
+    ]
+  },
+  {
+    "companyName": "Meta",
+    "slug": "meta",
+    "description": "Mock preparation guide for Meta: original model questions focused on graphs and product systems. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Meta's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on graphs and product systems. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Meta - Mock model paper",
+        "url": "/api/v1/placement-samples/meta-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1200 is discounted by 20%. What is its sale price?",
+        "answer": "INR 960. The discount is 1200 x 20/100 = 240; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 225 km in 3 hours. What is its average speed?",
+        "answer": "75 km/h. Average speed = distance / time = 225 / 3."
+      },
+      {
+        "question": "How would you find the shortest number of connections between two users in an unweighted graph?",
+        "answer": "Use breadth-first search and track visited nodes. BFS explores nodes in increasing edge-distance order."
+      },
+      {
+        "question": "What trade-off does denormalizing a frequently read feed introduce?",
+        "answer": "It can make reads faster but increases duplicate data and the work required to keep updates consistent."
+      },
+      {
+        "question": "How would you measure whether a new feature improved the user experience?",
+        "answer": "Define a user-centered metric and guardrails, compare against a baseline or controlled experiment and check for unintended effects."
+      }
+    ]
+  },
+  {
+    "companyName": "Amazon",
+    "slug": "amazon",
+    "description": "Mock preparation guide for Amazon: original model questions focused on queues and distributed systems. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Amazon's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on queues and distributed systems. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Amazon - Mock model paper",
+        "url": "/api/v1/placement-samples/amazon-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1240 is discounted by 25%. What is its sale price?",
+        "answer": "INR 930. The discount is 1240 x 25/100 = 310; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 312 km in 4 hours. What is its average speed?",
+        "answer": "78 km/h. Average speed = distance / time = 312 / 4."
+      },
+      {
+        "question": "Why might an order service place fulfillment work on a queue?",
+        "answer": "A queue decouples request handling from slower processing and absorbs traffic bursts. Consumers must still handle retries and duplicates safely."
+      },
+      {
+        "question": "What is eventual consistency?",
+        "answer": "Replicas may briefly disagree after a write, but converge if no new updates occur. The application must account for temporarily stale reads."
+      },
+      {
+        "question": "How would you explain a decision you made with incomplete information?",
+        "answer": "State the goal, known evidence, uncertainty, reversible options, decision and how you checked the outcome."
+      }
+    ]
+  },
+  {
+    "companyName": "Netflix",
+    "slug": "netflix",
+    "description": "Mock preparation guide for Netflix: original model questions focused on streaming and resilient services. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Netflix's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on streaming and resilient services. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Netflix - Mock model paper",
+        "url": "/api/v1/placement-samples/netflix-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1280 is discounted by 10%. What is its sale price?",
+        "answer": "INR 1152. The discount is 1280 x 10/100 = 128; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 162 km in 2 hours. What is its average speed?",
+        "answer": "81 km/h. Average speed = distance / time = 162 / 2."
+      },
+      {
+        "question": "How does a content delivery network help video playback?",
+        "answer": "It places content closer to viewers, which can reduce origin load and delivery latency."
+      },
+      {
+        "question": "What is a circuit breaker in a service architecture?",
+        "answer": "It temporarily stops calls to a repeatedly failing dependency, allowing controlled recovery and preventing cascading failures."
+      },
+      {
+        "question": "Why does adaptive video streaming change quality during playback?",
+        "answer": "It adjusts bitrate to estimated network capacity and buffer conditions to reduce interruptions while using available bandwidth."
+      }
+    ]
+  },
+  {
+    "companyName": "Google",
+    "slug": "google",
+    "description": "Mock preparation guide for Google: original model questions focused on algorithms and information retrieval. Not an official hiring guide or authentic previous-year paper.",
+    "hiringProcedure": "MOCK HIRING PROCEDURE - Illustrative practice pathway only. This does not represent Google's actual recruitment process.\n\n01. Aptitude warm-up\nPractise percentages, speed, numerical reasoning and clear reading.\n\n02. Technical fundamentals\nWork through the original practice questions on algorithms and information retrieval. Explain assumptions and edge cases.\n\n03. Problem-solving discussion\nPresent a solution, consider alternatives and discuss correctness and trade-offs.\n\n04. Project and communication practice\nExplain your contribution to a project, a challenge you faced and what you learned.",
+    "papers": [
+      {
+        "title": "Google - Mock model paper",
+        "url": "/api/v1/placement-samples/google-model-paper.pdf"
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "question": "An item priced at INR 1320 is discounted by 15%. What is its sale price?",
+        "answer": "INR 1122. The discount is 1320 x 15/100 = 198; subtract it from the original price."
+      },
+      {
+        "question": "A vehicle travels 252 km in 3 hours. What is its average speed?",
+        "answer": "84 km/h. Average speed = distance / time = 252 / 3."
+      },
+      {
+        "question": "How would you return the top k frequent words from a large list?",
+        "answer": "Count frequencies with a hash map, then maintain a size-k heap or sort the distinct words. Define a tie-break rule for equal frequencies."
+      },
+      {
+        "question": "Why does binary search require an ordered search space?",
+        "answer": "Each comparison must safely eliminate one side of the remaining range. Ordering provides that guarantee."
+      },
+      {
+        "question": "How would you clarify an ambiguous problem before coding?",
+        "answer": "Ask about inputs, constraints, edge cases, expected output and success criteria; then confirm the approach with a small example."
+      }
+    ]
+  }
+]

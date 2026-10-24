@@ -10,10 +10,10 @@
   border: 0;
 }
 .learning-access {
-  --access-line: #e2e8ef;
+  --access-line: var(--surface-border);
   --access-muted: #596d85;
   --access-hero: #102744;
-  --access-surface: #f5f7fb;
+  --access-surface: var(--surface-canvas);
 }
 .access-hero {
   padding: 30px 32px 0;
@@ -252,8 +252,9 @@
   align-items: start;
 }
 .access-directory {
-  background: #f0f4f9;
+  background: var(--surface-card);
   border: 1px solid var(--access-line);
+  box-shadow: var(--surface-shadow);
   border-radius: 11px;
   padding: 17px 12px;
   position: sticky;
@@ -395,8 +396,9 @@
   flex-shrink: 0;
 }
 .access-card {
-  background: white;
+  background: var(--surface-card);
   border: 1px solid var(--access-line);
+  box-shadow: var(--surface-shadow);
   border-radius: 11px;
   padding: 23px;
   margin-bottom: 21px;
@@ -792,8 +794,9 @@
 .access-directory > .admin-select { margin-bottom: 10px; }
 .access-directory .admin-select-trigger { font-size: 12px; min-height: 36px; }
 .access-preview {
-  border: 1px solid #d4e1ef;
+  border: 1px solid var(--surface-border);
   background: #eef4fb;
+  box-shadow: var(--surface-shadow);
   border-radius: 11px;
   padding: 23px 21px;
   margin-top: 5px;
@@ -903,9 +906,9 @@
   align-items: center;
   gap: 18px;
   grid-column: 1 / -1;
-  background: #fff;
-  border: 1px solid #d6e1ee;
-  box-shadow: 0 -4px 25px #1431520a;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 -3px 18px #183b6410, var(--surface-shadow);
   border-radius: 10px;
   padding: 17px 22px;
   position: sticky;

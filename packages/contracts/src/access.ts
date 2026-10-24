@@ -1,7 +1,7 @@
 export const featureKeys = [
   "courses",
-  "toolkit",
   "crt",
+  "pyq",
   "compiler",
   "practice",
   "live-exams",
@@ -23,36 +23,25 @@ export const practiceModuleIds = [
   "competitive-coding",
 ] as const;
 export type PracticeModuleId = (typeof practiceModuleIds)[number];
-export const toolkitTrackIds = [
-  "hiring",
-  "crt",
-  "dsa",
-  "fullstack",
-  "competitive",
-] as const;
-export type ToolkitTrackId = (typeof toolkitTrackIds)[number];
 export interface AccessPolicy {
   features: FeatureKey[] | null;
   courseIds: string[] | null;
   practiceModuleIds: PracticeModuleId[] | null;
-  toolkitTrackIds: ToolkitTrackId[] | null;
 }
 export interface PortalDisplay {
   portalTitle: string;
-  toolkitTitle: string;
   welcomeText: string;
 }
 export interface EffectiveAccess {
   features: FeatureKey[];
   courseIds: string[];
   practiceModuleIds: PracticeModuleId[];
-  toolkitTrackIds: ToolkitTrackId[];
   revision: number;
   display: PortalDisplay;
 }
 export type AccessSelections = Pick<
   EffectiveAccess,
-  "features" | "courseIds" | "practiceModuleIds" | "toolkitTrackIds"
+  "features" | "courseIds" | "practiceModuleIds"
 >;
 export interface AccessWorkspace {
   organization: { id: string; name: string; status: string };
@@ -96,7 +85,6 @@ export interface AccessWorkspace {
       sample: boolean;
       requiresCompiler: boolean;
     }[];
-    toolkitTracks: { id: ToolkitTrackId; name: string }[];
   };
 }
 export interface UpdateAccess {

@@ -1,0 +1,901 @@
+[
+  {
+    "topicId": "530c9970-261a-5be2-aa25-f42d396d42f0",
+    "title": "Aptitude and Placement Mock Tests",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "530c9970-261a-5be2-aa25-f42d396d42f0-starter-1",
+        "prompt": "After a timed mock test, you notice that most errors came from ratio questions. What is the most useful next step?",
+        "options": [
+          "Repeat only questions you already answer correctly.",
+          "Review the ratio errors, practise similar questions and test the topic again.",
+          "Ignore the errors and look only at your rank.",
+          "Memorise the order of answers from the mock test."
+        ],
+        "correctOption": 1,
+        "explanation": "An error review identifies the skill to improve; focused practice and a later check measure progress."
+      },
+      {
+        "id": "530c9970-261a-5be2-aa25-f42d396d42f0-starter-2",
+        "prompt": "A mock test gives 30 minutes for 30 questions and allows you to revisit questions. You have spent three minutes on one difficult question with no progress. What is the best time-management choice?",
+        "options": [
+          "Use all remaining time on that question.",
+          "Stop the test immediately.",
+          "Assume every later question will take exactly three minutes.",
+          "Mark it for review, move to another question and return if time remains."
+        ],
+        "correctOption": 3,
+        "explanation": "Moving on protects time for other questions while retaining the option to revisit the difficult one."
+      }
+    ]
+  },
+  {
+    "topicId": "474492d9-35d7-5d9f-9b1b-2197f5e47fa4",
+    "title": "Basic Technical or Subject-Related Interview Questions",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "474492d9-35d7-5d9f-9b1b-2197f5e47fa4-starter-1",
+        "prompt": "An interviewer asks you to solve a technical problem, but one requirement is unclear. What should you do first?",
+        "options": [
+          "Ask a focused clarification question and state any remaining assumptions.",
+          "Silently choose an arbitrary interpretation.",
+          "Start coding without understanding the task.",
+          "Declare that no solution is possible."
+        ],
+        "correctOption": 0,
+        "explanation": "Clarifying requirements helps ensure that the proposed solution addresses the actual problem."
+      },
+      {
+        "id": "474492d9-35d7-5d9f-9b1b-2197f5e47fa4-starter-2",
+        "prompt": "You know one approach to a technical problem but are unsure whether it is the most efficient. How should you respond?",
+        "options": [
+          "Claim it is optimal without checking.",
+          "Give an unrelated definition instead.",
+          "Explain your approach, test it with an example and discuss its limitations honestly.",
+          "Avoid explaining any part of your reasoning."
+        ],
+        "correctOption": 2,
+        "explanation": "Showing reasoning and limitations lets the interviewer assess your understanding and problem-solving process."
+      }
+    ]
+  },
+  {
+    "topicId": "0f6856d7-ced5-5e70-8c00-57f3433f07fb",
+    "title": "Body Language and Professional Etiquette",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "0f6856d7-ced5-5e70-8c00-57f3433f07fb-starter-1",
+        "prompt": "In an in-person interview, what best demonstrates attentive listening while allowing for individual comfort and accessibility needs?",
+        "options": [
+          "Stare continuously at the interviewer without looking away.",
+          "Use a comfortable attentive posture, avoid distractions and acknowledge the speaker appropriately.",
+          "Check unrelated phone notifications while the interviewer speaks.",
+          "Interrupt every sentence to show enthusiasm."
+        ],
+        "correctOption": 1,
+        "explanation": "Attentiveness is shown through respectful engagement, not a rigid rule about eye contact or posture."
+      },
+      {
+        "id": "0f6856d7-ced5-5e70-8c00-57f3433f07fb-starter-2",
+        "prompt": "You realise that an unavoidable delay will make you late for a scheduled interview. What is the most professional response?",
+        "options": [
+          "Arrive late without acknowledging the delay.",
+          "Send an inaccurate arrival estimate to avoid concern.",
+          "Ignore all calls from the interviewer.",
+          "Notify the contact promptly, apologise and provide a realistic arrival estimate."
+        ],
+        "correctOption": 3,
+        "explanation": "Prompt, accurate communication helps the interviewer manage the schedule and shows respect for their time."
+      }
+    ]
+  },
+  {
+    "topicId": "c7e7c202-b113-5ea1-9749-2b9cf41d059d",
+    "title": "Group Discussion Practice",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "c7e7c202-b113-5ea1-9749-2b9cf41d059d-starter-1",
+        "prompt": "In a practice discussion, two people dominate and another participant has not spoken. What can you do to support balanced participation?",
+        "options": [
+          "At an appropriate pause, invite the quieter participant to share their view without pressuring them.",
+          "Interrupt the quieter participant whenever they try to speak.",
+          "Announce that only the loudest participants have useful ideas.",
+          "Change the topic whenever someone new speaks."
+        ],
+        "correctOption": 0,
+        "explanation": "A respectful invitation creates an opportunity to contribute without forcing participation."
+      },
+      {
+        "id": "c7e7c202-b113-5ea1-9749-2b9cf41d059d-starter-2",
+        "prompt": "After a practice discussion, which feedback is most useful to a teammate?",
+        "options": [
+          "You are just bad at discussions.",
+          "Everything was perfect, so there is nothing to review.",
+          "Your example supported the point well; next time, leave a pause so others can respond.",
+          "You should always speak for the entire session."
+        ],
+        "correctOption": 2,
+        "explanation": "Specific, observable feedback identifies both a strength and a practical improvement."
+      }
+    ]
+  },
+  {
+    "topicId": "02c511b9-8dc8-52cf-922d-1fb129a90c00",
+    "title": "HR Interview Questions",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "02c511b9-8dc8-52cf-922d-1fb129a90c00-starter-1",
+        "prompt": "An interviewer asks, \"Why are you interested in this role?\" Which answer is strongest?",
+        "options": [
+          "Say you have not read anything about the role.",
+          "Connect a specific responsibility in the role to your skills, interests and a realistic learning goal.",
+          "Criticise every other employer you considered.",
+          "Claim you will accept any job without considering its responsibilities."
+        ],
+        "correctOption": 1,
+        "explanation": "A relevant answer shows that you understand the role and can explain why it fits your interests and skills."
+      },
+      {
+        "id": "02c511b9-8dc8-52cf-922d-1fb129a90c00-starter-2",
+        "prompt": "You are asked about a disagreement with a teammate. Which response best demonstrates professional judgement?",
+        "options": [
+          "Reveal private information unrelated to the disagreement.",
+          "Blame the teammate for every difficulty.",
+          "Claim that respectful disagreement should never be discussed.",
+          "Describe the situation briefly, explain how you listened and resolved it, and share what you learned."
+        ],
+        "correctOption": 3,
+        "explanation": "A concrete account of actions, resolution and learning is more useful than blame or unrelated personal details."
+      }
+    ]
+  },
+  {
+    "topicId": "c769a6c6-c91a-5af5-85f3-bf60675f4613",
+    "title": "Mock Interviews",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "c769a6c6-c91a-5af5-85f3-bf60675f4613-starter-1",
+        "prompt": "What is the main benefit of recording a mock interview with everyone’s consent?",
+        "options": [
+          "Reviewing the clarity, relevance and delivery of your answers to identify specific improvements",
+          "Guaranteeing selection in every real interview",
+          "Replacing all preparation about the actual role",
+          "Proving that longer answers are always better"
+        ],
+        "correctOption": 0,
+        "explanation": "A recording supports targeted feedback; it does not guarantee an outcome or replace role-specific preparation."
+      },
+      {
+        "id": "c769a6c6-c91a-5af5-85f3-bf60675f4613-starter-2",
+        "prompt": "During mock-interview feedback, you are told that your project answer was too vague. What should you do before the next practice round?",
+        "options": [
+          "Memorise more unrelated definitions.",
+          "Make the answer longer without adding specifics.",
+          "Prepare a concise example explaining your task, actions and observable outcome.",
+          "Avoid mentioning the project again even when asked."
+        ],
+        "correctOption": 2,
+        "explanation": "A structured, concrete example makes your contribution and results easier to understand."
+      }
+    ]
+  },
+  {
+    "topicId": "28e31657-aa18-5cfd-abc2-7ab55ec1f111",
+    "title": "Problem-Solving and Decision-Making",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "28e31657-aa18-5cfd-abc2-7ab55ec1f111-starter-1",
+        "prompt": "A team repeatedly misses a delivery deadline. Before selecting a fix, what should you do?",
+        "options": [
+          "Choose the first solution suggested without checking the cause.",
+          "Gather evidence about where delays occur and identify the underlying cause.",
+          "Add random tasks to everyone’s workload.",
+          "Assume one person is responsible without evidence."
+        ],
+        "correctOption": 1,
+        "explanation": "Understanding the cause makes it more likely that the chosen action will address the actual problem."
+      },
+      {
+        "id": "28e31657-aa18-5cfd-abc2-7ab55ec1f111-starter-2",
+        "prompt": "You must choose between two tools for a team project. Which method gives the strongest basis for the decision?",
+        "options": [
+          "Choose only the tool with the most attractive logo.",
+          "Assume the more expensive tool must always be better.",
+          "Let an unrelated advertisement determine the choice.",
+          "Compare both tools against agreed requirements, cost, risks and a small practical trial."
+        ],
+        "correctOption": 3,
+        "explanation": "Explicit criteria and relevant evidence make the comparison transparent and connected to the project’s needs."
+      }
+    ]
+  },
+  {
+    "topicId": "641a9f27-2010-50cb-b291-453eb483d75b",
+    "title": "Project and Internship Explanation",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "641a9f27-2010-50cb-b291-453eb483d75b-starter-1",
+        "prompt": "When describing a team project in an interview, how should you distinguish your contribution?",
+        "options": [
+          "Explain the team’s objective, identify the tasks you personally completed and describe the outcome.",
+          "Take credit for every task completed by the team.",
+          "List team members without explaining the work.",
+          "Describe only the project title."
+        ],
+        "correctOption": 0,
+        "explanation": "Separating the team objective from your own actions shows both collaboration and individual contribution."
+      },
+      {
+        "id": "641a9f27-2010-50cb-b291-453eb483d75b-starter-2",
+        "prompt": "Your internship prototype was never released to customers. How should you explain its outcome?",
+        "options": [
+          "Claim thousands of customers used it.",
+          "Invent revenue figures to make it sound successful.",
+          "Describe what you built, how it was evaluated and what you learned, without claiming a customer launch.",
+          "Say the project had no learning value because it was a prototype."
+        ],
+        "correctOption": 2,
+        "explanation": "A truthful account can demonstrate useful work and learning even when a prototype is not released."
+      }
+    ]
+  },
+  {
+    "topicId": "7f7e79c6-cb80-5f5f-9141-9d6102fb10dd",
+    "title": "Resume Preparation",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "7f7e79c6-cb80-5f5f-9141-9d6102fb10dd-starter-1",
+        "prompt": "Which resume bullet provides the clearest evidence of a student’s contribution?",
+        "options": [
+          "Excellent person with many talents.",
+          "Built a spreadsheet tracker that reduced weekly report preparation from 60 to 30 minutes in a class project.",
+          "Responsible for lots of things.",
+          "Best spreadsheet expert in the world."
+        ],
+        "correctOption": 1,
+        "explanation": "The bullet identifies an action, a concrete task and a measurable outcome that can be explained in an interview."
+      },
+      {
+        "id": "7f7e79c6-cb80-5f5f-9141-9d6102fb10dd-starter-2",
+        "prompt": "You have used a programming language only in one beginner course. How should you represent it on your resume?",
+        "options": [
+          "List yourself as an expert to attract attention.",
+          "Invent professional experience using it.",
+          "Claim a certification you have not earned.",
+          "State your beginner familiarity and, if relevant, mention the small project you completed."
+        ],
+        "correctOption": 3,
+        "explanation": "Describe skills at a level you can support with real experience; do not fabricate expertise or credentials."
+      }
+    ]
+  },
+  {
+    "topicId": "28b85b3a-f7ef-5fcb-94ee-a1e20369e4e4",
+    "title": "Self-Introduction and Career Goals",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "28b85b3a-f7ef-5fcb-94ee-a1e20369e4e4-starter-1",
+        "prompt": "Which answer connects a student’s introduction with a realistic early-career goal?",
+        "options": [
+          "I have practised data analysis in two course projects, and I want to develop that skill in an entry-level analyst role.",
+          "I expect to lead every department immediately, regardless of the role.",
+          "My goal has no connection to my interests or the work.",
+          "I cannot name any skill I want to develop."
+        ],
+        "correctOption": 0,
+        "explanation": "The answer connects existing experience with a relevant and achievable next step."
+      },
+      {
+        "id": "28b85b3a-f7ef-5fcb-94ee-a1e20369e4e4-starter-2",
+        "prompt": "You are still exploring career options. How should you answer a question about your goals honestly?",
+        "options": [
+          "Invent a rigid career plan that you do not believe.",
+          "Claim that learning new skills will never be necessary.",
+          "Explain the area you currently want to explore, what interests you about it and the skills you plan to build.",
+          "Promise that your interests can never change."
+        ],
+        "correctOption": 2,
+        "explanation": "A clear current direction and learning plan can be credible without pretending that every future step is settled."
+      }
+    ]
+  },
+  {
+    "topicId": "f7f9b122-2556-5753-a7b3-65cbe7bdf8f8",
+    "title": "Strengths and Weaknesses",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "f7f9b122-2556-5753-a7b3-65cbe7bdf8f8-starter-1",
+        "prompt": "An interviewer asks about a strength. Which response provides the best support?",
+        "options": [
+          "List ten positive adjectives without examples.",
+          "Name a relevant strength and explain a specific situation in which you used it effectively.",
+          "Say you are better than every other candidate.",
+          "Claim you have never needed help from anyone."
+        ],
+        "correctOption": 1,
+        "explanation": "A concrete example makes the claimed strength understandable and credible."
+      },
+      {
+        "id": "f7f9b122-2556-5753-a7b3-65cbe7bdf8f8-starter-2",
+        "prompt": "Which response handles a question about a weakness most constructively?",
+        "options": [
+          "Insist that you have no areas to improve.",
+          "Blame others for every challenge you face.",
+          "Disclose someone else’s weakness instead of your own.",
+          "Describe a genuine area to improve, the steps you are taking and evidence of progress."
+        ],
+        "correctOption": 3,
+        "explanation": "Self-awareness and specific improvement actions show that you can learn and respond to feedback."
+      }
+    ]
+  },
+  {
+    "topicId": "ae9952de-b0c3-5c58-938d-8a626ad5023a",
+    "title": "Teamwork and Leadership",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "ae9952de-b0c3-5c58-938d-8a626ad5023a-starter-1",
+        "prompt": "A teammate is falling behind because a requirement is unclear. What is the most constructive first response?",
+        "options": [
+          "Discuss the blocker, clarify the requirement together and agree on the next step.",
+          "Publicly blame the teammate without asking what happened.",
+          "Ignore the delay until the deadline passes.",
+          "Change their work without communicating."
+        ],
+        "correctOption": 0,
+        "explanation": "Understanding the blocker and agreeing on an action supports both progress and collaboration."
+      },
+      {
+        "id": "ae9952de-b0c3-5c58-938d-8a626ad5023a-starter-2",
+        "prompt": "A team leader assigns an important task. What should the leader communicate to support ownership?",
+        "options": [
+          "Only the task title, with no opportunity for questions",
+          "An impossible deadline without discussing constraints",
+          "The expected outcome, deadline, available support and how progress will be checked",
+          "A rule that the teammate must never report blockers"
+        ],
+        "correctOption": 2,
+        "explanation": "Clear expectations and support allow a teammate to act independently while keeping the work coordinated."
+      }
+    ]
+  },
+  {
+    "topicId": "a06f1424-6d3b-58f8-97ec-519712e82d0d",
+    "title": "Time Management",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "a06f1424-6d3b-58f8-97ec-519712e82d0d-starter-1",
+        "prompt": "You have an application due this evening and a nonurgent optional task with no deadline. What should guide your plan?",
+        "options": [
+          "Do the optional task first simply because it is easier.",
+          "Prioritise the deadline-bound application and schedule the optional task around the remaining time.",
+          "Ignore both tasks until the application closes.",
+          "Work on both randomly without checking the deadline."
+        ],
+        "correctOption": 1,
+        "explanation": "Prioritising a time-sensitive, important task reduces the risk of missing a fixed deadline."
+      },
+      {
+        "id": "a06f1424-6d3b-58f8-97ec-519712e82d0d-starter-2",
+        "prompt": "A project feels too large to begin. Which approach is most useful?",
+        "options": [
+          "Wait until the final hour before thinking about it.",
+          "Treat the whole project as one undefined task.",
+          "Spend all available time choosing a notebook.",
+          "Break it into manageable tasks, estimate the time needed and schedule the next concrete step."
+        ],
+        "correctOption": 3,
+        "explanation": "Smaller, scheduled actions make progress visible and help reveal dependencies or unrealistic time estimates."
+      }
+    ]
+  },
+  {
+    "topicId": "ce4259e0-c039-5614-83b7-0424ee4c71d2",
+    "title": "Workplace Communication",
+    "subjectId": "soft-skills",
+    "questions": [
+      {
+        "id": "ce4259e0-c039-5614-83b7-0424ee4c71d2-starter-1",
+        "prompt": "You need a colleague to review a document by Thursday noon. Which message is clearest?",
+        "options": [
+          "Please review the attached draft for factual errors and send comments by Thursday at noon.",
+          "Please look at the thing sometime.",
+          "You know what I need, so just do it.",
+          "This is urgent, but I will not say what action is needed."
+        ],
+        "correctOption": 0,
+        "explanation": "The message specifies the document, requested action, review scope and deadline."
+      },
+      {
+        "id": "ce4259e0-c039-5614-83b7-0424ee4c71d2-starter-2",
+        "prompt": "A meeting ends with several agreed actions. What is the most useful follow-up?",
+        "options": [
+          "Send unrelated personal notes instead.",
+          "Assume everyone remembers all decisions identically.",
+          "Send a concise summary listing each action, its owner and the agreed deadline.",
+          "Change the agreed deadlines without telling the team."
+        ],
+        "correctOption": 2,
+        "explanation": "A written action summary establishes shared expectations and makes responsibilities easier to track."
+      }
+    ]
+  },
+  {
+    "topicId": "820fd279-d9f7-5d2c-8c5f-319ed6ccd475",
+    "title": "Articles and Prepositions",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "820fd279-d9f7-5d2c-8c5f-319ed6ccd475-starter-1",
+        "prompt": "Choose the correct indefinite article: \"She is ___ honest employee.\"",
+        "options": [
+          "a",
+          "an",
+          "the",
+          "no article"
+        ],
+        "correctOption": 1,
+        "explanation": "Use \"an\" before a vowel sound. The h in \"honest\" is silent."
+      },
+      {
+        "id": "820fd279-d9f7-5d2c-8c5f-319ed6ccd475-starter-2",
+        "prompt": "Complete the sentence to state the exact scheduled start time: \"The interview starts ___ 10:30 a.m.\"",
+        "options": [
+          "on",
+          "in",
+          "by",
+          "at"
+        ],
+        "correctOption": 3,
+        "explanation": "Use \"at\" for a specific clock time. \"By\" would mean no later than that time, not the stated start time."
+      }
+    ]
+  },
+  {
+    "topicId": "22fbec98-f5f6-5809-b2c5-46703de24602",
+    "title": "Basic English Grammar",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "22fbec98-f5f6-5809-b2c5-46703de24602-starter-1",
+        "prompt": "Which sentence is grammatically correct?",
+        "options": [
+          "She does not like coffee.",
+          "She do not like coffee.",
+          "She does not likes coffee.",
+          "She not does like coffee."
+        ],
+        "correctOption": 0,
+        "explanation": "With \"she\", the negative simple present uses \"does not\" followed by the base verb \"like\"."
+      },
+      {
+        "id": "22fbec98-f5f6-5809-b2c5-46703de24602-starter-2",
+        "prompt": "Choose the correctly formed question.",
+        "options": [
+          "Where did you placed the file?",
+          "Where you did put the file?",
+          "Where did you put the file?",
+          "Where does you put the file?"
+        ],
+        "correctOption": 2,
+        "explanation": "A past-tense question uses question word + did + subject + base verb."
+      }
+    ]
+  },
+  {
+    "topicId": "03ab75e8-8c94-59d1-af8d-6ca0b131a108",
+    "title": "Email Writing",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "03ab75e8-8c94-59d1-af8d-6ca0b131a108-starter-1",
+        "prompt": "You need your supervisor to approve a leave request for 12 November. Which subject line states the purpose most clearly?",
+        "options": [
+          "Hello",
+          "Leave approval request for 12 November",
+          "Important information for you",
+          "Please read immediately"
+        ],
+        "correctOption": 1,
+        "explanation": "A useful subject line identifies the requested action and the relevant date."
+      },
+      {
+        "id": "03ab75e8-8c94-59d1-af8d-6ca0b131a108-starter-2",
+        "prompt": "You emailed a client but forgot the promised attachment. Which follow-up is most appropriate?",
+        "options": [
+          "You should already have the report somewhere.",
+          "There was no attachment because the report is not important.",
+          "Please ignore every email I have sent.",
+          "Apologies, I missed the attachment in my previous email. I have attached the report here."
+        ],
+        "correctOption": 3,
+        "explanation": "Acknowledge the mistake briefly, provide the missing file and clearly identify it."
+      }
+    ]
+  },
+  {
+    "topicId": "d80fd5a5-b13c-5143-98f9-2162c1077c59",
+    "title": "Error Detection and Sentence Correction",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "d80fd5a5-b13c-5143-98f9-2162c1077c59-starter-1",
+        "prompt": "Which correction fixes this sentence? \"He did not attended the meeting.\"",
+        "options": [
+          "He did not attend the meeting.",
+          "He did not attends the meeting.",
+          "He did not attending the meeting.",
+          "He do not attended the meeting."
+        ],
+        "correctOption": 0,
+        "explanation": "After \"did not\", use the base form \"attend\"; the auxiliary already marks the past tense."
+      },
+      {
+        "id": "d80fd5a5-b13c-5143-98f9-2162c1077c59-starter-2",
+        "prompt": "Which correction fixes this sentence? \"She has lived here since five years.\"",
+        "options": [
+          "She has lived here from five years.",
+          "She has lived here during five years.",
+          "She has lived here for five years.",
+          "She has lived here at five years."
+        ],
+        "correctOption": 2,
+        "explanation": "Use \"for\" with a duration, such as five years, and \"since\" with a starting point."
+      }
+    ]
+  },
+  {
+    "topicId": "663ba7e8-1e0e-5167-a69d-6cea1a2a8e88",
+    "title": "Fill in the Blanks",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "663ba7e8-1e0e-5167-a69d-6cea1a2a8e88-starter-1",
+        "prompt": "Choose the word that completes the sentence: \"The roads were flooded; ___, the bus service was suspended.\"",
+        "options": [
+          "however",
+          "therefore",
+          "although",
+          "unless"
+        ],
+        "correctOption": 1,
+        "explanation": "\"Therefore\" introduces a result: the flooding caused the suspension."
+      },
+      {
+        "id": "663ba7e8-1e0e-5167-a69d-6cea1a2a8e88-starter-2",
+        "prompt": "Choose the word that completes the sentence: \"The instructions were so ___ that every participant understood what to do.\"",
+        "options": [
+          "ambiguous",
+          "confusing",
+          "incomplete",
+          "clear"
+        ],
+        "correctOption": 3,
+        "explanation": "The result, everyone understanding the task, supports \"clear\" rather than the other choices."
+      }
+    ]
+  },
+  {
+    "topicId": "bfdfb243-b172-5cac-b08e-939170df4222",
+    "title": "Group Discussion",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "bfdfb243-b172-5cac-b08e-939170df4222-starter-1",
+        "prompt": "During a discussion about remote work, you disagree with a classmate. Which response contributes most constructively?",
+        "options": [
+          "I see your point about flexibility. Could we also consider how new staff receive training?",
+          "That opinion is obviously foolish.",
+          "I will speak louder until everyone agrees.",
+          "There is no need to hear any other view."
+        ],
+        "correctOption": 0,
+        "explanation": "Acknowledge the other view, then introduce a relevant consideration without attacking the speaker."
+      },
+      {
+        "id": "bfdfb243-b172-5cac-b08e-939170df4222-starter-2",
+        "prompt": "The group has discussed three possible solutions and is almost out of time. Which contribution is most useful?",
+        "options": [
+          "Introduce an unrelated topic.",
+          "Repeat your opening statement without considering the discussion.",
+          "Summarise the options and the main points of agreement before proposing a conclusion.",
+          "Stop everyone from explaining their views."
+        ],
+        "correctOption": 2,
+        "explanation": "A concise summary helps the group connect its reasoning and reach a relevant conclusion."
+      }
+    ]
+  },
+  {
+    "topicId": "886454bf-19b8-5488-87c9-20ba41ed1bef",
+    "title": "Idioms and Phrases",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "886454bf-19b8-5488-87c9-20ba41ed1bef-starter-1",
+        "prompt": "What does \"break the ice\" mean in the sentence, \"The facilitator used a short introduction game to break the ice\"?",
+        "options": [
+          "End the meeting earlier than planned",
+          "Make people feel more comfortable starting a conversation",
+          "Criticise participants for being quiet",
+          "Cancel the introduction activity"
+        ],
+        "correctOption": 1,
+        "explanation": "\"Break the ice\" means reduce initial awkwardness or tension in a social situation."
+      },
+      {
+        "id": "886454bf-19b8-5488-87c9-20ba41ed1bef-starter-2",
+        "prompt": "What does \"on the same page\" mean in the sentence, \"Before we start, let us check that we are on the same page\"?",
+        "options": [
+          "Read exactly the same number of books",
+          "Avoid discussing the plan",
+          "Work on separate goals without coordination",
+          "Have a shared understanding of the plan"
+        ],
+        "correctOption": 3,
+        "explanation": "\"On the same page\" means sharing an understanding of the situation, expectations or plan."
+      }
+    ]
+  },
+  {
+    "topicId": "1928f547-e473-5221-9ca6-e42365192574",
+    "title": "Parts of Speech and Tenses",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "1928f547-e473-5221-9ca6-e42365192574-starter-1",
+        "prompt": "In \"The analyst carefully checked the figures\", what part of speech is \"carefully\"?",
+        "options": [
+          "Adverb",
+          "Noun",
+          "Pronoun",
+          "Preposition"
+        ],
+        "correctOption": 0,
+        "explanation": "\"Carefully\" modifies \"checked\" by describing how the analyst performed the action."
+      },
+      {
+        "id": "1928f547-e473-5221-9ca6-e42365192574-starter-2",
+        "prompt": "Choose the correct form: \"By the time we arrived, the presentation ___.\"",
+        "options": [
+          "begin",
+          "has begin",
+          "had begun",
+          "will beginning"
+        ],
+        "correctOption": 2,
+        "explanation": "The past perfect \"had begun\" places the start of the presentation before another past event, our arrival."
+      }
+    ]
+  },
+  {
+    "topicId": "ff262f1b-fd89-54e0-b79a-df47f07006f7",
+    "title": "Presentation and Public Speaking",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "ff262f1b-fd89-54e0-b79a-df47f07006f7-starter-1",
+        "prompt": "You are presenting a technical project to a nontechnical audience. What is the best opening?",
+        "options": [
+          "Read a list of unexplained technical acronyms.",
+          "Explain the problem in everyday language and state what the audience will learn.",
+          "Start with every line of the source code.",
+          "Assume everyone has already read your full report."
+        ],
+        "correctOption": 1,
+        "explanation": "A clear purpose and familiar language give the audience a useful starting point."
+      },
+      {
+        "id": "ff262f1b-fd89-54e0-b79a-df47f07006f7-starter-2",
+        "prompt": "An audience member asks a factual question you cannot answer confidently. What should you do?",
+        "options": [
+          "Invent a number to avoid appearing uncertain.",
+          "Tell the audience that questions are unnecessary.",
+          "Repeat the question without addressing your uncertainty.",
+          "Acknowledge that you are unsure and offer to verify the answer after the presentation."
+        ],
+        "correctOption": 3,
+        "explanation": "Acknowledging uncertainty and checking the answer is more reliable than guessing or dismissing the question."
+      }
+    ]
+  },
+  {
+    "topicId": "c4c9a54c-e2f2-5e80-9795-d339d040f4a3",
+    "title": "Reading Comprehension",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "c4c9a54c-e2f2-5e80-9795-d339d040f4a3-starter-1",
+        "prompt": "Read: \"The library extended its closing time from 6 p.m. to 8 p.m. during exams. Morning opening hours stayed the same.\" How much later did the library close?",
+        "options": [
+          "Two hours later",
+          "One hour later",
+          "Three hours later",
+          "It did not close later"
+        ],
+        "correctOption": 0,
+        "explanation": "The change from 6 p.m. to 8 p.m. extends closing time by two hours."
+      },
+      {
+        "id": "c4c9a54c-e2f2-5e80-9795-d339d040f4a3-starter-2",
+        "prompt": "Read: \"Maya walks to work on dry days. When it rains, she takes the bus. It rained on Tuesday, so she took the bus.\" Which statement is directly supported?",
+        "options": [
+          "Maya takes the bus every day.",
+          "Maya never walks to work.",
+          "Maya took the bus on Tuesday.",
+          "It was dry on Tuesday."
+        ],
+        "correctOption": 2,
+        "explanation": "The passage explicitly states that she took the bus on Tuesday; it does not support the broader claims."
+      }
+    ]
+  },
+  {
+    "topicId": "a02fd178-ce33-5bdb-b0af-eec2608bb014",
+    "title": "Self-Introduction",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "a02fd178-ce33-5bdb-b0af-eec2608bb014-starter-1",
+        "prompt": "In a 45-second introduction to a campus interviewer, which information should you prioritise?",
+        "options": [
+          "Your entire family history",
+          "Your name, relevant studies, one useful skill or project and your interest in the role",
+          "A list of every film you have watched",
+          "Details of unrelated arguments with classmates"
+        ],
+        "correctOption": 1,
+        "explanation": "A brief introduction should help the interviewer understand your relevant background and interest."
+      },
+      {
+        "id": "a02fd178-ce33-5bdb-b0af-eec2608bb014-starter-2",
+        "prompt": "Which introduction is clearest for a student applying for a data internship?",
+        "options": [
+          "I am the best at everything, so the role does not matter.",
+          "I do many things, but I cannot name anything relevant.",
+          "I will explain my qualifications only after you select me.",
+          "I am Nisha, a final-year mathematics student. I used spreadsheets to analyse survey data and would like to develop those skills in this internship."
+        ],
+        "correctOption": 3,
+        "explanation": "The introduction connects current education, a concrete experience and a relevant learning goal."
+      }
+    ]
+  },
+  {
+    "topicId": "d2b939ff-0df1-5372-bf0d-be2df2388eaf",
+    "title": "Sentence Rearrangement",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "d2b939ff-0df1-5372-bf0d-be2df2388eaf-starter-1",
+        "prompt": "Arrange these steps in a logical sequence. A: Finally, serve the tea. B: First, boil the water. C: Next, add the tea leaves. D: Then, let the tea steep.",
+        "options": [
+          "B-C-D-A",
+          "A-B-C-D",
+          "C-A-B-D",
+          "D-C-B-A"
+        ],
+        "correctOption": 0,
+        "explanation": "The sequence markers identify the order: first, next, then and finally."
+      },
+      {
+        "id": "d2b939ff-0df1-5372-bf0d-be2df2388eaf-starter-2",
+        "prompt": "Arrange the sentences coherently. A: She checked the address on that invitation. B: Riya received an interview invitation. C: Finally, she reached that address on time. D: Using the address, she planned her route.",
+        "options": [
+          "A-D-B-C",
+          "C-B-A-D",
+          "B-A-D-C",
+          "D-A-C-B"
+        ],
+        "correctOption": 2,
+        "explanation": "The invitation must be introduced before \"that invitation\"; checking its address precedes planning the route and arriving."
+      }
+    ]
+  },
+  {
+    "topicId": "aa5bc52d-dded-54de-903a-e4a87e275dee",
+    "title": "Spoken English and Fluency",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "aa5bc52d-dded-54de-903a-e4a87e275dee-starter-1",
+        "prompt": "You did not hear a colleague clearly. Which response politely requests repetition?",
+        "options": [
+          "You must never speak again.",
+          "Could you please repeat the last part?",
+          "I will pretend I understood.",
+          "Your work is completely wrong."
+        ],
+        "correctOption": 1,
+        "explanation": "A polite, specific request for repetition helps restore understanding without blaming the speaker."
+      },
+      {
+        "id": "aa5bc52d-dded-54de-903a-e4a87e275dee-starter-2",
+        "prompt": "While answering a question in English, you need a moment to organise your thoughts. What is the best response?",
+        "options": [
+          "Speak as fast as possible, even if your meaning becomes unclear.",
+          "Add many unrelated words to avoid any pause.",
+          "Stop answering and leave without explanation.",
+          "Pause briefly, then give a clear answer at a comfortable pace."
+        ],
+        "correctOption": 3,
+        "explanation": "A brief pause can improve clarity; fluency does not require speaking without any pauses."
+      }
+    ]
+  },
+  {
+    "topicId": "95a526ef-4d84-5a99-beea-fc6de5c3224e",
+    "title": "Subject-Verb Agreement",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "95a526ef-4d84-5a99-beea-fc6de5c3224e-starter-1",
+        "prompt": "Choose the correct verb: \"Each of the applicants ___ an identification card.\"",
+        "options": [
+          "has",
+          "have",
+          "are having",
+          "were having"
+        ],
+        "correctOption": 0,
+        "explanation": "The subject \"each\" is singular, so it takes the singular verb \"has\" in this simple-present sentence."
+      },
+      {
+        "id": "95a526ef-4d84-5a99-beea-fc6de5c3224e-starter-2",
+        "prompt": "Choose the correct verb: \"The list of approved courses ___ on the noticeboard.\"",
+        "options": [
+          "are",
+          "have",
+          "is",
+          "were"
+        ],
+        "correctOption": 2,
+        "explanation": "The main subject is the singular noun \"list\", not the plural noun \"courses\" in the modifying phrase."
+      }
+    ]
+  },
+  {
+    "topicId": "ae3b1fb0-b90c-5776-aa82-b5819bf9f83d",
+    "title": "Vocabulary: Synonyms and Antonyms",
+    "subjectId": "verbal",
+    "questions": [
+      {
+        "id": "ae3b1fb0-b90c-5776-aa82-b5819bf9f83d-starter-1",
+        "prompt": "Which word is closest in meaning to \"concise\"?",
+        "options": [
+          "Careless",
+          "Brief",
+          "Noisy",
+          "Complicated"
+        ],
+        "correctOption": 1,
+        "explanation": "\"Concise\" describes expression that is brief and uses no unnecessary words."
+      },
+      {
+        "id": "ae3b1fb0-b90c-5776-aa82-b5819bf9f83d-starter-2",
+        "prompt": "Which word is the opposite of \"scarce\"?",
+        "options": [
+          "Rare",
+          "Limited",
+          "Insufficient",
+          "Abundant"
+        ],
+        "correctOption": 3,
+        "explanation": "\"Scarce\" means in short supply; \"abundant\" means available in large quantities."
+      }
+    ]
+  }
+]

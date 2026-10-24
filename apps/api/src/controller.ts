@@ -1,3 +1,7 @@
+import { crtRankings } from "./crt-rankings.js";
+import { placementSamplePath } from "./placement-samples.js";
+import { JobLogoService, companyLogoInput } from "./job-logos.js";
+import { PlacementService, placementInput } from "./placement.js";
 import {
   Body,
   Controller,
@@ -15,10 +19,12 @@ import {
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { z } from "zod";
+import { CourseCatalogService, courseCoverFields, enrollmentInboxQuery, enrollmentReviewInput } from "./course-catalog.js";
 import { SlateService } from "./service.js";
 import { LessonService } from "./lessons.js";
 import { lessonInput, uploadInput, submissionInput } from "./lesson-input.js";
 import { MailboxService } from "./mailbox.js";
+import { resumeInput } from "./resume-input.js";
 
 const id = z.string().uuid();
 const text = (max: number) => z.string().trim().min(1).max(max);
@@ -31,6 +37,7 @@ const courseInput = z
   .object({
     title: text(150),
     description: text(2000),
+    ...courseCoverFields,
     track: z.enum([
       "foundation",
       "hiring",
@@ -42,24 +49,6 @@ const courseInput = z
     ]),
   })
   .strict();
-const resumeInput = z
-  .object({
-    name: z.string().max(150),
-    title: z.string().max(150),
-    email: z.string().max(200),
-    phone: z.string().max(30),
-    location: z.string().max(150).default(""),
-    links: z.string().max(500).default(""),
-    summary: z.string().max(2000),
-    education: z.string().max(4000),
-    experience: z.string().max(6000),
-    skills: z.string().max(2000),
-    projects: z.string().max(6000),
-    certifications: z.string().max(4000).default(""),
-    template: z.enum(["classic", "compact", "modern", "serif"]),
-  })
-  .strict();
-
 @Controller("api/v1")
 export class ApiController {
   readonly mailbox: MailboxService;
@@ -352,6 +341,7 @@ export class ApiController {
       .object({
         title: text(150),
         description: text(2000),
+        ...courseCoverFields,
         lessons: z.array(lessonInput).min(1).max(200),
       })
       .strict()
@@ -379,6 +369,30 @@ export class ApiController {
       input.courseId,
     );
   }
+  // Only bundled, fictional demonstration assets are public; user uploads remain private.
+  @Get("placement-samples/:file") samplePlacement(@Param("file") file:string,@Res() res:Response) {
+    res.setHeader("Cache-Control","public, max-age=3600");
+    res.setHeader("X-Content-Type-Options","nosniff");
+    return res.sendFile(placementSamplePath(file));
+  }
+  @Get("platform/placement") async placementList(@Req() req:Request,@Query("kind") kind:string) {
+    return new PlacementService(this.service).list(await this.service.actor(req,"platform_admin"),z.enum(["certification","company"]).parse(kind));
+  }
+  @Post("platform/placement") async placementCreate(@Req() req:Request,@Body() body:unknown) {
+    return new PlacementService(this.service).save(await this.service.actor(req,"platform_admin"),placementInput.parse(body));
+  }
+  @Put("platform/placement/:id") async placementUpdate(@Req() req:Request,@Param("id") resource:string,@Body() body:unknown) {
+    return new PlacementService(this.service).save(await this.service.actor(req,"platform_admin"),placementInput.parse(body),id.parse(resource));
+  }
+  @Get("student/placement") async studentPlacement(@Req() req:Request,@Query("kind") kind:string) {
+    return new PlacementService(this.service).list(await this.service.actor(req,"student"),z.enum(["certification","company"]).parse(kind));
+  }
+  @Get("platform/company-logos") async companyLogos(@Req() req:Request) {
+    return new JobLogoService(this.service).list(await this.service.actor(req,"platform_admin"));
+  }
+  @Post("platform/company-logos") async companyLogoUpload(@Req() req:Request,@Body() body:unknown) {
+    return new JobLogoService(this.service).create(await this.service.actor(req,"platform_admin"),companyLogoInput.parse(body));
+  }
   @Get("platform/jobs") async jobs(
     @Req() req: Request,
     @Query("organizationId") organization: string,
@@ -393,6 +407,7 @@ export class ApiController {
     @Body() body: unknown,
   ) {
     const jobFields = {
+      logoId: id.nullable().optional(),
       title: text(150),
       company: text(150),
       description: text(3000),
@@ -525,6 +540,21 @@ export class ApiController {
       id.parse(course),
     );
   }
+  @Get("student/course-catalog") async courseDiscovery(@Req() req: Request) {
+    return new CourseCatalogService(this.service).catalog(await this.service.actor(req, "student"));
+  }
+  @Post("student/courses/:id/opened") async openedCourse(@Req() req: Request, @Param("id") course: string) {
+    return new CourseCatalogService(this.service).opened(await this.service.actor(req, "student"), id.parse(course));
+  }
+  @Post("student/courses/:id/enrollment-requests") async requestEnrollment(@Req() req: Request, @Param("id") course: string) {
+    return new CourseCatalogService(this.service).request(await this.service.actor(req, "student"), id.parse(course));
+  }
+  @Get("platform/enrollment-requests") async enrollmentRequests(@Req() req: Request, @Query() query: unknown) {
+    return new CourseCatalogService(this.service).inbox(await this.service.actor(req,"platform_admin"), enrollmentInboxQuery.parse(query));
+  }
+  @Patch("platform/enrollment-requests/:id") async reviewEnrollment(@Req() req: Request, @Param("id") request: string, @Body() body: unknown) {
+    return new CourseCatalogService(this.service).review(await this.service.actor(req,"platform_admin"), id.parse(request), enrollmentReviewInput.parse(body));
+  }
   @Get("student/courses") async studentCourses(@Req() req: Request) {
     return this.service.studentCatalog(req);
   }
@@ -548,8 +578,10 @@ export class ApiController {
   @Get("student/jobs") async studentJobs(@Req() req: Request) {
     return this.service.listJobs(await this.service.actor(req, "student"));
   }
-  @Get("student/rankings") async rankings(@Req() req: Request) {
-    return this.service.rankings(await this.service.actor(req, "student"));
+  @Get("student/rankings") async rankings(@Req() req: Request,@Query("mode") mode?:string,@Query("kind") kind?:string) {
+    const actor = await this.service.actor(req,"student");
+    if (kind === "crt") return crtRankings(this.service,actor,z.enum(["latest","overall"]).default("overall").parse(mode));
+    return this.service.rankings(actor);
   }
   @Get("student/resume") async resume(@Req() req: Request) {
     return this.service.getResume(await this.service.actor(req, "student"));

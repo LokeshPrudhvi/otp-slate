@@ -78,6 +78,7 @@ test("job broadcasts publish atomically to active organizations and retain tenan
         assert.equal(response.body.length, 1);
         assert.deepEqual(response.body[0], {
           ...fields, organizationId, id: response.body[0].id, postedAt: response.body[0].postedAt,
+          logoId: null, companyLogoUrl: null,
         });
         assert.ok(response.body[0].id);
         assert.ok(Date.parse(response.body[0].postedAt));

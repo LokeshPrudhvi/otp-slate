@@ -26,11 +26,19 @@ const welcomeMailPayload = z.object({
   organizationName: z.string().min(1),
   studentId: z.string().min(1),
 });
+const enrollmentMailPayload = z.object({
+  email: z.string().email(), studentName: z.string().min(1), studentEmail: z.string().email(),
+  studentId: z.string().nullable(), organizationName: z.string().min(1), branchName: z.string().nullable(),
+  branchCode: z.string().nullable(), courseTitle: z.string().min(1), requestedAt: z.string().datetime(),
+  requestId: z.string().uuid(),
+});
+export type EnrollmentMailPayload = z.infer<typeof enrollmentMailPayload>;
 export type PasswordResetMailPayload = z.infer<typeof passwordResetMailPayload>;
 export type WelcomeMailPayload = z.infer<typeof welcomeMailPayload>;
 export type MailPayloads = {
   password_reset: PasswordResetMailPayload;
   welcome_student: WelcomeMailPayload;
+  enrollment_request: EnrollmentMailPayload;
 };
 
 export interface PhoneSender {
@@ -138,7 +146,7 @@ export function decryptPayload(
     throw new Error("Email payload could not be decrypted.");
   }
   const parsed = (
-    type === "welcome_student" ? welcomeMailPayload : passwordResetMailPayload
+    type === "welcome_student" ? welcomeMailPayload : type === "enrollment_request" ? enrollmentMailPayload : passwordResetMailPayload
   ).safeParse(value);
   if (!parsed.success) throw new Error("Email payload is invalid.");
   return parsed.data;
@@ -286,4 +294,22 @@ export async function createUpload(key: string, contentType: string) {
     }),
     { expiresIn: 300 },
   );
+}
+
+export function formatEnrollmentMail(payload: EnrollmentMailPayload) {
+  const data = enrollmentMailPayload.parse(payload);
+  const details = [
+    `Student: ${data.studentName}`, `Email: ${data.studentEmail}`,
+    `Student ID: ${data.studentId || "Not provided"}`, `Organization: ${data.organizationName}`,
+    `Branch: ${[data.branchName, data.branchCode].filter(Boolean).join(" / ") || "Not assigned"}`,
+    `Course: ${data.courseTitle}`, `Requested at: ${data.requestedAt}`, `Request ID: ${data.requestId}`,
+  ].join("\n");
+  return {
+    subject: `Course enrollment request — ${data.courseTitle}`,
+    text: `A student has requested course access.\n\n${details}\n\nOpen the Platform Admin inbox to review the request, then assign the course through Learning access. Sending this request does not grant course access.`,
+    html: `<h1>Course enrollment request</h1><p>A student has requested course access.</p><pre style="font-family:inherit;white-space:pre-wrap">${escapeHtml(details)}</pre><p>Open the Platform Admin inbox to review the request, then assign the course through Learning access. Sending this request does not grant course access.</p>`,
+  };
+}
+export async function sendEnrollmentMail(id: string, payload: EnrollmentMailPayload) {
+  await sendResendMail(id, { to: payload.email, ...formatEnrollmentMail(payload) });
 }

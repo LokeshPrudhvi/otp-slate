@@ -8,13 +8,6 @@ export function hasAccess(identity: Identity | undefined, feature: string) {
   return Boolean(identity?.features.includes(feature));
 }
 
-export function hasToolkitTrack(identity: Identity | undefined, track: string) {
-  return (
-    hasAccess(identity, "toolkit") &&
-    Boolean(identity?.access?.toolkitTrackIds.some((id) => id === track))
-  );
-}
-
 export function hasCodingAccess(identity: Identity | undefined) {
   return (
     hasAccess(identity, "practice") &&
@@ -25,6 +18,7 @@ export function hasCodingAccess(identity: Identity | undefined) {
 
 const pathFeatures: Record<string, FeatureKey> = {
   courses: "courses",
+  "course-catalog": "courses",
   practice: "practice",
   exams: "live-exams",
   "exam-attempts": "live-exams",
@@ -33,6 +27,7 @@ const pathFeatures: Record<string, FeatureKey> = {
   announcements: "announcements",
   compiler: "compiler",
   crt: "crt",
+  placement: "jobs",
 };
 
 function resourceAccessKey(
@@ -44,9 +39,17 @@ function resourceAccessKey(
   if (feature === "crt")
     return [allowed, identity?.organizationId, identity?.access?.revision];
   if (feature === "courses") {
+    if (path === "student/course-catalog")
+      return [
+        allowed,
+        identity?.id,
+        identity?.organizationId,
+        identity?.access?.revision,
+      ];
     const courseId = path.split("/")[2];
     return [
       allowed,
+      identity?.id,
       courseId
         ? identity?.access?.courseIds.includes(courseId)
         : [...(identity?.access?.courseIds ?? [])].sort(),
@@ -66,7 +69,11 @@ function resourceAccessKey(
 /** Isolate changed permissions without restarting a session when another student changes. */
 export function useStudentData<T>(key: string, path: string, enabled = true) {
   const me = useMe();
-  const feature = pathFeatures[path.split("/")[1]];
+  const feature = path.startsWith("student/placement?kind=company")
+    ? "pyq"
+    : path.startsWith("student/placement?")
+      ? "jobs"
+      : pathFeatures[path.split("/")[1]];
   return useQuery({
     queryKey: ["student", key, resourceAccessKey(me.data, feature, path)],
     queryFn: ({ signal }) => api<T>(path, "GET", undefined, signal),
@@ -105,14 +112,13 @@ export function AccessRoute({
   children?: ReactNode;
 }) {
   const me = useMe(),
-    { id, track } = useParams();
+    { id } = useParams();
   const allowed =
     hasAccess(me.data, feature) &&
     (!coding || hasCodingAccess(me.data)) &&
     (feature !== "courses" ||
       !id ||
-      Boolean(me.data?.access?.courseIds.includes(id))) &&
-    (feature !== "toolkit" || !track || hasToolkitTrack(me.data, track));
+      Boolean(me.data?.access?.courseIds.includes(id)));
   if (!allowed) return <AccessUnavailable />;
   return children ?? <Outlet />;
 }

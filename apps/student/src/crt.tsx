@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   crtSubjects,
@@ -13,6 +13,7 @@ import {
 import { api, QuestionImageView, Select, useMe } from "@slate/ui";
 import { useStudentData } from "./access";
 import { Status, StudentIcon } from "./design";
+import { CrtPracticeArt, CrtSubjectArt } from "./crt-card-art";
 import "./crt.css";
 
 const subjectDescriptions: Record<CrtSubjectId, string> = {
@@ -22,79 +23,44 @@ const subjectDescriptions: Record<CrtSubjectId, string> = {
   "soft-skills":
     "Prepare for interviews, workplace conversations and your next opportunity.",
 };
-const topicPageSize = 20;
 
 export function CrtPage() {
   const [params, setParams] = useSearchParams();
-  const subjects = crtSubjects.map((subject) => subject.id as string);
-  const requested = params.get("subject") || "quantitative";
+  const requested = params.get("subject");
   const selected =
-    requested === "practice" || subjects.includes(requested)
+    requested === "practice" ||
+    crtSubjects.some((subject) => subject.id === requested)
       ? requested
-      : "quantitative";
-  const topicId = selected === "practice" ? null : params.get("topic");
+      : null;
+  const topicId =
+    selected && selected !== "practice" ? params.get("topic") : null;
   const topics = useStudentData<CrtStudentTopic[]>(
     "crt-topics",
     "student/crt/topics",
   );
-  const completed = topics.data?.filter((topic) => topic.completed).length || 0;
-  const changeTab = (subject: string) => setParams({ subject });
   return (
     <div className={`crt-page${topicId ? " crt-page--topic" : ""}`}>
-      {!topicId && (
-        <header className="crt-hero">
-          <div className="crt-hero-copy">
-            <span className="crt-eyebrow">CAMPUS RECRUITMENT TRAINING</span>
-            <h1>One topic closer to ready.</h1>
-            <p>
-              Read the concepts, put them into practice and build your
-              confidence.
-            </p>
-          </div>
-          <div className="crt-progress-summary">
-            <StudentIcon name="practice" />
-            <div>
-              <strong>
-                {completed}
-                <span> / {topics.data?.length ?? "—"}</span>
-              </strong>
-              <span>topics completed</span>
-            </div>
-          </div>
-          <nav className="crt-subjects" aria-label="CRT subjects">
-            {crtSubjects.map((subject, index) => (
-              <button
-                type="button"
-                key={subject.id}
-                className={selected === subject.id ? "is-active" : ""}
-                aria-current={selected === subject.id ? "page" : undefined}
-                onClick={() => changeTab(subject.id)}
-              >
-                <span className="crt-tab-number">0{index + 1}</span>
-                <span>{subject.name}</span>
-              </button>
-            ))}
-            <button
-              type="button"
-              className={selected === "practice" ? "is-active" : ""}
-              aria-current={selected === "practice" ? "page" : undefined}
-              onClick={() => changeTab("practice")}
-            >
-              <StudentIcon name="practice" />
-              <span>Practice</span>
-            </button>
-          </nav>
-        </header>
-      )}
       <main
         className="crt-content"
         aria-label={
-          selected === "practice"
-            ? "CRT practice"
-            : crtSubjects.find((subject) => subject.id === selected)?.name
+          !selected
+            ? "CRT subjects"
+            : selected === "practice"
+              ? "CRT practice"
+              : crtSubjects.find((subject) => subject.id === selected)?.name
         }
       >
-        <Status pending={topics.isPending} error={topics.error} />
+        {selected && !topicId && (
+          <Link className="crt-back crt-home-link" to="/crt">
+            <span aria-hidden="true">←</span> All CRT subjects
+          </Link>
+        )}
+        <Status
+          pending={topics.isPending}
+          error={topics.error}
+          label="Loading your CRT curriculum"
+          variant="cards"
+        />
         {topics.isError && (
           <button
             type="button"
@@ -105,7 +71,9 @@ export function CrtPage() {
           </button>
         )}
         {topics.data &&
-          (selected === "practice" ? (
+          (!selected ? (
+            <SubjectCards topics={topics.data} />
+          ) : selected === "practice" ? (
             <CrtPractice
               key={params.get("session") || "new"}
               topics={topics.data}
@@ -121,7 +89,7 @@ export function CrtPage() {
             <TopicReader
               key={topicId}
               id={topicId}
-              onBack={() => changeTab(selected)}
+              onBack={() => setParams({ subject: selected })}
             />
           ) : (
             <TopicLibrary
@@ -140,6 +108,94 @@ export function CrtPage() {
   );
 }
 
+const subjectTaglines: Record<CrtSubjectId, string> = {
+  quantitative: "Think in numbers",
+  reasoning: "Connect the dots",
+  verbal: "Find your words",
+  "soft-skills": "Make an impression",
+};
+
+function SubjectCards({ topics }: { topics: CrtStudentTopic[] }) {
+  return (
+    <section aria-labelledby="crt-subject-heading">
+      <div className="crt-section-head crt-landing-head">
+        <div>
+          <span className="crt-eyebrow">YOUR LEARNING PATH</span>
+          <h1 id="crt-subject-heading">Campus Recruitment and Training</h1>
+          <p>Explore a subject or revisit what you’ve learned with practice.</p>
+        </div>
+      </div>
+      <nav className="crt-subject-grid" aria-label="Choose a CRT subject">
+        <Link className="crt-practice-card" to="/crt?subject=practice">
+          <CrtPracticeArt />
+          <div className="crt-practice-card-copy">
+            <span className="crt-eyebrow">MAKE IT SECOND NATURE</span>
+            <h3>Practice</h3>
+            <p>
+              Pick a subject, choose your topics and build a question set just
+              for you.
+            </p>
+          </div>
+          <span className="crt-practice-card-action">
+            Start practising <span aria-hidden="true">→</span>
+          </span>
+        </Link>
+        {crtSubjects.map((subject, index) => {
+          const assigned = topics.filter(
+            (topic) => topic.subjectId === subject.id,
+          );
+          const completed = assigned.filter((topic) => topic.completed).length;
+          const percent = assigned.length
+            ? (completed / assigned.length) * 100
+            : 0;
+          return (
+            <Link
+              className={`crt-subject-card crt-subject-card--${subject.id}`}
+              to={`/crt?subject=${subject.id}`}
+              key={subject.id}
+              aria-label={`${subject.name}, ${assigned.length} topics, ${completed} completed`}
+            >
+              <div className="crt-subject-card-top">
+                <span className="crt-subject-number" aria-hidden="true">
+                  0{index + 1}
+                </span>
+                <span className="crt-subject-tagline" aria-hidden="true">
+                  {subjectTaglines[subject.id]}
+                </span>
+                <CrtSubjectArt subject={subject.id} />
+              </div>
+              <div className="crt-subject-card-body">
+                <h3>{subject.name}</h3>
+                <p>{subjectDescriptions[subject.id]}</p>
+                <div className="crt-subject-card-progress">
+                  <span>
+                    {assigned.length}{" "}
+                    {assigned.length === 1 ? "topic" : "topics"}
+                  </span>
+                  <span>
+                    {assigned.length
+                      ? `${completed} completed`
+                      : "Awaiting topics"}
+                  </span>
+                  <div
+                    className="crt-subject-progress-track"
+                    aria-hidden="true"
+                  >
+                    <span style={{ width: `${percent}%` }} />
+                  </div>
+                </div>
+                <span className="crt-subject-card-action">
+                  Explore topics <span aria-hidden="true">→</span>
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+    </section>
+  );
+}
+
 export function TopicLibrary({
   subject,
   topics,
@@ -150,9 +206,9 @@ export function TopicLibrary({
   onOpen: (topic: CrtStudentTopic) => void;
 }) {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
   const [show, setShow] = useState("all");
   const searchId = useId();
+  const headingId = useId();
   const filtered = topics.filter(
     (topic) =>
       `${topic.title} ${topic.description}`
@@ -161,91 +217,183 @@ export function TopicLibrary({
       (show === "all" ||
         (show === "completed" ? topic.completed : !topic.completed)),
   );
-  const pages = Math.max(1, Math.ceil(filtered.length / topicPageSize));
-  const currentPage = Math.min(page, pages - 1);
   const completed = topics.filter((topic) => topic.completed).length;
+  const percent = topics.length
+    ? Math.round((completed / topics.length) * 100)
+    : 0;
+  const positions = new Map(
+    topics.map((topic, index) => [topic.id, index + 1]),
+  );
   return (
-    <section>
-      <div className="crt-section-head">
-        <div>
-          <span className="crt-eyebrow">YOUR CURRICULUM</span>
-          <h2>{crtSubjects.find((item) => item.id === subject)?.name}</h2>
+    <section
+      className={`crt-library crt-library--${subject}`}
+      aria-labelledby={headingId}
+    >
+      <header className="crt-library-hero">
+        <div className="crt-library-intro">
+          <span className="crt-eyebrow">LEARN A LITTLE. BUILD CONFIDENCE.</span>
+          <h1 id={headingId}>
+            {crtSubjects.find((item) => item.id === subject)?.name}
+          </h1>
           <p>{subjectDescriptions[subject]}</p>
         </div>
-        <span className="crt-completion-count">
-          {completed} of {topics.length} complete
-        </span>
-      </div>
+        <div className="crt-library-visual" aria-hidden="true">
+          <CrtSubjectArt subject={subject} />
+        </div>
+        <div className="crt-library-progress">
+          <div className="crt-progress-ring" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <circle
+                className="crt-progress-ring-track"
+                cx="40"
+                cy="40"
+                r="33"
+              />
+              <circle
+                className="crt-progress-ring-fill"
+                cx="40"
+                cy="40"
+                r="33"
+                pathLength="100"
+                strokeDasharray={`${percent} 100`}
+              />
+            </svg>
+            <strong>{percent}%</strong>
+          </div>
+          <div>
+            <span>Your progress</span>
+            <strong>
+              {completed} of {topics.length} complete
+            </strong>
+            <small>
+              {topics.length === 0
+                ? "New topics coming soon"
+                : completed === topics.length
+                  ? "Every topic completed. Well done!"
+                  : `${topics.length - completed} topics to explore`}
+            </small>
+          </div>
+        </div>
+      </header>
       {topics.length > 0 ? (
         <>
           <div className="crt-library-tools">
             <label className="crt-search" htmlFor={searchId}>
-              <span>Find a topic</span>
+              <span className="crt-visually-hidden">Find a topic</span>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="m16 16 4 4" />
+              </svg>
               <input
                 id={searchId}
                 type="search"
                 placeholder="Search your topics…"
                 value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPage(0);
-                }}
+                onChange={(event) => setSearch(event.target.value)}
               />
             </label>
-            <label className="crt-filter">
-              <span>Progress</span>
-              <Select
-                aria-label="Filter topics by progress"
-                value={show}
-                onChange={(value) => {
-                  setShow(value);
-                  setPage(0);
+            <div
+              className="crt-progress-filters"
+              role="group"
+              aria-label="Filter topics by progress"
+            >
+              {[
+                { value: "all", label: "All topics", count: topics.length },
+                {
+                  value: "remaining",
+                  label: "To complete",
+                  count: topics.length - completed,
+                },
+                { value: "completed", label: "Completed", count: completed },
+              ].map((filter) => (
+                <button
+                  type="button"
+                  key={filter.value}
+                  aria-pressed={show === filter.value}
+                  onClick={() => setShow(filter.value)}
+                >
+                  {filter.label} <span>{filter.count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="crt-library-results">
+            <h2>
+              Your topics{" "}
+              <span aria-live="polite" aria-atomic="true">
+                {filtered.length} {filtered.length === 1 ? "topic" : "topics"}
+              </span>
+            </h2>
+            {search || show !== "all" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setShow("all");
                 }}
-                options={[
-                  { value: "all", label: "All topics" },
-                  { value: "remaining", label: "To complete" },
-                  { value: "completed", label: "Completed" },
-                ]}
-              />
-            </label>
+              >
+                Clear filters
+              </button>
+            ) : (
+              <span>Read. Practise. Make progress.</span>
+            )}
           </div>
           {filtered.length ? (
             <div className="crt-topic-grid">
-              {filtered
-                .slice(
-                  currentPage * topicPageSize,
-                  (currentPage + 1) * topicPageSize,
-                )
-                .map((topic, index) => (
-                  <button
-                    type="button"
-                    className={`crt-topic-link${topic.completed ? " is-complete" : ""}`}
-                    key={topic.id}
-                    onClick={() => onOpen(topic)}
-                    aria-label={`${topic.title}${topic.completed ? ", completed" : ""}`}
-                  >
+              {filtered.map((topic) => (
+                <button
+                  type="button"
+                  className={`crt-topic-link${topic.completed ? " is-complete" : ""}`}
+                  key={topic.id}
+                  onClick={() => onOpen(topic)}
+                  aria-label={`${topic.title}${topic.completed ? ", completed" : ""}`}
+                >
+                  <span className="crt-topic-heading">
                     <span className="crt-topic-index">
-                      {topic.completed ? (
-                        <StudentIcon name="check" />
-                      ) : (
-                        String(
-                          currentPage * topicPageSize + index + 1,
-                        ).padStart(2, "0")
-                      )}
+                      {String(positions.get(topic.id)).padStart(2, "0")}
+                    </span>
+                    <strong className="crt-topic-title">{topic.title}</strong>
+                  </span>
+                  <span className="crt-topic-meta">
+                    <span>
+                      <StudentIcon name="courses" /> Study notes
                     </span>
                     <span>
-                      <strong>{topic.title}</strong>
-                      <small>
-                        {topic.completed
-                          ? "Completed"
-                          : `${topic.questionCount} questions · Pass ${topic.passingScore}%`}
-                      </small>
+                      {topic.questionCount}{" "}
+                      {topic.questionCount === 1 ? "question" : "questions"}
                     </span>
-                    <span className="crt-topic-arrow" aria-hidden="true">
-                      ↗
+                    <span>
+                      {topic.completed
+                        ? topic.bestScore !== null
+                          ? `Best score ${topic.bestScore}%`
+                          : "Completed"
+                        : `Pass ${topic.passingScore}%`}
                     </span>
-                  </button>
-                ))}
+                  </span>
+                  <span className="crt-topic-card-footer">
+                    <span className="crt-topic-action">
+                      {topic.completed ? "Review topic" : "Start learning"}
+                      <span className="crt-topic-arrow" aria-hidden="true">
+                        →
+                      </span>
+                    </span>
+                    <span className="crt-topic-status">
+                      {topic.completed && <StudentIcon name="check" />}
+                      {topic.completed
+                        ? "Completed"
+                        : topic.bestScore !== null
+                          ? "Keep going"
+                          : "Ready to start"}
+                    </span>
+                  </span>
+                </button>
+              ))}
             </div>
           ) : (
             <EmptyState
@@ -253,34 +401,6 @@ export function TopicLibrary({
               text="Try another search or progress filter."
             />
           )}
-          <footer className="crt-pagination">
-            <span>
-              {filtered.length
-                ? `${currentPage * topicPageSize + 1}–${Math.min((currentPage + 1) * topicPageSize, filtered.length)} of ${filtered.length} topics`
-                : "0 topics"}
-            </span>
-            <div>
-              <button
-                type="button"
-                className="a-btn"
-                disabled={currentPage === 0}
-                onClick={() => setPage(currentPage - 1)}
-              >
-                ← Previous
-              </button>
-              <span>
-                Page {currentPage + 1} of {pages}
-              </span>
-              <button
-                type="button"
-                className="a-btn"
-                disabled={currentPage + 1 >= pages}
-                onClick={() => setPage(currentPage + 1)}
-              >
-                Next →
-              </button>
-            </div>
-          </footer>
         </>
       ) : (
         <EmptyState
@@ -310,11 +430,23 @@ function TopicReader({ id, onBack }: { id: string; onBack: () => void }) {
     `student/crt/topics/${id}`,
   );
   return (
-    <section>
-      <button type="button" className="crt-back" onClick={onBack}>
-        ← All topics
-      </button>
-      <Status pending={detail.isPending} error={detail.error} />
+    <section className="crt-reader">
+      <nav className="crt-reader-navigation" aria-label="CRT navigation">
+        <Link className="crt-back crt-home-link" to="/crt">
+          <span aria-hidden="true">←</span> All CRT subjects
+        </Link>
+        <span aria-hidden="true" className="crt-reader-nav-divider">
+          /
+        </span>
+        <button type="button" className="crt-back" onClick={onBack}>
+          ← All topics
+        </button>
+      </nav>
+      <Status
+        pending={detail.isPending}
+        error={detail.error}
+        label="Opening your topic"
+      />
       {detail.isError && (
         <button className="a-btn" onClick={() => void detail.refetch()}>
           Retry topic
@@ -389,13 +521,15 @@ function TopicActivity({
     <>
       <div className="crt-section-head">
         <div>
-          <span className="crt-eyebrow">
-            {
-              crtSubjects.find((subject) => subject.id === topic.subjectId)
-                ?.name
-            }
-          </span>
-          <h1>{topic.title}</h1>
+          <div className="crt-reader-title">
+            <h1>{topic.title}</h1>
+            <span className="crt-eyebrow">
+              {
+                crtSubjects.find((subject) => subject.id === topic.subjectId)
+                  ?.name
+              }
+            </span>
+          </div>
           {topic.description && <p>{topic.description}</p>}
         </div>
         {topic.completed && (
@@ -589,10 +723,7 @@ function PdfReader({ topic }: { topic: CrtStudentTopicDetail }) {
   return (
     <section className="crt-pdf-panel" aria-label="Topic PDF">
       <div className="crt-panel-heading">
-        <div>
-          <span className="crt-eyebrow">THE CONCEPTS</span>
-          <h3>Read the lesson</h3>
-        </div>
+        <h3>Read the lesson</h3>
         <button
           ref={button}
           type="button"
@@ -605,7 +736,11 @@ function PdfReader({ topic }: { topic: CrtStudentTopicDetail }) {
         </button>
       </div>
       <div className="crt-pdf-body">
-        <Status pending={pdf.isPending} error={pdf.error} />
+        <Status
+          pending={pdf.isPending}
+          error={pdf.error}
+          label="Preparing your study material"
+        />
         {source && (
           <iframe
             src={source}

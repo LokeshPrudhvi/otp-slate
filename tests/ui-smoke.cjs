@@ -13,7 +13,7 @@ function boot(session) {
 }
 const dom=boot(), w=dom.window, d=w.document;
 const click=s=>{assert.ok(d.querySelector(s),s);d.querySelector(s).click();};
-const openHub=id=>{click('.a-nav[data-go="dashboard"]');click(`.hub-shortcuts [data-go="${id}"]`);};
+const openPractice=id=>{click('.a-nav[data-go="practice"]');click(`[data-act="practice-start"][data-id="${id}"]`);};
 const submit=()=>d.querySelector('#loginForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
 assert.equal(errors.length,0,errors.join('\n'));
 assert.ok(d.querySelector('#login').classList.contains('open'));
@@ -70,26 +70,20 @@ click('.mc-x');
 assert.equal(d.querySelector('.live-result'),null);
 click('.a-nav[data-go="dashboard"]');
 assert.ok(d.querySelector('.live-dash [data-go="live-exams"]'));
-click('.a-nav[data-go="toolkit"]');
-assert.equal(d.querySelectorAll('.a-rail [data-go="toolkit"]').length,1);
-assert.equal(d.querySelectorAll('.hub-card').length,5);
-click('.hub-card [data-go="hiring"]');
-assert.equal(d.querySelectorAll('.hub-card').length,6);
-click('.a-crumbs [data-go="toolkit"]');
-assert.equal(d.querySelectorAll('.hub-card').length,5);
-for(const [hub,count] of [['hiring',6],['crt',4],['dsa',2],['fullstack',3],['cc',3]]) {
- openHub(hub);
- assert.equal(d.querySelectorAll('.hub-card').length,count,hub);
- assert.equal(d.querySelector(`.a-nav[data-go="${hub}"]`),null);
- assert.ok(d.querySelector('.a-nav[data-go="toolkit"]').classList.contains('on'));
-}
+click('.a-nav[data-go="crt"]');
+assert.equal(d.querySelectorAll('.a-cgrid .a-row').length,4);
+assert.ok(d.querySelector('.a-nav[data-go="crt"]').classList.contains('on'));
+click('[data-act="course"][data-id="quant"]');
+assert.ok(d.querySelector('.a-nav[data-go="crt"]').classList.contains('on'));
+click('.a-crumbs [data-go="crt"]');
+assert.equal(d.querySelectorAll('.a-cgrid .a-row').length,4);
 click('.a-nav[data-go="courses"]');
 assert.ok(d.querySelector('#catalog').textContent.includes('C++ Programming'));
 assert.ok(!d.querySelector('#catalog').textContent.includes('Technical Foundation'));
-openHub('hiring');click('[data-act="launch"][data-id="typing"]');
+openPractice('typing');
 assert.ok(d.querySelector('#modal').classList.contains('open'));
 assert.match(d.querySelector('#mc').textContent,/Typing/);click('.mc-x');
-click('[data-act="course"][data-id="aptitude"]');
+click('.a-nav[data-go="courses"]');click('[data-act="course"][data-id="aptitude"]');
 assert.ok(d.querySelector('#amain').textContent.includes('Number System'));
 assert.equal(d.querySelector('.a-cnav'),null);
 assert.equal(d.querySelectorAll('[data-act="ctab"]').length,0);
@@ -104,10 +98,10 @@ click('.learn-resume [data-act="item"]');
 assert.ok(!d.querySelector('.learn-resume'));
 assert.ok(d.querySelector('#amain').textContent.includes('Number System'));
 
-for (const [hub,ids] of [['hiring',['aptitude','live','practice','livecode','webdev']],['crt',['quant','logic','cp','interview']]]) {
- for(const id of ids) { openHub(hub);click(`[data-act="launch"][data-id="${id}"]`);assert.ok(d.querySelector('#modal').classList.contains('open'),id + ': ' + errors.join('; '));click('.mc-x'); }
+for (const id of ['aptitude','live','practice','livecode','webdev','quant','logic','cp','interview']) {
+ openPractice(id);assert.ok(d.querySelector('#modal').classList.contains('open'),id + ': ' + errors.join('; '));click('.mc-x');
 }
-openHub('hiring');click('[data-act="launch"][data-id="practice"]');
+openPractice('practice');
 assert.equal(d.querySelectorAll('.problem-editor').length,1);
 assert.equal(d.querySelectorAll('.ide').length,0);
 assert.ok(d.querySelector('.ex-l').textContent.includes('Two Sum'));
@@ -126,7 +120,7 @@ assert.equal(d.querySelector('.ed-ta').value,draft);
 click('[data-ex="submit"]');click('[data-ov="ok"]');
 assert.match(d.querySelector('.ex-ov').textContent,/Sample submitted/);
 click('[data-ov="close"]');
-openHub('hiring');click('[data-act="launch"][data-id="webdev"]');
+openPractice('webdev');
 assert.ok(d.querySelector('.problem-editor'));
 assert.equal(d.querySelectorAll('.ide').length,0);
 click('.mc-x');
@@ -165,4 +159,4 @@ assert.ok(loggedOut.window.document.querySelector('#login').classList.contains('
 loggedOut.window.close();
 assert.deepEqual(errors,[]);
 w.close();
-console.log('PASS: startup, validation, login, session restore, five hubs, courses, typing lab, module navigation, logout and logged-out reload.');
+console.log('PASS: startup, validation, login, session restore, CRT, course catalog, practice activities, typing lab, module navigation, logout and logged-out reload.');

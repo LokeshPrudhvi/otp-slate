@@ -301,6 +301,8 @@ export const members = pgTable("members", {
   ...dates(),
 });
 export const courses = pgTable("courses", {
+  coverImageUrl: text("cover_image_url"),
+  coverUploadId: uuid("cover_upload_id"),
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   description: text("description").notNull(),
@@ -364,6 +366,9 @@ export const progress = pgTable(
     ),
   ],
 );
+export const companyLogos = pgTable("company_logos", {
+ id:uuid("id").primaryKey().defaultRandom(),companyName:text("company_name").notNull(),companyKey:text("company_key").notNull(),sha256:text("sha256").notNull().unique(),objectKey:text("object_key").notNull().unique(),fileName:text("file_name").notNull(),contentType:text("content_type").notNull(),size:integer("size").notNull(),createdAt:timestamp("created_at",{withTimezone:true}).notNull().defaultNow(),
+});
 export const jobs = pgTable("jobs", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("org_id")
@@ -371,6 +376,7 @@ export const jobs = pgTable("jobs", {
     .references(() => organizations.id),
   title: text("title").notNull(),
   company: text("company").notNull(),
+  logoId: uuid("logo_id").references(()=>companyLogos.id),
   description: text("description").notNull(),
   url: text("url").notNull(),
   postedAt: timestamp("posted_at", { withTimezone: true })
@@ -594,4 +600,42 @@ export const crtAttempts = pgTable("crt_attempts", {
     .notNull()
     .defaultNow(),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),
+});
+
+export const courseActivity = pgTable("course_activity", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("org_id").notNull(),
+  memberId: uuid("member_id").notNull(),
+  courseId: uuid("course_id").notNull(),
+  lastOpenedAt: timestamp("last_opened_at", { withTimezone: true }).notNull().defaultNow(),
+}, t => [uniqueIndex("course_activity_member_course").on(t.memberId, t.courseId)]);
+export const enrollmentRequests = pgTable("course_enrollment_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("org_id").notNull(),
+  studentMemberId: uuid("student_member_id").notNull(),
+  studentName: text("student_name").notNull(),
+  studentEmail: text("student_email").notNull(),
+  studentId: text("student_id"),
+  organizationName: text("organization_name").notNull(),
+  branchName: text("branch_name"),
+  branchCode: text("branch_code"),
+  courseId: uuid("course_id").notNull(),
+  courseTitle: text("course_title").notNull(),
+  status: text("status").$type<"pending" | "reviewed">().notNull().default("pending"),
+  outboxId: uuid("outbox_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedBy: uuid("reviewed_by"),
+}, t => [uniqueIndex("course_request_member_course").on(t.studentMemberId, t.courseId)]);
+
+export const placementResources = pgTable("placement_resources", {
+  logoId: uuid("logo_id").references(() => companyLogos.id),
+  id: uuid("id").primaryKey().defaultRandom(),
+  kind: text("kind").notNull(), title: text("title").notNull(), provider: text("provider").notNull(),
+  description: text("description").notNull().default(""), logoUrl: text("logo_url").notNull().default(""),
+  url: text("url").notNull().default(""), hiringProcedure: text("hiring_procedure").notNull().default(""),
+  papers: jsonb("papers").$type<{title:string;url:string}[]>().notNull().default([]),
+  practiceQuestions: jsonb("practice_questions").$type<{question:string;answer:string}[]>().notNull().default([]),
+  status: text("status").notNull().default("draft"), updatedAt: timestamp("updated_at",{withTimezone:true}).notNull().defaultNow(),
 });

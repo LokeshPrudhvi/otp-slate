@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { Organization } from "@slate/contracts";
 import { ErrorMessage, Icon, useData } from "@slate/ui";
 import { AdminPage } from "./page";
+import { LoadingState } from "@slate/ui/loading";
 import "./dashboard.css";
 
 interface PlatformSummary {
@@ -20,9 +21,9 @@ const workspaceLinks = [
   },
   {
     to: "/access",
-    icon: "toolkit",
+    icon: "workspace",
     title: "Learning access",
-    description: "Assign courses, practice and portal sections.",
+    description: "Assign courses, Coding and portal sections.",
   },
   {
     to: "/jobs",
@@ -82,7 +83,7 @@ export function AdminDashboard() {
             <div><h2 id="dashboard-organizations-title">Recent organizations</h2><p>Open an organization to manage its people and access.</p></div>
             <Link className="admin-dashboard-text-link" to="/organizations">View all <span aria-hidden="true">→</span></Link>
           </div>
-          {organizations.isPending ? <div className="admin-dashboard-placeholder-list" role="status">Loading organizations…</div> : organizations.error ? <div className="admin-dashboard-load-error">
+          {organizations.isPending ? <LoadingState label="Loading organizations" variant="table" /> : organizations.error ? <div className="admin-dashboard-load-error">
             <ErrorMessage error={organizations.error} />
             <button type="button" className="btn" onClick={() => void organizations.refetch()}>Retry organizations</button>
           </div> : allOrganizations.length ? <>
@@ -126,7 +127,7 @@ export function AdminDashboard() {
             </div>
           </section>
           <section className="admin-dashboard-service" aria-labelledby="dashboard-services-title">
-            <span className="admin-dashboard-workspace-icon"><Icon name="toolkit" /></span>
+            <span className="admin-dashboard-workspace-icon"><Icon name="workspace" /></span>
             <div><h2 id="dashboard-services-title">Connected services</h2><p>Check email, verification and code execution setup.</p><Link className="admin-dashboard-text-link" to="/integrations">View services <span aria-hidden="true">→</span></Link></div>
           </section>
         </div>

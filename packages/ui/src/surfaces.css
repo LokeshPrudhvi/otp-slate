@@ -1,0 +1,8 @@
+/* Shared page and card surfaces across the three portals. */
+:root {
+  --surface-canvas: #edf2f8;
+  --surface-card: #fff;
+  --surface-border: #ccd8e6;
+  --surface-shadow: 0 1px 2px #183b6406, 0 5px 18px #183b640d;
+  --surface-shadow-hover: 0 2px 4px #183b640a, 0 9px 24px #183b6417;
+}

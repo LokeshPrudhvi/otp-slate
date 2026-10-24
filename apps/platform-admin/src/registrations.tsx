@@ -727,7 +727,7 @@ export function Registrations() {
         </div>}
         <p className="registration-help">
           {status === "pending" ? <>Only public registrations and previously queued imports need review. Admin-created students are approved immediately. </> : status === "rejected" ? <>Rejected requests do not create accounts. Review the recorded reason in each row. </> : <>Track created accounts and welcome emails here. Failed emails can be retried from the row. </>}
-          Assign courses and practice in{" "}
+          Assign courses and Coding in{" "}
           <Link to={`/members${organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : ""}`}>People & learning access</Link>.
           {(status === "approved" || status === "all") && <> “Accepted by provider” does not confirm inbox delivery.</>}
         </p>

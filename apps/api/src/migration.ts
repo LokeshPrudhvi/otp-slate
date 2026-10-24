@@ -1,3 +1,7 @@
+import { placementLogoMigration } from "./placement-logo-migration.js";
+import { jobLogoMigration } from "./job-logo-migration.js";
+import { placementMigration } from "./placement-migration.js";
+import { courseCatalogMigration } from "./course-catalog-migration.js";
 // Migration 001. Run explicitly with owner credentials against Neon; local development applies it automatically.
 import { mailboxMigration } from "./mailbox-migration.js";
 import { legacyTableMigration } from "./legacy-table-migration.js";
@@ -12,6 +16,7 @@ import { crtAllBranchesMigration } from "./crt-all-branches-migration.js";
 import { questionImageMigration } from "./question-image-migration.js";
 import { branchEditMigration } from "./branch-edit-migration.js";
 import { courseLifecycleMigration } from "./course-lifecycle-migration.js";
+import { retiredAccessMigration } from "./retired-access-migration.js";
 export const migration =
   legacyTableMigration +
   `
@@ -86,4 +91,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS member_student_identity ON members(org_id, low
   examMigration +
   questionImageMigration +
   crtMigration +
-  crtAllBranchesMigration;
+  crtAllBranchesMigration +
+  retiredAccessMigration +
+  courseCatalogMigration + placementMigration + jobLogoMigration + placementLogoMigration;

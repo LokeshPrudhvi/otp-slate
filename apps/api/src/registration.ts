@@ -15,6 +15,7 @@ import { type Database, type Transaction } from "./database.js";
 import { encryptPayload, type WelcomeMailPayload } from "./providers.js";
 import type { Actor, SlateService } from "./service.js";
 import * as s from "./schema.js";
+import { supportedFeatures } from "./access.js";
 import {
   branchCodeInput,
   branchNameInput,
@@ -780,7 +781,7 @@ export class RegistrationService {
           passwordSetupComplete: updated.passwordSetupComplete,
           phone: updated.phone,
           phoneVerifiedAt: updated.phoneVerifiedAt,
-          features: updated.features,
+          features: supportedFeatures(updated.features),
           studentId: updated.studentId,
           cohort: updated.cohort,
           branchName: updated.branchName,

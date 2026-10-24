@@ -1,3 +1,4 @@
+import { expandedCodingCatalog } from "./coding-expansion.js";
 import type { PracticeAssessment } from "@slate/contracts";
 
 // Original sample prompts. Each row is a complete challenge with JSON input,
@@ -340,7 +341,7 @@ function starterCode(title: string) {
     ]),
   );
 }
-export const codingCatalog: PracticeAssessment[] = groups.flatMap(
+const originalCatalog: PracticeAssessment[] = groups.flatMap(
   (group, groupIndex) =>
     group.rows.split("\n").map((row, rowIndex) => {
       const [title, difficulty, statement, input, output, hint] =
@@ -386,3 +387,5 @@ export const codingCatalog: PracticeAssessment[] = groups.flatMap(
       };
     }),
 );
+
+export const codingCatalog: PracticeAssessment[] = [...originalCatalog, ...expandedCodingCatalog(starterCode)];

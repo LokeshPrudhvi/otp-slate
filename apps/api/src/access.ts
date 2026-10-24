@@ -9,13 +9,11 @@ import { z } from "zod";
 import {
   featureKeys,
   practiceModuleIds,
-  toolkitTrackIds,
   type AccessPolicy,
   type AccessWorkspace,
   type EffectiveAccess,
   type FeatureKey,
   type PortalDisplay,
-  type PracticeAssessment,
   type PracticeModuleId,
   type UpdateAccess,
 } from "@slate/contracts";
@@ -52,7 +50,6 @@ export const updateAccessInput = z
           z.enum(practiceModuleIds),
           practiceModuleIds.length,
         ),
-        toolkitTrackIds: list(z.enum(toolkitTrackIds), toolkitTrackIds.length),
       })
       .strict(),
     branchName: z.string().trim().min(1).max(120).optional(),
@@ -60,7 +57,6 @@ export const updateAccessInput = z
     display: z
       .object({
         portalTitle: z.string().trim().min(1).max(80),
-        toolkitTitle: z.string().trim().min(1).max(80),
         welcomeText: z.string().trim().max(240),
       })
       .strict()
@@ -97,18 +93,55 @@ export const inheritPolicy = (): AccessPolicy => ({
   features: null,
   courseIds: null,
   practiceModuleIds: null,
-  toolkitTrackIds: null,
 });
 export const defaultDisplay: PortalDisplay = {
   portalTitle: "Student portal",
-  toolkitTitle: "Your Placement Toolkit",
   welcomeText:
     "Continue learning, practise your skills and track your progress.",
 };
+// Persisted JSON may outlive a portal feature. Only supported fields are exposed
+// or used when resolving permissions; an explicit empty selection stays empty.
+export function supportedFeatures(value: unknown): FeatureKey[] {
+  return Array.isArray(value)
+    ? [...new Set(value)].filter((key): key is FeatureKey =>
+        featureKeys.includes(key as FeatureKey),
+      )
+    : [];
+}
+export function supportedPolicy(
+  value: AccessPolicy | null | undefined,
+): AccessPolicy {
+  return {
+    features:
+      value?.features == null ? null : supportedFeatures(value.features),
+    courseIds:
+      value?.courseIds == null
+        ? null
+        : Array.isArray(value.courseIds)
+          ? [...new Set(value.courseIds)].filter((id) => typeof id === "string")
+          : [],
+    practiceModuleIds:
+      value?.practiceModuleIds == null
+        ? null
+        : Array.isArray(value.practiceModuleIds)
+          ? [...new Set(value.practiceModuleIds)].filter((id) =>
+              practiceModuleIds.includes(id),
+            )
+          : [],
+  };
+}
+export function supportedDisplay(
+  value: PortalDisplay | null | undefined,
+): PortalDisplay {
+  return {
+    portalTitle: value?.portalTitle ?? defaultDisplay.portalTitle,
+    welcomeText: value?.welcomeText ?? defaultDisplay.welcomeText,
+  };
+}
 const coreFeatures: FeatureKey[] = [
   "courses",
-  "toolkit",
   "crt",
+  "pyq",
   "compiler",
   "practice",
   "live-exams",
@@ -116,28 +149,14 @@ const coreFeatures: FeatureKey[] = [
   "announcements",
   "self-assessment",
 ];
-export function practiceModule(
-  assessment: PracticeAssessment,
-): PracticeModuleId {
-  if (assessment.kind === "coding") return "competitive-coding";
-  if (assessment.id === "reasoning") return "reasoning";
-  if (assessment.kind === "typing") return "typing";
-  if (assessment.kind === "interview" || assessment.id === "interview-quiz")
-    return "interview";
-  if (
-    ["mern-project", "java-project", "python-project"].includes(assessment.id)
-  )
-    return "fullstack";
-  if (assessment.kind === "project") return "web-development";
-  return "aptitude";
-}
+// Keep legacy policy values readable, but only offer the coding library now.
+const competitiveModules: PracticeModuleId[] = ["competitive-coding"];
 const features: AccessWorkspace["catalog"]["features"] = [
   ["courses", "Courses", "Published courses selected for this audience."],
-  ["crt", "CRT", "PDF lessons and practice assigned to this organization and branch."],
   [
-    "toolkit",
-    "Learning toolkit",
-    "Show selected learning tracks on the dashboard and in Toolkit.",
+    "crt",
+    "CRT",
+    "PDF lessons and practice assigned to this organization and branch.",
   ],
   [
     "compiler",
@@ -146,18 +165,19 @@ const features: AccessWorkspace["catalog"]["features"] = [
   ],
   [
     "practice",
-    "Practice",
-    "Self-paced activities from assigned practice modules.",
+    "Coding",
+    "DSA and coding problems with topic and difficulty filters.",
   ],
   ["live-exams", "Live exams", "View assigned live and upcoming exams."],
   ["inbox", "Inbox", "Send and read organization messages."],
   ["announcements", "Announcements", "Read organization announcements."],
   [
     "self-assessment",
-    "Self-assessment",
-    "Show the self-assessment chart on the dashboard.",
+    "Learning Progress",
+    "Show CRT module and programming completion on the dashboard.",
   ],
-  ["jobs", "Jobs", "Browse jobs shared with the organization."],
+  ["jobs", "Careers", "Browse jobs and external certification courses."],
+  ["pyq", "PYQ", "Company hiring procedures, question papers and practice."],
   ["resume", "Resume builder", "Create and export a resume."],
   ["rankings", "Student rankings", "View the organization leaderboard."],
 ].map(([id, name, description]) => ({
@@ -165,22 +185,6 @@ const features: AccessWorkspace["catalog"]["features"] = [
   name,
   description,
 }));
-const moduleNames: Record<PracticeModuleId, string> = {
-  aptitude: "Quantitative aptitude",
-  reasoning: "Logical reasoning",
-  typing: "Typing practice",
-  interview: "Interview skills",
-  "web-development": "Web development",
-  fullstack: "Full stack projects",
-  "competitive-coding": "DSA / coding questions",
-};
-const trackNames = [
-  "Hiring Assessments",
-  "CRT Modules",
-  "Advanced DSA",
-  "Full Stack Development",
-  "Competitive Coding",
-];
 type PolicyRecord = typeof s.accessPolicies.$inferSelect;
 type MemberRecord = typeof s.members.$inferSelect;
 type GrantRecord = typeof s.grants.$inferSelect;
@@ -196,6 +200,10 @@ export function resolvePolicies(
   grants: GrantRecord[],
   demo: boolean,
 ) {
+  records = records.map((row) => ({
+    ...row,
+    policy: supportedPolicy(row.policy),
+  }));
   const organizationRow = records.find((row) => row.scope === "organization"),
     branch = records.find(
       (row) =>
@@ -206,12 +214,7 @@ export function resolvePolicies(
       (row) => row.scope === "student" && row.targetKey === member.id,
     ),
     rows = [student, branch, organizationRow],
-    baseFeatures = [
-      ...coreFeatures,
-      ...member.features.filter((key): key is FeatureKey =>
-        featureKeys.includes(key as FeatureKey),
-      ),
-    ],
+    baseFeatures = [...coreFeatures, ...supportedFeatures(member.features)],
     activeGrants = grants.filter(
       (grant) =>
         grant.memberId === member.id &&
@@ -238,20 +241,21 @@ export function resolvePolicies(
       ),
       practiceModuleIds: choose(
         "practiceModuleIds",
-        demo ? [...practiceModuleIds] : [],
+        demo ? [...competitiveModules] : [],
       ),
-      toolkitTrackIds: choose("toolkitTrackIds", [...toolkitTrackIds]),
       revision: organization.accessRevision,
-      display: organization.portalDisplay || defaultDisplay,
+      display: supportedDisplay(organization.portalDisplay),
     };
   if (!effective.features.includes("courses")) effective.courseIds = [];
+  effective.practiceModuleIds = effective.practiceModuleIds.filter((id) =>
+    competitiveModules.includes(id),
+  );
   if (!effective.features.includes("practice"))
     effective.practiceModuleIds = [];
   if (!effective.features.includes("compiler"))
     effective.practiceModuleIds = effective.practiceModuleIds.filter(
       (id) => id !== "competitive-coding",
     );
-  if (!effective.features.includes("toolkit")) effective.toolkitTrackIds = [];
   const source = rows.find(
     (row) =>
       row?.policy.courseIds !== null && row?.policy.courseIds !== undefined,
@@ -421,7 +425,10 @@ export class AccessService {
       .from(sql`(values (true)) as access_snapshot`);
     const organization = known?.organization || snapshot.organizations[0];
     if (!organization) throw new NotFoundException("Organization not found.");
-    const records = known?.records || snapshot.records;
+    const records = (known?.records || snapshot.records).map((row) => ({
+      ...row,
+      policy: supportedPolicy(row.policy),
+    }));
     const { people, grants, courses } = snapshot;
     const organizationPolicy = records.find(
       (row) => row.scope === "organization",
@@ -467,7 +474,7 @@ export class AccessService {
       },
       revision: organization.accessRevision,
       organizationPolicy: organizationPolicy?.policy || inheritPolicy(),
-      display: organization.portalDisplay || defaultDisplay,
+      display: supportedDisplay(organization.portalDisplay),
       branches: [...branches.values()].sort((a, b) =>
         a.name.localeCompare(b.name),
       ),
@@ -497,15 +504,14 @@ export class AccessService {
             demo,
           ).effective,
           baseline: (() => {
-            const { features, courseIds, practiceModuleIds, toolkitTrackIds } =
-              resolvePolicies(
-                organization,
-                member,
-                [],
-                ownGrants,
-                demo,
-              ).effective;
-            return { features, courseIds, practiceModuleIds, toolkitTrackIds };
+            const { features, courseIds, practiceModuleIds } = resolvePolicies(
+              organization,
+              member,
+              [],
+              ownGrants,
+              demo,
+            ).effective;
+            return { features, courseIds, practiceModuleIds };
           })(),
         };
       }),
@@ -513,26 +519,18 @@ export class AccessService {
         defaults: {
           features: [...coreFeatures],
           courseIds: [],
-          practiceModuleIds: demo ? [...practiceModuleIds] : [],
-          toolkitTrackIds: [...toolkitTrackIds],
+          practiceModuleIds: demo ? [...competitiveModules] : [],
         },
         features,
         courses: courses.sort((a, b) => a.title.localeCompare(b.title)),
-        practiceModules: practiceModuleIds.map((id) => ({
+        practiceModules: competitiveModules.map((id) => ({
           id,
-          name: moduleNames[id],
+          name: "Coding",
           description:
-            id === "competitive-coding"
-              ? "Coding problems with difficulty and topic filters. Requires Compiler."
-              : "Sample activities available for administrator assignment.",
-          count: demoPractice.filter((item) => practiceModule(item) === id)
-            .length,
+            "DSA and coding problems with difficulty and topic filters. Requires Compiler.",
+          count: demoPractice.filter((item) => item.kind === "coding").length,
           sample: true,
           requiresCompiler: id === "competitive-coding",
-        })),
-        toolkitTracks: toolkitTrackIds.map((id, index) => ({
-          id,
-          name: trackNames[index],
         })),
       },
     };
@@ -594,7 +592,13 @@ export class AccessService {
       const records = await tx
         .select()
         .from(s.accessPolicies)
-        .where(eq(s.accessPolicies.organizationId, organizationId));
+        .where(eq(s.accessPolicies.organizationId, organizationId))
+        .then((rows) =>
+          rows.map((row) => ({
+            ...row,
+            policy: supportedPolicy(row.policy),
+          })),
+        );
       const previous = records.find(
         (row) => row.scope === input.scope && row.targetKey === target,
       );
@@ -606,7 +610,6 @@ export class AccessService {
           "features",
           "courseIds",
           "practiceModuleIds",
-          "toolkitTrackIds",
         ] as const) {
           const blocked =
             input.policy[key]?.filter(

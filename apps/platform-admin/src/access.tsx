@@ -28,13 +28,12 @@ import "./access.css";
 
 type Scope = UpdateAccess["scope"];
 type Selection = { scope: Scope; id: string };
-type ListKey = "courseIds" | "practiceModuleIds" | "toolkitTrackIds";
+type ListKey = "courseIds" | "practiceModuleIds";
 type Option = { id: string; label: string; detail?: string; blocked?: string };
 const emptyPolicy = (): AccessPolicy => ({
   features: null,
   courseIds: null,
   practiceModuleIds: null,
-  toolkitTrackIds: null,
 });
 const scopeLabels = {
   organization: "Organization",
@@ -44,9 +43,8 @@ const scopeLabels = {
 const featureIcons: Partial<Record<FeatureKey, string>> = {
   courses: "book",
   crt: "book",
-  toolkit: "toolkit",
   compiler: "code",
-  practice: "exam",
+  practice: "code",
   "live-exams": "exam",
   inbox: "mail",
   announcements: "mail",
@@ -318,7 +316,10 @@ function AccessEditor({
   function effectiveList(key: ListKey): string[] {
     const ceiling = currentWorkspace.organizationPolicy[key];
     return selectedList(key).filter(
-      (id) => isOrg || ceiling === null || ceiling.includes(id as never),
+      (id) =>
+        (key !== "practiceModuleIds" ||
+          currentWorkspace.catalog.practiceModules.some((module) => module.id === id)) &&
+        (isOrg || ceiling === null || ceiling.includes(id as never)),
     );
   }
   function setList(key: ListKey, items: string[] | null) {
@@ -424,7 +425,7 @@ function AccessEditor({
     (module) => ({
       id: module.id,
       label: module.name,
-      detail: `${module.count} activities${module.sample ? " · Sample library" : ""}${module.requiresCompiler ? " · Uses compiler" : ""}`,
+      detail: `${module.count} coding problems${module.requiresCompiler ? " · Uses compiler" : ""}`,
       blocked:
         !isOrg &&
         currentWorkspace.organizationPolicy.practiceModuleIds !== null &&
@@ -435,16 +436,6 @@ function AccessEditor({
           : undefined,
     }),
   );
-  const trackOptions = currentWorkspace.catalog.toolkitTracks.map((track) => ({
-    id: track.id,
-    label: track.name,
-    blocked:
-      !isOrg &&
-      currentWorkspace.organizationPolicy.toolkitTrackIds !== null &&
-      !currentWorkspace.organizationPolicy.toolkitTrackIds.includes(track.id)
-        ? "Unavailable in this organization"
-        : undefined,
-  }));
   const previewFeatures = effectiveFeatures;
   const lists: {
     key: ListKey;
@@ -464,20 +455,12 @@ function AccessEditor({
     },
     {
       key: "practiceModuleIds",
-      label: "Practice library",
-      noun: "practice modules",
+      label: "Coding",
+      noun: "coding libraries",
       feature: "practice",
       description:
-        "Build a focused practice library with the modules they need.",
+        "Give students access to the DSA and coding problem library.",
       options: practiceOptions,
-    },
-    {
-      key: "toolkitTrackIds",
-      label: "Toolkit sections",
-      noun: "toolkit sections",
-      feature: "toolkit",
-      description: "Select the learning sections displayed inside the toolkit.",
-      options: trackOptions,
     },
   ];
   return (
@@ -788,7 +771,7 @@ function AccessEditor({
                 ) &&
                 !effectiveFeatures.includes("compiler") && (
                   <p className="access-field-note warning">
-                    Coding activities stay unavailable while the compiler is
+                    Coding stays unavailable while the compiler is
                     disabled.
                   </p>
                 )}
@@ -813,38 +796,21 @@ function AccessEditor({
                 <p>Use language that fits this organization’s curriculum.</p>
               </div>
             </div>
-            <div className="form-grid">
-              <Field label="Portal title">
-                <input
-                  required
-                  maxLength={80}
-                  value={display.portalTitle}
-                  readOnly={readOnly}
-                  placeholder="Learning portal"
-                  onChange={(event) =>
-                    setDisplay((previous) => ({
-                      ...previous,
-                      portalTitle: event.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Toolkit title">
-                <input
-                  required
-                  maxLength={80}
-                  value={display.toolkitTitle}
-                  readOnly={readOnly}
-                  placeholder="Your learning toolkit"
-                  onChange={(event) =>
-                    setDisplay((previous) => ({
-                      ...previous,
-                      toolkitTitle: event.target.value,
-                    }))
-                  }
-                />
-              </Field>
-            </div>
+            <Field label="Portal title">
+              <input
+                required
+                maxLength={80}
+                value={display.portalTitle}
+                readOnly={readOnly}
+                placeholder="Learning portal"
+                onChange={(event) =>
+                  setDisplay((previous) => ({
+                    ...previous,
+                    portalTitle: event.target.value,
+                  }))
+                }
+              />
+            </Field>
             <Field label="Dashboard welcome message">
               <textarea
                 maxLength={240}
@@ -921,7 +887,7 @@ function AccessEditor({
                   ).length
                 : 0}
             </strong>
-            <span>Practice modules</span>
+            <span>Coding libraries</span>
           </div>
         </div>
         <p className="access-preview-note">

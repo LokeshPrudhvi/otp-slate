@@ -1,12 +1,12 @@
 .org-root {
   --org-ink: #172b4d;
   --org-muted: #7a8697;
-  --org-line: #e7ebef;
+  --org-line: var(--surface-border);
   --org-green: #318477;
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
   min-height: 100dvh;
-  background: #f5f6f8;
+  background: var(--surface-canvas);
   color: var(--org-ink);
   font-size: 13px;
 }
@@ -400,8 +400,9 @@
   margin: 0 0 24px;
 }
 .org-stat {
-  background: white;
+  background: var(--surface-card);
   border: 1px solid var(--org-line);
+  box-shadow: var(--surface-shadow);
   border-radius: 10px;
   padding: 18px 19px 19px;
 }
@@ -468,11 +469,15 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
 }
 .org-card {
-  background: #fff;
+  background: var(--surface-card);
   border: 1px solid var(--org-line);
+  box-shadow: var(--surface-shadow);
   border-radius: 10px;
   padding: 23px 23px 19px;
   min-width: 0;
+}
+.org-card :is(.org-card, .org-stat, .panel, .card, .metric) {
+  box-shadow: none;
 }
 .org-card-heading {
   display: flex;

@@ -181,7 +181,6 @@ test("branch editing atomically preserves audiences, access and progress with st
             features: ["courses", "practice", "announcements"],
             courseIds: [course.id],
             practiceModuleIds: ["aptitude"],
-            toolkitTrackIds: [],
           },
           courseVersions: { [course.id]: version.id },
         },

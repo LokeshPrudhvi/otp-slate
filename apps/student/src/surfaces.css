@@ -1,0 +1,84 @@
+@import "@slate/ui/surfaces.css";
+
+/* Keep the page visibly separate from its content surfaces. */
+.student-app,
+.student-app .a-main,
+.student-app .a-nav.on {
+  background: var(--surface-canvas);
+}
+.student-app .crt-page {
+  --crt-surface: var(--surface-canvas);
+  --crt-line: var(--surface-border);
+}
+
+/* White primary panels; coloured headers and status treatments keep their fill. */
+.student-app :is(
+  .self-assessment-card,
+  .rankings-panel,
+  .hub-card,
+  .student-announcement,
+  .learn-module,
+  .learn-progress,
+  .lesson-activity,
+  .resume-form,
+  .coding-progress-card,
+  .coding-list-panel,
+  .exam-instructions,
+  .exam-submitted,
+  .crt-practice-setup,
+  .crt-practice-attempt
+) {
+  background: var(--surface-card);
+  border-color: var(--surface-border);
+  box-shadow: var(--surface-shadow);
+}
+.student-app :is(
+  .learning-card,
+  .crt-topic-link,
+  .crt-subject-card,
+  .coding-daily-card,
+  .exam-summary,
+  .exam-empty,
+  .learn-resume,
+  .live-dash
+) {
+  box-shadow: var(--surface-shadow);
+}
+.student-app .learning-card {
+  border-color: var(--surface-border);
+}
+.student-app :is(.learning-card, .crt-topic-link, .crt-subject-card, .job-card):hover {
+  box-shadow: var(--surface-shadow-hover);
+}
+.student-app :is(.learning-card, .job-card):hover {
+  border-color: #94aecb;
+}
+.student-app .crt-topic-link.is-complete {
+  border-color: #b7d5c5;
+}
+.student-app .crt-topic-link.is-complete:hover {
+  border-color: #31825b;
+}
+.student-app .course-catalog-filters {
+  background: #e2eaf4;
+  border-color: #ccd8e6;
+}
+.student-app .course-catalog-filters .a-pill:not(.on) {
+  color: #455e79;
+}
+
+/* Reading tabs stay joined; a single shadow contains the whole workspace. */
+.student-app .crt-topic-workspace {
+  border-radius: 12px;
+  box-shadow: var(--surface-shadow);
+}
+
+@media print {
+  .student-app,
+  .student-app .a-main {
+    background: #fff;
+  }
+  .student-app :is(.resume-form, .lesson-activity, .crt-topic-workspace) {
+    box-shadow: none;
+  }
+}

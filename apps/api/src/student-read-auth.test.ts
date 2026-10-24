@@ -89,7 +89,6 @@ test("student course HTTP reads retain fresh authentication and access checks", 
         features: ["courses"],
         courseIds: [course.id],
         practiceModuleIds: [],
-        toolkitTrackIds: [],
       };
       const [access] = await tx
         .insert(s.accessPolicies)

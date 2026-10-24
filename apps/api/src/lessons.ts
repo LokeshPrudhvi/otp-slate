@@ -80,7 +80,8 @@ export class LessonService {
     if (
       input.purpose === "video" ||
       input.purpose === "question_image" ||
-      input.purpose === "crt_pdf"
+      input.purpose === "crt_pdf" ||
+      input.purpose === "course_cover"
     ) {
       if (actor.role !== "platform_admin") throw new ForbiddenException();
       if (input.courseId || input.lessonId)
@@ -104,7 +105,7 @@ export class LessonService {
       versionId = course.versionId;
     }
     const isVideo = input.purpose === "video";
-    const isImage = input.purpose === "question_image";
+    const isImage = ["question_image", "course_cover"].includes(input.purpose);
     const isPdf = input.purpose === "crt_pdf";
     const allowedType = isVideo
       ? ["video/mp4", "video/webm"].includes(input.contentType)
@@ -231,7 +232,7 @@ export class LessonService {
         throw new BadRequestException(
           "The uploaded file changed while being finalized. Upload it again.",
         );
-      if (upload.purpose === "question_image") {
+      if (["question_image", "course_cover"].includes(upload.purpose)) {
         if (!this.storage.readPrefix)
           throw new ServiceUnavailableException(
             "Image validation is not available. Try again later.",

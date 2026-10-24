@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, authClient, useMe } from "@slate/ui";
 import type { Identity } from "@slate/contracts";
+import { LoadingState } from "@slate/ui/loading";
 import { Artwork, Status } from "./design";
 
 export function AuthFrame({
@@ -44,14 +45,11 @@ export function StudentLogin() {
   // during subsequent window-focus checks.
   if (me.isPending || !me.isFetchedAfterMount)
     return (
-      <AuthFrame
-        title="Opening your workspace…"
-        description="Checking your existing session."
-      >
-        <p className="auth-message" role="status">
-          Please wait…
-        </p>
-      </AuthFrame>
+      <LoadingState
+        fullScreen
+        label="Opening your workspace"
+        detail="Checking your session and getting things ready."
+      />
     );
   if (me.isSuccess && me.data)
     return (

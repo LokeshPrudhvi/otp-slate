@@ -401,7 +401,7 @@ test("access resolution uses the current branch and its policy in one snapshot a
     );
     assert.deepEqual(before.effective.courseIds, [fixture.assigned.id]);
     assert.equal(before.versionIds[fixture.assigned.id], fixture.pinned.id);
-    assert.deepEqual(before.effective.practiceModuleIds, ["aptitude"]);
+    assert.deepEqual(before.effective.practiceModuleIds, []);
     assert.equal(before.effective.features.includes("compiler"), false);
 
     // Reproduce the interleaving: authentication already read the old member,

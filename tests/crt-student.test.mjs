@@ -181,6 +181,12 @@ const activityTab = (name) =>
 const activityPanel = (name) =>
   document.getElementById(activityTab(name).getAttribute("aria-controls"));
 const topicsOnScreen = () => [...document.querySelectorAll(".crt-topic-link")];
+const progressFilter = (label) =>
+  [
+    ...document.querySelectorAll(
+      '[role="group"][aria-label="Filter topics by progress"] button',
+    ),
+  ].find((item) => item.textContent.trim().startsWith(label));
 const location = () => document.querySelector("[data-location]").textContent;
 async function click(item) {
   assert.ok(item, "Expected interactive element");
@@ -300,7 +306,7 @@ test("an assessment is ready only when every current question has an in-range in
   assert.equal(allAnswered(questions, { "q-1": 0, "q-2": 1 }), true);
 });
 
-test("topic links paginate in groups of 20 and keep completion markers and open the selected topic", async () => {
+test("all topic links remain available in one continuous list and the final topic opens with completion intact", async () => {
   const topics = Array.from({ length: 45 }, (_, i) =>
     topic(i + 1, "quantitative", { completed: i % 4 === 0 }),
   );
@@ -314,50 +320,51 @@ test("topic links paginate in groups of 20 and keep completion markers and open 
       },
     }),
   );
-  assert.equal(topicsOnScreen().length, 20);
-  assert.equal(button("← Previous").disabled, true);
-  assert.match(
-    document.querySelector(".crt-pagination").textContent,
-    /1–20 of 45 topics/,
+  assert.equal(topicsOnScreen().length, 45);
+  assert.deepEqual(
+    topicsOnScreen().map((item) => item.getAttribute("aria-label")),
+    topics.map((item) => `${item.title}${item.completed ? ", completed" : ""}`),
   );
+  assert.equal(document.querySelector(".crt-pagination"), null);
+  assert.equal(button("← Previous"), undefined);
+  assert.equal(button("Next →"), undefined);
   assert.match(topicsOnScreen()[0].getAttribute("aria-label"), /completed/);
   assert.ok(topicsOnScreen()[0].querySelector('[data-icon="check"]'));
-  await click(button("Next →"));
-  assert.equal(topicsOnScreen().length, 20);
-  assert.match(topicsOnScreen()[0].textContent, /Topic 21/);
-  await click(button("Next →"));
-  assert.equal(topicsOnScreen().length, 5);
-  assert.equal(button("Next →").disabled, true);
-  await click(topicsOnScreen()[4]);
+  await click(topicsOnScreen()[44]);
   assert.equal(opened.id, topics[44].id);
 });
 
-test("topic search and progress dropdown reset pagination and expose only matching completion states", async () => {
+test("topic search and progress filters show every matching topic and combine without hiding later results", async () => {
   const topics = Array.from({ length: 45 }, (_, i) =>
     topic(i + 1, "quantitative", { completed: i % 4 === 0 }),
   );
   await mount(
     h(TopicLibrary, { subject: "quantitative", topics, onOpen() {} }),
   );
-  await click(button("Next →"));
+  assert.equal(progressFilter("All topics").getAttribute("aria-pressed"), "true");
+  assert.match(progressFilter("All topics").textContent, /45/);
+  assert.match(progressFilter("Completed").textContent, /12/);
+  assert.match(progressFilter("To complete").textContent, /33/);
   await inputValue(
     document.querySelector('input[type="search"]'),
-    "  READING 04  ",
+    "  READING 44  ",
   );
   assert.equal(topicsOnScreen().length, 1);
-  assert.match(topicsOnScreen()[0].textContent, /Topic 04/);
-  assert.match(
-    document.querySelector(".crt-pagination").textContent,
-    /Page 1 of 1/,
-  );
+  assert.match(topicsOnScreen()[0].textContent, /Topic 44/);
+  await click(progressFilter("Completed"));
+  assert.equal(topicsOnScreen().length, 0);
+  assert.match(document.body.textContent, /No matching topics/);
+  assert.equal(progressFilter("Completed").getAttribute("aria-pressed"), "true");
+  assert.equal(progressFilter("All topics").getAttribute("aria-pressed"), "false");
   await inputValue(document.querySelector('input[type="search"]'), "");
-  await choose("Filter topics by progress", "Completed");
   assert.equal(topicsOnScreen().length, 12);
   assert.ok(
     topicsOnScreen().every((item) => item.classList.contains("is-complete")),
   );
-  await choose("Filter topics by progress", "To complete");
-  assert.equal(topicsOnScreen().length, 20);
+  await click(progressFilter("To complete"));
+  assert.equal(topicsOnScreen().length, 33);
+  assert.equal(progressFilter("To complete").getAttribute("aria-pressed"), "true");
+  assert.equal(progressFilter("Completed").getAttribute("aria-pressed"), "false");
   assert.ok(
     topicsOnScreen().every((item) => !item.classList.contains("is-complete")),
   );
@@ -366,38 +373,114 @@ test("topic search and progress dropdown reset pagination and expose only matchi
     "No matching title",
   );
   assert.match(document.body.textContent, /No matching topics/);
-  assert.equal(button("Next →").disabled, true);
+  assert.equal(topicsOnScreen().length, 0);
+  await inputValue(document.querySelector('input[type="search"]'), "");
+  await click(progressFilter("All topics"));
+  assert.equal(topicsOnScreen().length, 45);
 });
 
-test("the five fixed subject tabs return after leaving the focused topic workspace", async () => {
+test("CRT opens as four subject cards and a practice card, with progress from assigned topics only", async () => {
+  const topics = [
+    topic(1, "quantitative", { completed: true }),
+    topic(2, "quantitative"),
+    topic(3, "reasoning"),
+  ];
+  read = () => topics;
+  await mount(h(CrtPage));
+  const cards = [...document.querySelectorAll(".crt-subject-card")];
+  assert.equal(cards.length, 4);
+  assert.equal(document.querySelectorAll(".crt-practice-card").length, 1);
+  assert.equal(document.querySelector(".crt-subjects"), null);
+  assert.equal(topicsOnScreen().length, 0);
+  assert.equal(cards[0].getAttribute("href"), "/crt?subject=quantitative");
+  assert.match(cards[0].getAttribute("aria-label"), /2 topics, 1 completed/);
+  assert.equal(
+    cards[0].querySelector(".crt-subject-progress-track span").style.width,
+    "50%",
+  );
+  assert.match(cards[2].textContent, /0 topicsAwaiting topics/);
+  assert.equal(
+    cards[2].querySelector(".crt-subject-progress-track span").style.width,
+    "0%",
+  );
+  assert.equal(document.querySelector(".crt-hero"), null);
+  assert.equal(calls.length, 0);
+});
+
+test("subject cards open their topics and provide a route back to all CRT subjects without a fixed tab header", async () => {
   const subjects = ["quantitative", "reasoning", "verbal", "soft-skills"];
   const topics = subjects.map((subject, i) =>
     topic(i + 1, subject, { title: `${subject} lesson` }),
   );
   read = (path) => (path === "student/crt/topics" ? topics : null);
   await mount(h(CrtPage), "/crt?subject=unknown");
-  const tabs = () => [...document.querySelectorAll(".crt-subjects button")];
-  assert.equal(tabs().length, 5);
-  assert.match(topicsOnScreen()[0].textContent, /quantitative lesson/);
-  for (let i = 1; i < 4; i++) {
-    await click(tabs()[i]);
+  const cards = () => [...document.querySelectorAll(".crt-subject-card")];
+  assert.equal(cards().length, 4);
+  assert.equal(topicsOnScreen().length, 0);
+  for (let i = 0; i < 4; i++) {
+    await click(cards()[i]);
+    assert.equal(location(), `/crt?subject=${subjects[i]}`);
     assert.equal(topicsOnScreen().length, 1);
     assert.match(
       topicsOnScreen()[0].textContent,
       new RegExp(`${subjects[i]} lesson`),
     );
-    assert.equal(tabs()[i].getAttribute("aria-current"), "page");
+    assert.equal(document.querySelector(".crt-hero"), null);
+    assert.equal(cards().length, 0);
+    await click(topicsOnScreen()[0]);
+    assert.match(location(), /topic=/);
+    await click(button("← All topics"));
+    assert.equal(location(), `/crt?subject=${subjects[i]}`);
+    await click(document.querySelector(".crt-home-link"));
+    assert.equal(location(), "/crt");
+    assert.equal(cards().length, 4);
   }
-  await click(topicsOnScreen()[0]);
-  assert.match(location(), /topic=/);
-  assert.equal(document.querySelector(".crt-hero"), null);
-  assert.equal(tabs().length, 0);
-  await click(button("← All topics"));
-  assert.doesNotMatch(location(), /topic=/);
-  assert.equal(tabs().length, 5);
-  await click(tabs()[4]);
+  await click(document.querySelector(".crt-practice-card"));
   assert.equal(location(), "/crt?subject=practice");
   assert.match(document.body.textContent, /Choose what to work on/);
+  await click(document.querySelector(".crt-home-link"));
+  assert.equal(location(), "/crt");
+  assert.equal(cards().length, 4);
+});
+
+test("the card landing page handles loading, failure and a curriculum with no assigned topics", async () => {
+  let finish;
+  read = () =>
+    new Promise((resolve) => {
+      finish = resolve;
+    });
+  await mount(h(CrtPage));
+  assert.equal(document.querySelectorAll(".crt-subject-card").length, 0);
+  assert.match(
+    document.querySelector('[role="status"]').textContent,
+    /Loading/,
+  );
+  await act(async () => finish([]));
+  await settle();
+  assert.equal(document.querySelectorAll(".crt-subject-card").length, 4);
+  assert.ok(
+    [...document.querySelectorAll(".crt-subject-card")].every((card) =>
+      card.textContent.includes("Awaiting topics"),
+    ),
+  );
+  await click(document.querySelector(".crt-subject-card"));
+  assert.match(document.body.textContent, /Your topics will appear here/);
+  read = () => {
+    throw new Error("Could not load your assigned topics.");
+  };
+  await act(async () => {
+    await query.resetQueries();
+  });
+  await settle();
+  assert.match(
+    document.querySelector('[role="alert"]').textContent,
+    /Could not load/,
+  );
+  assert.ok(button("Retry topics"));
+  read = () => [];
+  await click(button("Retry topics"));
+  assert.equal(document.querySelector('[role="alert"]'), null);
+  assert.match(document.body.textContent, /Your topics will appear here/);
 });
 
 test("practice subject selection filters topics, clears the former topic, and sends the chosen count", async () => {
@@ -625,7 +708,8 @@ test("switching topic tabs preserves the PDF, answer draft, reading acknowledgem
   assert.equal(document.querySelector(".crt-result-banner"), outcome);
   assert.equal(calls.length, 1);
   assert.equal(
-    reads.filter((path) => path === `student/crt/topics/${value.id}/pdf`).length,
+    reads.filter((path) => path === `student/crt/topics/${value.id}/pdf`)
+      .length,
     1,
   );
 });

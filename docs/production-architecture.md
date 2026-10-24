@@ -27,13 +27,13 @@ The engineering starting point is 200 simultaneous learners and a 300-student ex
 
 | Portal | Production responsibilities | Access boundary |
 | --- | --- | --- |
-| Student | Assigned courses and modules; placement toolkit; practice; live exams; personal progress and rankings; jobs; resume builder | Own account and submissions, assigned resources, published jobs, and permitted organization rankings |
+| Student | Assigned courses and modules; CRT; practice; live exams; personal progress and rankings; jobs; resume builder | Own account and submissions, assigned resources, published jobs, and permitted organization rankings |
 | Platform Admin | Organizations; student and viewer accounts; Excel imports; cohorts; access profiles and individual assignments; course content; problem and question banks; exams; jobs; audit and operational reports | Explicit platform privileges, with an organization scope recorded for every organization-specific change |
 | Organization Admin | Participation, course progress, skills, practice and exam analytics, student performance and individual student insights | Fixed organization from the authenticated account; analytics only |
 
 Organization members do not create organizations, manage students, enroll learners, change learning access, publish exams, edit jobs, or manage other member accounts. Their authentication actions, such as signing in, changing their own password, and signing out, remain available. Every member email has its own identity; there is no shared organization password.
 
-The course catalog retains C, C++, Python and Java in Courses. Placement Toolkit groups Hiring Assessments, CRT Modules, Advanced DSA, Full Stack Development and Competitive Coding. Practice collects eligible practice activities; Live Exams displays exams released by Platform Admin and an empty state when none are available. Calendar, to-do and recent feedback are outside the agreed student UI.
+The course catalog contains C, C++, Python, Java, Advanced DSA, Full Stack Development and Competitive Coding. CRT has its own navigation entry for the shared curriculum; Hiring Assessments are available through Practice. Practice collects eligible practice activities; Live Exams displays exams released by Platform Admin and an empty state when none are available. Calendar, to-do and recent feedback are outside the agreed student UI.
 
 | Catalog group | Required content |
 | --- | --- |
@@ -43,7 +43,7 @@ The course catalog retains C, C++, Python and Java in Courses. Placement Toolkit
 | Full Stack Development | MERN, Java and Python tracks with repository/project submissions |
 | Competitive Coding | Language-specific problem collections, targeting 100 problems each for C++, Java, Python and other enabled languages |
 
-Collections reference reusable problems and their validated runtimes; the same problem need not be copied into every collection. Show actual published counts, rather than claiming 100 available problems before that content exists. Toolkit remains the single navigation entry for these groups, with dashboard entry cards.
+Collections reference reusable problems and their validated runtimes; the same problem need not be copied into every collection. Show actual published counts, rather than claiming 100 available problems before that content exists. Assigned courses remain available through Courses, and eligible practice activities through Practice.
 
 Full Stack combines courses with repository/project-link submissions. Live classes open authorized Zoom or Google Meet links. Browser monitoring records exam-related browser signals; webcam recording, browser-hosted full applications, AI assistance, billing and public self-registration are outside the launch scope.
 
@@ -497,7 +497,7 @@ Deploy backward-compatible API/schema changes first, then portal bundles. Use im
 
 ## Migration from the HTML prototype
 
-Retain the current screens as visual and interaction references, including the Coursera-like course navigation, single Toolkit navigation entry, Practice/Live Exams split, dashboard rankings and distinct organization analytics layout. Extract shared tokens and components, then connect each workflow to typed API calls.
+Retain the current screens as visual and interaction references, including the Coursera-like course navigation, CRT curriculum, Practice/Live Exams split, dashboard rankings and distinct organization analytics layout. Extract shared tokens and components, then connect each workflow to typed API calls.
 
 Replace `localStorage` workspace persistence, preview login/session flags, browser password hashes, sample analytics and mock compiler results. Do not import seed students, demo passwords or locally stored credentials into production. Curate real courses, problems and question sets through the new platform authoring workflow; import actual rosters through validated provisioning. Client-side hiding of buttons is not an authorization control.
 

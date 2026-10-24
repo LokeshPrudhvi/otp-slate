@@ -55,7 +55,7 @@ test("Platform Admin can provision and correct students without changing identit
     await tx.insert(s.grants).values({ organizationId: org.id, memberId: student.id, courseId: course.id, versionId: version.id });
     await tx.insert(s.progress).values({ organizationId: org.id, memberId: student.id, versionId: version.id, lessonId: lesson.id });
     await tx.insert(s.accessPolicies).values([
-      { organizationId: org.id, scope: "organization", targetKey: "organization", policy: { features: ["courses", "jobs"], courseIds: [course.id], practiceModuleIds: [], toolkitTrackIds: [] }, courseVersions: { [course.id]: version.id } },
+      { organizationId: org.id, scope: "organization", targetKey: "organization", policy: { features: ["courses", "jobs"], courseIds: [course.id], practiceModuleIds: [] }, courseVersions: { [course.id]: version.id } },
       { organizationId: org.id, scope: "branch", targetKey: "ME", branchName: "Mechanical Engineering", policy: inheritPolicy() },
       { organizationId: org.id, scope: "student", targetKey: student.id, policy: { ...inheritPolicy(), courseIds: [course.id] }, courseVersions: { [course.id]: version.id } },
     ]);

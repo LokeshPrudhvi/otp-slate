@@ -7,18 +7,20 @@ import {
   MailQuotaError,
   sendResetMail,
   sendWelcomeMail,
+  sendEnrollmentMail,
   type MailPayloads,
 } from "./providers.js";
 
 export type MailTransport = {
-  [T in keyof MailPayloads]: (
+  [T in Exclude<keyof MailPayloads, "enrollment_request">]: (
     id: string,
     payload: MailPayloads[T],
   ) => Promise<void>;
-};
+} & { enrollment_request?: (id: string, payload: MailPayloads["enrollment_request"]) => Promise<void> };
 const providerTransport: MailTransport = {
   password_reset: sendResetMail,
   welcome_student: sendWelcomeMail,
+  enrollment_request: sendEnrollmentMail,
 };
 const MAX_ATTEMPTS = 5;
 const LEASE_MS = 60_000;
@@ -134,6 +136,9 @@ export async function deliverOne(
         }
       }
       await sender.welcome_student(job.id, payload);
+    } else if (job.type === "enrollment_request") {
+      if (!sender.enrollment_request) throw new Error("Enrollment mail transport is unavailable.");
+      await sender.enrollment_request(job.id, decryptPayload(secret, job.encryptedPayload, "enrollment_request"));
     } else {
       throw new Error("Unsupported email type.");
     }
