@@ -67,12 +67,6 @@ test("MCQ images stay private, validated and bound to assigned versions and atte
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("No external messages");
-      },
-    },
     true,
     storage,
   );

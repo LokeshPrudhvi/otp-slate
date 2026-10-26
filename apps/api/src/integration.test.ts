@@ -55,14 +55,7 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
   const auth = createAuth(connection.db, config, connection.local);
   const previousStudentPortal = process.env.STUDENT_PORTAL_URL;
   process.env.STUDENT_PORTAL_URL = config.origins[0];
-  const delivered: { phone: string; code: string }[] = [];
-  const sender = {
-    configured: true,
-    async send(phone: string, code: string) {
-      delivered.push({ phone, code });
-    },
-  };
-  const service = new SlateService(connection.db, auth, config, sender, true);
+  const service = new SlateService(connection.db, auth, config, true);
   const root = await auth.api.createUser({
     body: {
       email: "platform@example.test",
@@ -293,7 +286,7 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
               phone: "+919876543210",
             })
           ).status,
-          403,
+          404,
         );
         assert.equal((await student.request("/api/auth/token")).status, 403);
         assert.equal(
@@ -318,93 +311,23 @@ test("real PostgreSQL and HTTP account, permission and learning workflows", asyn
         assert.equal(
           (await student.request("/api/v1/me?portal=student")).body
             .onboardingStep,
-          "phone",
+          null,
         );
         assert.equal(
           (await student.request("/api/v1/student/courses")).status,
-          403,
+          200,
         );
       },
     );
     await t.test(
-      "phone delivery failure stays closed; wrong codes persist attempts and correct codes are single-use",
+      "retired phone verification endpoints return not found without blocking access",
       async () => {
-        sender.configured = false;
-        assert.equal(
-          (
-            await student.request("/api/v1/onboarding/phone", "POST", {
-              phone: "+919876543210",
-            })
-          ).status,
-          503,
-        );
-        sender.configured = true;
-        const challenge = await student.request(
-          "/api/v1/onboarding/phone",
-          "POST",
-          { phone: "+919876543210" },
-        );
-        assert.equal(challenge.status, 201, JSON.stringify(challenge.body));
-        assert.equal(delivered.length, 1);
-        assert.equal(
-          (
-            await student.request("/api/v1/onboarding/phone/verify", "POST", {
-              challengeId: challenge.body.challengeId,
-              code: "000000",
-            })
-          ).status,
-          400,
-        );
-        const row = await scoped(
-          connection.db,
-          { platform: true },
-          async (tx) =>
-            (
-              await tx
-                .select()
-                .from(schema.phoneChallenges)
-                .where(
-                  eq(schema.phoneChallenges.id, challenge.body.challengeId),
-                )
-            )[0],
-        );
-        assert.equal(row.attempts, 1);
-        const accepted = await student.request(
-          "/api/v1/onboarding/phone/verify",
-          "POST",
-          { challengeId: challenge.body.challengeId, code: delivered[0].code },
-        );
-        assert.equal(accepted.status, 201);
-        assert.equal(accepted.body.requiresSignIn, true);
-        assert.equal(
-          (await student.request("/api/v1/student/courses")).status,
-          401,
-        );
-        await student.login(
-          "learner@example.test",
-          "Learner-new-password!2026",
-        );
-        assert.equal(
-          (await student.request("/api/v1/me?portal=student")).body
-            .onboardingStep,
-          null,
-        );
-        assert.equal(
-          (
-            await student.request("/api/v1/onboarding/phone/verify", "POST", {
-              challengeId: challenge.body.challengeId,
-              code: delivered[0].code,
-            })
-          ).status,
-          403,
-        );
+        for (const path of ["onboarding/phone", "onboarding/phone/verify"])
+          assert.equal((await student.request(`/api/v1/${path}`, "POST", { phone: "+919876543210", code: "123456" })).status, 404);
         const courses = await student.request("/api/v1/student/courses");
         assert.equal(courses.status, 200);
         assert.deepEqual(courses.body, []);
-        assert.equal(
-          (await student.request("/api/v1/student/resume")).status,
-          403,
-        );
+        assert.equal((await student.request("/api/v1/student/resume")).status, 403);
       },
     );
     await t.test(

@@ -94,7 +94,7 @@ function StudentLoginForm({ sessionError }: { sessionError: Error | null }) {
     [step, setStep] = useState<"password" | "mfa" | "reset">("password");
   const [notice, setNotice] = useState(
     new URLSearchParams(location.search).get("setup") === "complete"
-      ? "Phone verified. Sign in with your new password to continue."
+      ? "Account setup complete. Sign in with your new password to continue."
       : "",
   );
   const signIn = useMutation({
@@ -299,10 +299,7 @@ export function StudentOnboarding() {
     navigate = useNavigate();
   const [current, setCurrent] = useState(""),
     [password, setPassword] = useState(""),
-    [confirm, setConfirm] = useState(""),
-    [phone, setPhone] = useState(""),
-    [code, setCode] = useState(""),
-    [challenge, setChallenge] = useState("");
+    [confirm, setConfirm] = useState("");
   const step = me.data?.onboardingStep;
   const complete = useMutation({
     mutationFn: async () => {
@@ -314,37 +311,13 @@ export function StudentOnboarding() {
           newPassword: password,
         });
         await query.invalidateQueries({ queryKey: ["me"] });
-      } else if (step === "phone") {
-        if (!challenge) {
-          const result = await api<{ challengeId: string }>(
-            "onboarding/phone",
-            "POST",
-            { phone },
-          );
-          setChallenge(result.challengeId);
-          return;
-        }
-        await api("onboarding/phone/verify", "POST", {
-          challengeId: challenge,
-          code,
-        });
-        query.clear();
-        navigate("/login?setup=complete", { replace: true });
       }
     },
   });
   return (
     <AuthFrame
-      title={
-        step === "password"
-          ? "Make this account yours"
-          : "Verify your phone number"
-      }
-      description={
-        step === "password"
-          ? "Replace your temporary password before you start learning."
-          : "We will send a six-digit verification code to your number on WhatsApp."
-      }
+      title="Make this account yours"
+      description="Replace your temporary password before you start learning."
     >
       <form
         onSubmit={(event) => {
@@ -352,7 +325,7 @@ export function StudentOnboarding() {
           complete.mutate();
         }}
       >
-        {step === "password" ? (
+        {step === "password" && (
           <>
             <label htmlFor="onboarding-current">
               Current temporary password
@@ -388,63 +361,10 @@ export function StudentOnboarding() {
               onChange={(event) => setConfirm(event.target.value)}
             />
           </>
-        ) : (
-          <>
-            <label htmlFor="onboarding-phone">
-              Phone number, including country code
-            </label>
-            <input
-              id="onboarding-phone"
-              type="tel"
-              required
-              pattern="\+[1-9][0-9]{7,14}"
-              placeholder="+91 98765 43210"
-              autoComplete="tel"
-              disabled={Boolean(challenge)}
-              value={phone}
-              onChange={(event) =>
-                setPhone(event.target.value.replace(/\s/g, ""))
-              }
-            />
-            {challenge && (
-              <>
-                <label htmlFor="onboarding-code">
-                  WhatsApp verification code
-                </label>
-                <input
-                  id="onboarding-code"
-                  className="student-code"
-                  required
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  autoComplete="one-time-code"
-                  value={code}
-                  onChange={(event) => setCode(event.target.value)}
-                />
-                <button
-                  className="auth-link"
-                  type="button"
-                  onClick={() => {
-                    setChallenge("");
-                    setCode("");
-                    complete.reset();
-                  }}
-                >
-                  Change number or request another code
-                </button>
-              </>
-            )}
-          </>
         )}
         <Status error={complete.error} />
         <button className="lg-btn" disabled={complete.isPending}>
-          {complete.isPending
-            ? "Please wait…"
-            : step === "password"
-              ? "Save password and continue"
-              : challenge
-                ? "Verify and continue"
-                : "Send WhatsApp code"}
+          {complete.isPending ? "Please wait…" : "Save password and continue"}
         </button>
       </form>
       <button

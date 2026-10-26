@@ -12,6 +12,7 @@ import {
   type ResumeDraft,
 } from "./resume-model";
 import { ResumePreview } from "./resume-preview";
+import { printResume } from "./resume-print";
 import "./resume.css";
 
 const templates = {
@@ -281,6 +282,8 @@ function BulletEditor({
 }
 
 export function ResumePage() {
+  const [printError, setPrintError] = useState<Error | null>(null);
+  const [printing, setPrinting] = useState(false);
   const query = useQueryClient();
   const me = useMe(),
     saved = useData<{ data: Resume | null; revision: number }>(
@@ -370,10 +373,17 @@ export function ResumePage() {
         </span>
         <button
           className="a-btn pri"
-          onClick={() => window.print()}
-          disabled={!draft}
+          onClick={async () => {
+            const paper = document.querySelector<HTMLElement>(".resume-builder .resume-paper");
+            if (!paper || !draft || printing) return;
+            setPrintError(null); setPrinting(true);
+            try { await printResume(paper, draft.name); }
+            catch (error) { setPrintError(error instanceof Error ? error : new Error("The resume could not be exported. Please retry.")); }
+            finally { setPrinting(false); }
+          }}
+          disabled={!draft || printing}
         >
-          Print / Save PDF
+          {printing ? "Preparing PDF…" : "Print / Save PDF"}
         </button>
       </Heading>
       <p className="hub-note">
@@ -386,6 +396,7 @@ export function ResumePage() {
         label="Opening your resume"
         variant="workspace"
       />
+      <Status error={printError} />
       {draft && (
         <div className="resume-layout">
           <div className="resume-form" aria-label="Resume details">

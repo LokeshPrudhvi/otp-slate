@@ -29,12 +29,6 @@ test("live exams preserve audiences and answers, enforce deadlines and roles, an
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("Exam operations must not send messages.");
-      },
-    },
     true,
   );
   const exams = new ExamService(service);

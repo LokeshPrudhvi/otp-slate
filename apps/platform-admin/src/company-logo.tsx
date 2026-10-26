@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CompanyLogo } from "@slate/contracts";
-import { api, ErrorMessage, Field, useData } from "@slate/ui";
+import { api, compressUploadImage, ErrorMessage, Field, useData } from "@slate/ui";
 import { AdminSelect } from "./select";
 import "./company-logo.css";
 const normalize = (name: string) =>
@@ -38,12 +38,7 @@ export function CompanyLogoField({
     setPending(true);
     onPending(true);
     try {
-      if (
-        !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
-        !file.size ||
-        file.size > 524288
-      )
-        throw new Error("Choose a PNG, JPG or WebP logo of 512 KB or smaller.");
+      file = await compressUploadImage(file, { maxBytes: 524288, targetBytes: 160 * 1024, maxDimension: 800 });
       const bytes = new Uint8Array(await file.arrayBuffer());
       const hash = [
         ...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
@@ -149,7 +144,7 @@ export function CompanyLogoField({
         </label>
         <span id={help}>
           {company.trim()
-            ? "PNG, JPG or WebP · max 512 KB"
+            ? "PNG, JPG or WebP · automatically compressed before upload (up to 30 MB original)"
             : "Enter the company name to upload its logo"}
         </span>
       </div>

@@ -12,7 +12,6 @@ Reviewed on 6 October 2026 for 2,000 registered students and the ₹20,000 month
 | Database access           | Drizzle with SQL migrations                                                   | Preserve transaction-scoped organization isolation; Prisma ORM is an alternative library that can also use Neon                    |
 | Authentication            | Better Auth with revocable cookie sessions and short-lived session-bound JWTs | Implemented in the initial Node API; verify MFA and provider-connected onboarding in staging. Neon Auth is not a launch dependency |
 | Email                     | Resend                                                                        | Free allowance may suit routine resets; onboarding email bursts can require an upgrade                                             |
-| WhatsApp                  | Official Meta Cloud API directly                                              | Avoid a provider subscription where possible, but authentication delivery still has Meta charges                                   |
 | Documents and media files | Private Cloudflare R2                                                         | Video uploads need pre-encoding or a separate encoding service, a player and authorized playback                                   |
 | Code execution            | Trial Cloudflare Sandboxes/Containers against managed Judge0                  | Decide after testing languages, exam bursts, isolation, recovery and actual cost per submission                                    |
 | Background processing     | Provider undecided                                                            | Keep durable job records, retries and idempotency in the architecture; queue technology can be selected later                      |
@@ -25,7 +24,6 @@ JWT represents signed claims. Password hashing, reset-token expiry, first-login 
 
 Resend Free includes 3,000 emails/month with a 100/day cap. Its Pro plan is $20/month for 50,000 emails. Do not rely on the monthly allowance to send 2,000 invitations in one day. [Resend pricing](https://resend.com/pricing)
 
-Official WhatsApp authentication templates are charged when delivered. Free trials and free unofficial client libraries do not establish a dependable zero-cost production OTP channel; whatsapp-web.js itself warns about possible blocking. [Meta pricing](https://whatsappbusiness.com/products/platform-pricing/), [whatsapp-web.js](https://github.com/wwebjs/whatsapp-web.js)
 
 ## Cloudflare boundaries
 

@@ -24,11 +24,7 @@ test("admin-created student completes emailed-password onboarding and accesses o
   const previousPortal = process.env.STUDENT_PORTAL_URL;
   process.env.STUDENT_PORTAL_URL = config.origins[0];
   const auth = createAuth(connection.db, config, true);
-  const phoneInbox: { phone: string; code: string }[] = [];
-  const service = new SlateService(connection.db, auth, config, {
-    configured: true,
-    async send(phone, code) { phoneInbox.push({ phone, code }); },
-  }, true);
+  const service = new SlateService(connection.db, auth, config, true);
   const adminPassword = "Flow-admin-password!2026";
   const administrator = await auth.api.createUser({ body: {
     name: "Flow administrator", email: "flow-admin@example.test", password: adminPassword, role: "admin",
@@ -130,7 +126,7 @@ test("admin-created student completes emailed-password onboarding and accesses o
       assert.equal(job.encryptedPayload, "");
     });
 
-    await t.test("temporary login requires password replacement and blocks learning until phone verification", async () => {
+    await t.test("temporary login blocks learning until password replacement, then grants assigned access", async () => {
       assert.equal((await student.login(message.email, message.temporaryPassword)).status, 200);
       assert.equal((await student.request("/api/v1/me?portal=student")).body.onboardingStep, "password");
       for (const path of ["student/courses", `student/courses/${assignedCourse}`, "student/practice", "student/compiler"])
@@ -138,24 +134,16 @@ test("admin-created student completes emailed-password onboarding and accesses o
       assert.equal((await student.request("/api/v1/onboarding/password", "POST", {
         currentPassword: message.temporaryPassword, newPassword,
       })).status, 201);
-      assert.equal((await student.request("/api/v1/me?portal=student")).body.onboardingStep, "phone");
-      assert.equal((await student.request("/api/v1/student/courses")).status, 403);
-      assert.equal((await student.request("/api/v1/student/practice")).status, 403);
+      assert.equal((await student.request("/api/v1/me?portal=student")).body.onboardingStep, null);
+      assert.equal((await student.request("/api/v1/student/courses")).status, 200);
+      assert.equal((await student.request("/api/v1/student/practice")).status, 200);
       const oldPasswordClient = new Client(config.origins[0]);
       assert.equal((await oldPasswordClient.login(message.email, message.temporaryPassword)).status, 401);
     });
 
-    await t.test("student verifies the delivered phone OTP and signs back in with the new password", async () => {
-      const challenge = await student.request("/api/v1/onboarding/phone", "POST", { phone: "+919876543210" });
-      assert.equal(challenge.status, 201);
-      assert.equal(phoneInbox.length, 1);
-      assert.equal(phoneInbox[0].phone, "+919876543210");
-      const verified = await student.request("/api/v1/onboarding/phone/verify", "POST", {
-        challengeId: challenge.body.challengeId, code: phoneInbox[0].code,
-      });
-      assert.equal(verified.status, 201);
-      assert.equal(verified.body.requiresSignIn, true);
-      assert.equal((await student.request("/api/v1/student/courses")).status, 401);
+    await t.test("phone verification endpoints are removed and permanent-password login works", async () => {
+      for (const path of ["onboarding/phone", "onboarding/phone/verify"])
+        assert.equal((await student.request(`/api/v1/${path}`, "POST", { phone: "+919876543210", code: "123456" })).status, 404);
       assert.equal((await student.login(message.email, newPassword)).status, 200);
       const identity = await student.request("/api/v1/me?portal=student");
       assert.equal(identity.body.onboardingStep, null);

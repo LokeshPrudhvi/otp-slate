@@ -17,7 +17,7 @@ mark{background:var(--marker);color:var(--marker-ink);padding:0 .25em;border-rad
 .sp{flex:1}
 .disp{font-family:"Bricolage Grotesque",Lato,sans-serif}
 
-/* 03-lms.css: OTP Slate LMS shell (always light): rail, dashboard cards, catalog, course modules, calendar, inbox, grades, trays, Otto pet, WhatsApp sign-in. */
+/* 03-lms.css: OTP Slate LMS shell (always light): rail, dashboard cards, catalog, course modules, calendar, inbox, grades, trays, Otto pet. */
 /* ===== LMS app (product mock, fixed light) ===== */
 .app{position:relative;display:flex;height:760px;background:#fff;color:#2d3b45;font:15px/1.45 Lato,Arial,sans-serif;overflow:hidden;color-scheme:light}
 .app a{color:#1f5fae}

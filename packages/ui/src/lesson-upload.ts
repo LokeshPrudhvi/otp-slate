@@ -1,5 +1,6 @@
 import type { LessonFile } from "@slate/contracts";
 import { api } from "./kit";
+import { compressUploadImage } from "./image-upload";
 
 const documentTypes: Record<string, string> = {
   pdf: "application/pdf", txt: "text/plain", zip: "application/zip",
@@ -13,7 +14,7 @@ export async function uploadLessonFile(
   onProgress?: (percent: number) => void,
 ): Promise<LessonFile> {
   const extension = file.name.split(".").pop()?.toLowerCase() || "";
-  const contentType = scope.purpose === "video"
+  let contentType = scope.purpose === "video"
     ? ({ mp4: "video/mp4", webm: "video/webm" } as Record<string, string>)[extension]
     : ["question_image", "course_cover"].includes(scope.purpose)
       ? ({ png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp" } as Record<string, string>)[extension]
@@ -23,6 +24,10 @@ export async function uploadLessonFile(
   if (!contentType) throw new Error(scope.purpose === "video" ? "Choose an MP4 or WebM video." : ["question_image", "course_cover"].includes(scope.purpose) ? "Choose a PNG, JPEG or WebP image." : scope.purpose === "crt_pdf" ? "Choose a PDF document." : "Choose a PDF, text, ZIP, PNG, JPEG or DOCX file.");
   const megabytes = scope.purpose === "video" ? 250 : ["question_image", "course_cover"].includes(scope.purpose) ? 5 : scope.purpose === "crt_pdf" ? 20 : 10;
   const limit = megabytes * 1024 * 1024;
+  if (["image/png", "image/jpeg", "image/webp"].includes(contentType)) {
+    file = await compressUploadImage(new File([file], file.name, { type: contentType, lastModified: file.lastModified }), { maxBytes: limit, preserveFormat: scope.purpose === "assignment" });
+    contentType = file.type;
+  }
   if (file.size <= 0 || file.size > limit) throw new Error(`Choose a non-empty file of ${megabytes} MB or smaller.`);
   onProgress?.(0);
   const prepared = await api<{ upload: LessonFile; uploadUrl: string; headers: Record<string, string> }>("lesson-uploads", "POST", {

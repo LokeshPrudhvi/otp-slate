@@ -6,16 +6,16 @@ This architecture translates the existing HTML workflows into production service
 
 Application conversion has started. See the [application setup and implementation status](application-setup.md) for working routes, local accounts, commands and remaining release work. Planned capabilities below should not be read as a claim that they are all implemented.
 
-The [production stack review](stack-options-review.md) explains the accepted choices and their tradeoffs. This document is the current implementation baseline: React/React Router, Node/NestJS, Neon/Drizzle, Better Auth with revocable sessions and JWT where required, Resend, official Meta WhatsApp and private Cloudflare R2. Cloudflare Sandboxes will be benchmarked against managed Judge0 before choosing exam execution. The background-job provider is undecided, and job listings will be added manually by Platform Admin.
+The [production stack review](stack-options-review.md) explains the accepted choices and their tradeoffs. This document is the current implementation baseline: React/React Router, Node/NestJS, Neon/Drizzle, Better Auth with revocable sessions and JWT where required, Resend and private Cloudflare R2. Cloudflare Sandboxes will be benchmarked against managed Judge0 before choosing exam execution. The background-job provider is undecided, and job listings will be added manually by Platform Admin.
 
 ## Confirmed launch requirements
 
 | Decision | Agreed behavior |
 | --- | --- |
 | Student population | 2,000 registered students; simultaneous usage has not been specified |
-| Operating budget | ₹20,000 per month, including hosting, execution, OTP/email and recorded-video delivery |
+| Operating budget | ₹20,000 per month, including hosting, execution, email and recorded-video delivery |
 | Provisioning | Platform Admin creates student accounts and temporary passwords; organizations distribute credentials outside the read-only portal |
-| First student login | Change the temporary password, enter a phone number, then verify that number using WhatsApp OTP before accessing learning resources |
+| First student login | Change the temporary password before accessing assigned learning resources |
 | Live exams | Timed exams with browser monitoring |
 | Learning delivery | Recorded courses plus live classes through an existing Zoom or Google Meet account |
 | Web development and Full Stack | Submit project and repository links |
@@ -58,7 +58,6 @@ Full Stack combines courses with repository/project-link submissions. Live class
 | Background processing | Durable PostgreSQL outbox and job records; queue provider deferred | Imports, provisioning, grading orchestration, analytics and PDF generation need retries and bounded workers; no Redis subscription is assumed |
 | Authentication | Better Auth on Node.js with database-backed sessions; short-lived JWT where needed | Maintained password/session handling; application membership, onboarding and learning permissions remain server-owned |
 | Account email | Resend | Password-reset transport and operational messages; quota-aware delivery |
-| Phone verification | Official Meta WhatsApp Cloud API | Authentication templates for first-login and phone-change OTP; no unofficial WhatsApp Web automation |
 | Code execution | Cloudflare Sandboxes/Containers trial, compared with managed Judge0 through a common adapter | Student compilation stays outside the LMS API and database; exam use is gated on correctness, isolation, recovery, throughput and cost |
 | Content and uploads | Private Cloudflare R2, with pre-encoded course video at launch | Low storage cost and free direct egress; the LMS owns its player, authorized delivery and rendition preparation |
 | Charts and editor | Accessible chart components and a focused code editor component | Retain the problem description, editor and test-result layout already approved |
@@ -92,7 +91,7 @@ flowchart TB
   A --> F
   F --> C[Authorized Cloudflare media delivery]
   C --> S
-  A --> N[Meta WhatsApp and Resend adapters]
+  A --> N[Resend email adapter]
   A --> V[Authorized pre-encoded video playback]
   V --> S
   A --> T[Logs metrics and alerts]
@@ -133,32 +132,22 @@ Generate a unique random temporary password for each student and organization me
 
 Require organization members to change their temporary password on first sign-in. Platform Admin can reset or disable an account but cannot retrieve its permanent password. Use a protected server-side provisioning adapter, disable public sign-up, and send no automatic invitations because distribution is handled by the organization. Passwords are hashed through Better Auth's maintained password implementation; do not implement password hashing with JWT. Verify disable-sign-up and provisioning behavior together during integration. [Better Auth email/password configuration](https://better-auth.com/docs/authentication/email-password)
 
-Require MFA for Platform Admin through Better Auth's two-factor support and application guards. Student and organization sessions use their own trusted portal context and server-enforced roles. Platform privileges cannot be assigned through public authentication payloads. Keep the student phone-onboarding requirement separate from administrator MFA. [Better Auth two-factor support](https://better-auth.com/docs/plugins/2fa)
+Require MFA for Platform Admin through Better Auth's two-factor support and application guards. Student and organization sessions use their own trusted portal context and server-enforced roles. Platform privileges cannot be assigned through public authentication payloads. Student password setup is separate from administrator MFA. [Better Auth two-factor support](https://better-auth.com/docs/plugins/2fa)
 
-### First student login and WhatsApp verification
+### First student login
 
-Use the provisioned email and temporary password for the initial login. Better Auth verifies credentials; application guards restrict the resulting session until the required password change and phone verification are complete. The first stage permits only password change, onboarding status and logout. After the password change, phone verification becomes available. No stage can open courses, practice, jobs, analytics, resumes or exams before all required steps complete. The guards apply even if a client calls an underlying authentication route directly.
+Use the provisioned email and temporary password for the initial login. Better Auth verifies credentials; application guards restrict the session until the student replaces the temporary password. After password setup, the student can open only assigned courses and enabled features. Phone numbers are contact details and never gate account access.
 
 ```mermaid
 flowchart LR
   C[Platform-created account] --> L[Temporary password login]
   L --> P[Required new password]
-  P --> N[Enter phone number]
-  N --> W[Send WhatsApp verification code]
-  W --> V[Verify code on server]
-  V --> R[Revoke onboarding sessions]
-  R --> A[Fresh sign-in with permanent password]
+  P --> A[Assigned learning resources]
 ```
 
-Persist `password_setup_complete`, `phone_verified_at` and an onboarding state separately from account suspension. Only the server can set verification flags. A changed password with an unverified phone remains in onboarding; logging in again resumes this flow. Subsequent sign-ins use the permanent password. WhatsApp OTP is required for onboarding and phone changes, rather than every routine login.
+Persist `password_setup_complete` separately from suspension and organization access. Students who previously stopped at phone setup proceed once password setup is complete. Retired phone challenge endpoints are unavailable. Historical verification records do not grant or deny access.
 
-Implement Meta WhatsApp Business Platform delivery through an adapter. Set up the business sender and authentication template before the pilot, then test Indian numbers and onboarding batches against the approved sending limits. WhatsApp provides authentication messages for OTP verification and charges delivered messages according to market and message category. [WhatsApp authentication](https://whatsappbusiness.com/products/conversation-categories/authentication/), [WhatsApp pricing](https://whatsappbusiness.com/products/platform-pricing/)
-
-The API generates a cryptographically random six-digit code with a proposed five-minute lifetime. Store a keyed hash bound to the account, normalized E.164 phone number, challenge ID and purpose; never the plaintext code. Allow at most five verification attempts per challenge, a 60-second resend interval and bounded hourly sends per account, phone and IP. A resend invalidates the previous challenge. Successful verification consumes the challenge atomically, revokes onboarding sessions and requires a fresh sign-in with the permanent password. Signed delivery webhooks update delivery status; delivered status does not prove verification.
-
-Phone verification is an application-owned state, separate from email verification and the authentication library's MFA factors. Only successful server-side WhatsApp challenge verification can mark a phone verified. There is no SMS verification dependency or unofficial WhatsApp Web client.
-
-Forgotten passwords use Better Auth's expiring reset links delivered by Resend. Enable `revokeSessionsOnPasswordReset`, restrict redirect destinations to the portal allowlist and give requests a generic response that does not disclose whether an email exists. Successful resets do not satisfy phone verification or clear suspension. Recovery from loss of the verified number goes through a Platform Admin identity check; students initiate ordinary phone changes themselves. Organization Admin cannot edit their data. There is no emergency OTP bypass in the learner UI. Resend failures and quota exhaustion remain visible, retryable operational events. [Better Auth password resets](https://better-auth.com/docs/authentication/email-password), [Resend pricing](https://resend.com/pricing)
+Forgotten passwords use Better Auth's expiring reset links delivered by Resend. Resetting a password revokes sessions and does not clear suspension or change course access. Keep student welcome emails and reset-email failures visible and retryable.
 
 ### Sessions
 
@@ -384,7 +373,7 @@ packages/
   contracts/          Generated API clients and shared schemas
   domain/             Server-owned rules and versioned scoring types
   database/           Drizzle schema, migrations, tenant roles and test fixtures
-  integrations/       Identity, WhatsApp, execution, video and storage adapters
+  integrations/       Identity, email, execution, video and storage adapters
 edge/
   media/              Private R2 playback authorization and delivery Worker
   execution/          Authenticated Cloudflare sandbox control Worker and images
@@ -398,7 +387,7 @@ Share UI components and contracts, but keep authorization and hidden grading mat
 
 ### Reference deployment
 
-Serve the three static portal bundles through Cloudflare, with trusted routing of each host's `/api/*` to the Node API. Budget DigitalOcean Bangalore as the application-host reference, subject to availability; use a nearby supported Neon region and verify measured round-trip latency before committing. Require TLS to Neon and keep connection strings server-side. Confirm the location and data handling of Neon, R2, execution, email and WhatsApp; this architecture does not imply that every provider stores data only in India.
+Serve the three static portal bundles through Cloudflare, with trusted routing of each host's `/api/*` to the Node API. Budget DigitalOcean Bangalore as the application-host reference, subject to availability; use a nearby supported Neon region and verify measured round-trip latency before committing. Require TLS to Neon and keep connection strings server-side. Confirm the location and data handling of Neon, R2, execution and email; this architecture does not imply that every provider stores data only in India.
 
 The production pilot reference uses two 2 GiB application nodes behind a regional load balancer, each running an API container. Trusted workers initially share those nodes under CPU/memory limits; static assets bypass them. Compilation always stays at the selected external provider. Limit PDF export and password-hashing concurrency, pause nonessential imports/exports during exam peaks and move workers to a separate node when measurements require it. A single-node development setup can cost less but does not satisfy the API-node failure requirement.
 
@@ -430,7 +419,7 @@ This baseline is illustrative, not a capacity guarantee. Neon compute rises when
 | Neon compute, storage and restore allowance | ₹3,000 | Baseline about ₹2,056; remaining allowance for history and bounded scaling |
 | External execution and Workers plan | ₹5,400 | Includes the $5 Workers base; actual resources/quotas selected after the provider trial |
 | R2 media/documents and delivery operations | ₹1,000 | About ₹662 storage baseline; remaining allowance for operations and media Worker usage |
-| WhatsApp verification and Resend email | ₹2,800 | Allowance supports $20 Resend Pro if needed and an indicative ₹1,000 messaging reserve; confirm Meta rates |
+| Resend email | Up to ₹2,800 reserved | Review the current email plan against welcome-email and password-reset volume; no messaging provider is required |
 | Monitoring and annual-domain allocation | ₹500 | Start with bounded logs and low-volume monitoring |
 | Tax, currency movement, staging and overage reserve | ₹4,050 | Shared reserve, not an additional unlimited-usage allowance |
 | **Total monthly ceiling** | **₹20,000** | A planning allocation, not a provider quote or capacity guarantee |
@@ -447,7 +436,7 @@ For video, an average 1 Mbps stream delivers about 0.45 GB per learner-hour. Fou
 
 Cloudflare Stream is not selected for launch. Its managed-video delivery price is $1/1,000 minutes, so those two viewing cases would cost $120 and $600 respectively before stored-minute charges. Moving to Stream or another managed video service requires a fresh budget; R2 free egress does not apply to Stream billing. [Stream pricing](https://developers.cloudflare.com/stream/pricing/)
 
-For onboarding, estimate WhatsApp sends as `new students × average sends per verification`, plus phone changes and recovery activity. Confirm the delivered Indian authentication-template rate, sender limits and readiness; ₹1,000 is a reserve, not a unit-price quote. Do not delay urgent resets behind bulk email work when the free daily quota is exhausted. Budget alerts at 60%, 80% and 90% of forecast spend should drive practice quotas and operator review before new exams are published. Preserve capacity for an admitted exam; do not interrupt saved answers because a spending alert fires.
+Estimate welcome and reset email volume from new accounts and recovery requests. Keep password reset work ahead of bulk welcome emails. Review email quotas before onboarding batches.
 
 ## Capacity and operating targets
 
@@ -457,14 +446,13 @@ At 300 exam takers, one autosave every ten seconds is about 30 requests/second, 
 
 Measure p95 API read latency under 500 ms and committed autosave latency under 750 ms as initial targets, excluding provider execution time. Measure admission/login latency, missed autosaves, deadline correctness, database pool waits, worker memory, queue age and provider throughput. Provider runtime latency is measured in the integration trial, not promised from an advertised daily quota.
 
-Maintain dashboards for authentication failures, WhatsApp delivery/verification failures, access denials, API errors, database saturation, grade backlog, oldest outbox event, provider quota usage, video bytes, aggregate freshness and cost forecast. Use request IDs, submission IDs and organization IDs where appropriate; redact passwords, OTPs, session tokens, phone numbers and resume contents from logs.
+Maintain dashboards for authentication failures, access denials, API errors, database saturation, grade backlog, oldest outbox event, provider quota usage, video bytes, aggregate freshness and cost forecast. Use request IDs, submission IDs and organization IDs where appropriate; redact passwords, OTPs, session tokens, phone numbers and resume contents from logs.
 
 | Failure | Required behavior |
 | --- | --- |
 | PostgreSQL unavailable | Reject saves visibly; never acknowledge an answer that was not durably committed |
 | Queue unavailable | Preserve pending work in the database; restore queues and reconcile outbox/job records |
 | Execution provider unavailable | Keep accepted code and grading-pending state; retry/review without wrong-answer penalties |
-| WhatsApp unavailable | Keep first-time students in resumable onboarding; show delivery failure and bounded retry; existing password logins continue |
 | Authentication subsystem unavailable | New logins may fail; existing sessions continue only if session and current account checks can still be completed securely |
 | Resend unavailable or quota exhausted | Queue eligible email retries, show generic reset responses and alert operations; never report a failed send as delivered |
 | One API node fails | Load balancer routes to the healthy node; sessions remain shared server state; event streams reconnect |
@@ -473,14 +461,14 @@ Maintain dashboards for authentication failures, WhatsApp delivery/verification 
 
 Configure Neon restore history explicitly, budget its metered storage and retain encrypted independent exports with tested restore procedures. Launch supports history up to seven days; verify the configured window and quota rather than relying on development defaults. Apply R2 lifecycle rules separately to credentials, imports, exports and source media. Rehearse database restore, reconnecting the API, auth-session revocation decisions and job reconciliation before launch. Proposed recovery objectives are no more than 15 minutes of database loss and service restoration within 60 minutes; do not promise them until a drill confirms them. [Neon restore plans](https://github.com/neondatabase/website/blob/main/content/docs/introduction/plans.md)
 
-Before onboarding real data, approve and implement retention schedules for grades, accounts, source code, monitoring events, import files, credential packages, resume exports, logs and backups. A starting operational proposal is 30 days for raw browser events, 90 days for operational logs, 24 hours for downloadable credential packages and seven days for import sources after completion; academic-result retention is set with the institution. Document deletion/anonymization and backup expiry, with a focused privacy review for phone verification and monitoring. These are proposed product policies, not statements of legal requirements.
+Before onboarding real data, approve and implement retention schedules for grades, accounts, source code, monitoring events, import files, credential packages, resume exports, logs and backups. A starting operational proposal is 30 days for raw browser events, 90 days for operational logs, 24 hours for downloadable credential packages and seven days for import sources after completion; academic-result retention is set with the institution. Document deletion/anonymization and backup expiry, with a focused privacy review for contact details and monitoring. These are proposed product policies, not statements of legal requirements.
 
 ## Implementation sequence and release gates
 
 | Phase | Deliverables | Completion evidence |
 | --- | --- | --- |
 | 1. Foundation | React/Vite/Router portals, Node/Nest API, Drizzle/Neon migrations, shared design tokens, API contracts, tenant context, CI and staging | Three real portal shells; cross-role and cross-organization API requests denied |
-| 2. Accounts and access | Better Auth, protected provisioning, Excel workflow, temporary passwords, Meta WhatsApp onboarding, Resend resets, revocable sessions, cohorts and grants | 2,000-row import with retry; first-login bypass tests; reset/logout/revocation verified |
+| 2. Accounts and access | Better Auth, protected provisioning, Excel workflow, temporary passwords, Resend resets, revocable sessions, cohorts and grants | 2,000-row import with retry; first-login bypass tests; reset/logout/revocation verified |
 | 3. Learning content | Course/question CMS, R2 uploads and authorized prepared-video playback, live-class links, project submission and progress | Assigned learners can open content; unassigned learners cannot obtain files, cached media or playback authorizations |
 | 4. Practice execution | Cloudflare/managed-Judge0 comparison, problem editor, verified runtimes/drivers, durable submissions, fair quotas and grading | Provider selected from correctness, isolation, recovery, burst-throughput and cost evidence; real verdicts in each enabled language |
 | 5. Live exams | Publication, audience snapshots, admission, autosave, deadlines, monitoring, review and result release | Full cohort rehearsal, reconnect and deadline tests, provider-delay grading and finalization |
@@ -508,7 +496,6 @@ The first implementation milestone is **foundation plus real provisioning, first
 The user has resolved account ownership, onboarding channel, content delivery, project submission and monitoring scope. The remaining work is targeted validation rather than another broad feature questionnaire:
 
 - Confirm Node-host and Neon region/latency, exact invoices, restore settings and the acceptable database SLA tier.
-- Complete the WhatsApp sender/template setup and verify the send rate needed for onboarding batches.
 - Benchmark Cloudflare execution against managed Judge0, including compiler images, test isolation, billing and peak throughput; fix each problem's permitted runtimes.
 - Validate private R2 playback, encoding readiness, seeking/caching, operation counts and monthly watch hours.
 - Validate Better Auth's protected provisioning, reset/session revocation, MFA, portal isolation and server-owned phone onboarding; configure a verified Resend sending domain.

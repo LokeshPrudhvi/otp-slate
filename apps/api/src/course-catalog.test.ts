@@ -52,12 +52,6 @@ test("course discovery, recent learning, covers and enrollment requests preserve
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("No external messaging during tests");
-      },
-    },
     true,
     storage,
   );

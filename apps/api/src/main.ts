@@ -7,7 +7,6 @@ import {
 import { createAuth } from "./auth.js";
 import { createApplication } from "./app.js";
 import { SlateService } from "./service.js";
-import { metaPhoneSender } from "./providers.js";
 import { startMailWorker } from "./mail-worker.js";
 
 const config = loadConfig();
@@ -18,7 +17,6 @@ const service = new SlateService(
   connection.db,
   createAuth(connection.db, config, connection.local),
   config,
-  metaPhoneSender(),
   connection.local,
 );
 const app = await createApplication(service);

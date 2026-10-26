@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { expo } from "@better-auth/expo";
 import { createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, jwt, twoFactor } from "better-auth/plugins";
@@ -25,7 +26,7 @@ export function createAuth(
     baseURL: config.authUrl,
     basePath: "/api/auth",
     secret: config.secret,
-    trustedOrigins: config.origins,
+    trustedOrigins: [...config.origins, "slate://"],
     database: drizzleAdapter(db, { provider: "pg", schema }),
     hooks: {
       before: createAuthMiddleware(async (context) => {
@@ -113,6 +114,7 @@ export function createAuth(
       },
     },
     plugins: [
+      expo(),
       admin(),
       twoFactor({ issuer: "OTP Slate" }),
       jwt({

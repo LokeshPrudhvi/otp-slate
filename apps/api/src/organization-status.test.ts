@@ -18,10 +18,7 @@ test("organization archive and restore revoke access while preserving student re
     authUrl: "http://localhost:3000", origins: ["http://localhost:5173"], port: 0,
   };
   const auth = createAuth(connection.db, config, true);
-  const service = new SlateService(connection.db, auth, config, {
-    configured: false,
-    async send() { assert.fail("Archive tests must not send external messages."); },
-  }, true);
+  const service = new SlateService(connection.db, auth, config, true);
   const [org, other] = await scoped(connection.db, { platform: true }, tx =>
     tx.insert(s.organizations).values([{ name: "Archive College" }, { name: "Other College" }]).returning());
   await scoped(connection.db, { platform: true }, tx => tx.insert(s.organizationBranches).values([{ organizationId: org.id, code: "CSE", name: "Computer Science" }]));

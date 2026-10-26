@@ -17,9 +17,7 @@ test("job broadcasts publish atomically to active organizations and retain tenan
     authUrl: "http://localhost:3000", origins: ["http://localhost:5174"], port: 0,
   };
   const auth = createAuth(connection.db, config, true);
-  const service = new SlateService(connection.db, auth, config, {
-    configured: false, async send() { assert.fail("Job tests must not send external messages."); },
-  }, true);
+  const service = new SlateService(connection.db, auth, config, true);
   const [first, second, archived] = await scoped(connection.db, { platform: true }, tx =>
     tx.insert(s.organizations).values([
       { name: "First College" }, { name: "Second College" },

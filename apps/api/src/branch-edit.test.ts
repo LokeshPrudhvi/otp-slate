@@ -28,12 +28,6 @@ test("branch editing atomically preserves audiences, access and progress with st
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("Branch editing must not send mail or phone messages.");
-      },
-    },
     true,
   );
   const [org, other, archived] = await scoped(

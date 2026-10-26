@@ -27,12 +27,6 @@ test("organization announcements enforce audience, lifecycle and tenant access t
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("No external messages in announcement tests.");
-      },
-    },
     true,
   );
   const [org, other, demo] = await scoped(

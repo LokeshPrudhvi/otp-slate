@@ -26,12 +26,6 @@ test("student course HTTP reads retain fresh authentication and access checks", 
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("Student read tests must not send external messages.");
-      },
-    },
     true,
   );
   const password = "Student-read-tests-only!2026";
@@ -273,7 +267,7 @@ test("student course HTTP reads retain fresh authentication and access checks", 
 
     for (const step of ["password", "phone"] as const) {
       await t.test(
-        `incomplete ${step} onboarding denies both course reads`,
+        `password setup gates access while legacy phone status does not (${step})`,
         async () => {
           await scoped(connection.db, { platform: true }, (tx) =>
             tx
@@ -286,7 +280,7 @@ test("student course HTTP reads retain fresh authentication and access checks", 
               .where(eq(s.members.id, fixture.member.id)),
           );
           try {
-            await assertBoth(403);
+            await assertBoth(step === "password" ? 403 : 200);
           } finally {
             await scoped(connection.db, { platform: true }, (tx) =>
               tx

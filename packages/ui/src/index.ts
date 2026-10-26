@@ -3,6 +3,7 @@ export * from "./loading";
 export * from "./score-trend";
 export * from "./lesson-content";
 export * from "./lesson-upload";
+export * from "./image-upload";
 export * from "./rich-text-editor";
 export * from "./select";
 export * from "./question-image";

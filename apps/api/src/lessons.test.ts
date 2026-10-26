@@ -51,12 +51,6 @@ test("rich lessons, assignments, MCQ grading and private assets", async (t) => {
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("No external messages");
-      },
-    },
     true,
     storage,
   );

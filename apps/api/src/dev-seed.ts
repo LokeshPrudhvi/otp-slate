@@ -127,7 +127,7 @@ export async function seedDevelopment(db: Database, auth: Auth) {
     });
   });
   console.log(
-    "Local development fixtures ready. No emails or WhatsApp messages were sent.",
+    "Local development fixtures ready. No emails were sent.",
   );
   console.log(
     "Demo accounts: admin@slate.test, student@slate.test, viewer@slate.test",

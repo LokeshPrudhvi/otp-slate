@@ -23,9 +23,7 @@ test("Platform Admin can provision and correct students without changing identit
   const previousPortal = process.env.STUDENT_PORTAL_URL;
   process.env.STUDENT_PORTAL_URL = config.origins[0];
   const auth = createAuth(connection.db, config, true);
-  const service = new SlateService(connection.db, auth, config, {
-    configured: false, async send() { assert.fail("Student management tests must not send external messages."); },
-  }, true);
+  const service = new SlateService(connection.db, auth, config, true);
   const [org, otherOrg, archivedOrg] = await scoped(connection.db, { platform: true }, tx =>
     tx.insert(s.organizations).values([{ name: "Management College" }, { name: "Other College" }, { name: "Archived College", status: "archived" }]).returning());
   await scoped(connection.db, { platform: true }, tx => tx.insert(s.organizationBranches).values([org, otherOrg, archivedOrg].flatMap(organization => [{ organizationId: organization.id, code: "CSE", name: "Computer Science" }, { organizationId: organization.id, code: "ME", name: "Mechanical Engineering" }])));
@@ -314,8 +312,8 @@ test("Platform Admin can provision and correct students without changing identit
       const me = await request("me?portal=student", "GET", undefined, fresh.cookie);
       assert.equal(me.status, 200);
       assert.equal(me.body.id, student.id);
-      assert.equal(me.body.onboardingStep, "phone");
-      assert.equal((await request("student/courses", "GET", undefined, fresh.cookie)).status, 403);
+      assert.equal(me.body.onboardingStep, null);
+      assert.equal((await request("student/courses", "GET", undefined, fresh.cookie)).status, 200);
       assert.equal((await request("me?portal=student", "GET", undefined, foreign.cookie)).status, 200);
       assert.equal((await request("me?portal=platform", "GET", undefined, admin.cookie)).status, 200);
       assert.deepEqual(await history(), beforeHistory);

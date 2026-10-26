@@ -113,6 +113,32 @@ test("a completed cover upload uses the cover purpose and replaces the URL witho
   assert.deepEqual(reads, []);
 });
 
+test("a cover above the old 5 MB limit uploads only compressed bytes and matching metadata", async () => {
+  const prototype = dom.window.HTMLCanvasElement.prototype;
+  const originalContext = prototype.getContext, originalBlob = prototype.toBlob;
+  const originalBitmap = globalThis.createImageBitmap;
+  let metadata, uploaded, closed = false;
+  globalThis.createImageBitmap = async () => ({ width: 4000, height: 2000, close() { closed = true; } });
+  prototype.getContext = () => ({ clearRect() {}, drawImage() {} });
+  prototype.toBlob = function(callback, type) { callback(new dom.window.Blob([new Uint8Array(500000)], { type })); };
+  globalThis.XMLHttpRequest = class { upload = {}; status = 200; open() {} setRequestHeader() {} send(file) { uploaded = file; queueMicrotask(() => this.onload()); } };
+  globalThis.fetch = async (url, options = {}) => {
+    if (url.endsWith('/lesson-uploads')) { metadata = JSON.parse(options.body); return response({ upload: { id: 'compressed' }, uploadUrl: 'https://storage.example.test/upload', headers: {} }); }
+    if (url.endsWith('/complete')) return response({ id: 'compressed', fileName: 'large.webp' });
+    throw new Error(`Unexpected request ${url}`);
+  };
+  try {
+    await mountCover();
+    const input = document.querySelector('input[type="file"]');
+    Object.defineProperty(input, 'files', { configurable: true, value: [new File([new Uint8Array(6 * 1024 * 1024)], 'large.png', { type: 'image/png' })] });
+    await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+    await settle();
+    assert.equal(metadata.size, 500000); assert.equal(metadata.contentType, 'image/webp'); assert.equal(metadata.fileName, 'large.webp');
+    assert.equal(uploaded.size, metadata.size); assert.equal(uploaded.type, metadata.contentType); assert.equal(closed, true);
+    assert.deepEqual(cover, { url: '', id: 'compressed' });
+  } finally { prototype.getContext = originalContext; prototype.toBlob = originalBlob; globalThis.createImageBitmap = originalBitmap; }
+});
+
 const originalRequest = () => ({ id: "request-1", studentMemberId: "student-1", studentName: "Asha Rao", studentEmail: "asha@example.test", studentId: "CSE-101", organizationId: "org-1", organizationName: "Example College", branchName: "Computer Science", branchCode: "CSE", courseId: "course-1", courseTitle: "Advanced Algorithms", status: "pending", createdAt: "2026-10-21T05:00:00Z", readAt: null, reviewedAt: null, emailStatus: "accepted", enrolled: false });
 function inboxMock({ failPatch = false } = {}) {
   let request = originalRequest();

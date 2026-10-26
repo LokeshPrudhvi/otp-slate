@@ -21,7 +21,7 @@ test("registration HTTP endpoints enforce approval, request limits, portal origi
   const previousPortal = process.env.STUDENT_PORTAL_URL;
   process.env.STUDENT_PORTAL_URL = config.origins[0];
   const auth = createAuth(connection.db, config, true);
-  const service = new SlateService(connection.db, auth, config, { configured: false, async send() { assert.fail("No real transport in HTTP tests."); } }, true);
+  const service = new SlateService(connection.db, auth, config, true);
   const adminIdentity = await auth.api.createUser({ body: { email: "http-admin@example.test", name: "Admin", password: "Test-admin-only-password!2026", role: "admin" } });
   const viewerIdentity = await auth.api.createUser({ body: { email: "http-viewer@example.test", name: "Viewer", password: "Test-viewer-only-password!2026", role: "user" } });
   const organizationId = await scoped(connection.db, { platform: true }, async tx => {

@@ -1256,10 +1256,7 @@ function Members() {
                                 <small>
                                   {!member.passwordSetupComplete
                                     ? "Password change required"
-                                    : member.role === "student" &&
-                                        !member.phoneVerifiedAt
-                                      ? "Phone verification required"
-                                      : "Account setup complete"}
+                                    : "Account setup complete"}
                                 </small>
                               </td>
                               <td>
@@ -2039,6 +2036,8 @@ function CourseEditor() {
                   />
                 </Field>
               </div>
+            </Panel>
+            <Panel title="Course cover image">
               <CourseCoverField
                 value={coverImageUrl}
                 uploadId={coverUploadId}
@@ -2452,10 +2451,6 @@ function Integrations() {
                   data.data.email ? "Configured" : "Not configured",
                 ],
                 [
-                  "WhatsApp verification",
-                  data.data.whatsapp ? "Configured" : "Not configured",
-                ],
-                [
                   "Private R2 storage",
                   data.data.storage ? "Configured" : "Not configured",
                 ],
@@ -2469,9 +2464,8 @@ function Integrations() {
             </Panel>
             <Panel title="Before onboarding students">
               <p className="muted">
-                Configure the approved WhatsApp sender and authentication
-                template before issuing student accounts. Configure the email
-                sending domain for password resets.
+                Configure the email sending domain for student welcome emails and
+                password resets. Students set a new password on their first login.
               </p>
               <p className="note">
                 Credentials are managed in server configuration. This page never

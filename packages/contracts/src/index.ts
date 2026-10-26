@@ -7,7 +7,7 @@ import type { EffectiveAccess } from "./access.js";
 import type { QuestionImage } from "./question-image.js";
 export type Portal = "student" | "platform" | "organization";
 export type Role = "student" | "platform_admin" | "organization_viewer";
-export type OnboardingStep = "password" | "phone" | "mfa" | null;
+export type OnboardingStep = "password" | "mfa" | null;
 export interface Identity {
   id: string;
   name: string;
@@ -54,7 +54,11 @@ export interface Lesson {
   kind?: "text" | "video" | "assignment" | "quiz";
   format?: "plain" | "markdown";
   video?: { url?: string; uploadId?: string };
-  assignment?: { acceptText: boolean; acceptLink: boolean; acceptFiles: boolean };
+  assignment?: {
+    acceptText: boolean;
+    acceptLink: boolean;
+    acceptFiles: boolean;
+  };
   quiz?: { passingScore: number; questions: LessonQuestion[] };
 }
 export interface LessonQuestion {
@@ -84,14 +88,24 @@ export interface LessonSubmission {
   files: LessonFile[];
   score: number | null;
   passed: boolean | null;
-  quizResults: { questionId: string; selectedOption: number; correctOption: number; explanation?: string }[];
+  quizResults: {
+    questionId: string;
+    selectedOption: number;
+    correctOption: number;
+    explanation?: string;
+  }[];
   submittedAt: string;
   studentName?: string;
   studentEmail?: string;
   organizationName?: string;
   lessonTitle?: string;
   versionNumber?: number;
-  quizQuestions?: { id: string; prompt: string; options: string[]; image?: QuestionImage }[];
+  quizQuestions?: {
+    id: string;
+    prompt: string;
+    options: string[];
+    image?: QuestionImage;
+  }[];
 }
 export interface Course {
   id: string;
@@ -106,13 +120,19 @@ export interface Course {
   lastOpenedAt?: string | null;
   lessons?: Lesson[];
 }
-export interface CompanyLogo { id:string; companyName:string; sha256:string; fileName:string; url:string|null; }
+export interface CompanyLogo {
+  id: string;
+  companyName: string;
+  sha256: string;
+  fileName: string;
+  url: string | null;
+}
 export interface Job {
   id: string;
   title: string;
   company: string;
-  logoId?:string|null;
-  companyLogoUrl?:string|null;
+  logoId?: string | null;
+  companyLogoUrl?: string | null;
   description: string;
   url: string;
   postedAt: string;
@@ -339,7 +359,6 @@ export interface DemoPerformance {
 export interface IntegrationStatus {
   database: "local-postgres" | "neon-compatible-postgres";
   email: boolean;
-  whatsapp: boolean;
   storage: boolean;
   execution: string;
   environment: string;
@@ -376,4 +395,8 @@ export interface CourseEnrollmentInbox {
   pageSize: number;
 }
 
-export type { PlacementLink, PlacementResource, PlacementResourceInput } from "./placement.js";
+export type {
+  PlacementLink,
+  PlacementResource,
+  PlacementResourceInput,
+} from "./placement.js";

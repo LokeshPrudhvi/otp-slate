@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "OTP Slate",
+    "slug": "otp-slate-student",
+    "version": "0.1.0",
+    "scheme": "slate",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/slate-icon.png",
+    "android": {
+      "package": "com.otpslate.student",
+      "predictiveBackGestureEnabled": true,
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F2747",
+        "foregroundImage": "./assets/slate-icon-foreground.png"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.otpslate.student",
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-document-picker",
+      "expo-video",
+      "@config-plugins/react-native-pdf",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0F2747",
+          "image": "./assets/slate-icon.png",
+          "imageWidth": 96
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

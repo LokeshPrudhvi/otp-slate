@@ -53,12 +53,6 @@ test("CRT curriculum stays branch scoped, versioned, private and persistently gr
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("No external messages");
-      },
-    },
     true,
     storage,
   );

@@ -29,12 +29,6 @@ test("branch catalog governs creation, registration, imports and audience select
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("No external transport in branch tests.");
-      },
-    },
     true,
   );
   const [org, other, archived] = await scoped(

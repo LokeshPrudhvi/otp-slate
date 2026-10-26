@@ -488,7 +488,7 @@ export function Login() {
     [step, setStep] = useState<"password" | "mfa" | "reset">("password"),
     [notice, setNotice] = useState(
       new URLSearchParams(location.search).get("setup") === "complete"
-        ? "Phone verified. Sign in with your new password to continue."
+        ? "Account setup complete. Sign in with your new password to continue."
         : "",
     );
   const mutation = useMutation({
@@ -698,9 +698,7 @@ export function Onboarding() {
     [current, setCurrent] = useState(""),
     [password, setPassword] = useState(""),
     [confirm, setConfirm] = useState(""),
-    [phone, setPhone] = useState(""),
     [code, setCode] = useState(""),
-    [challenge, setChallenge] = useState(""),
     [mfaSetup, setMfaSetup] = useState<{
       totpURI: string;
       backupCodes: string[];
@@ -715,23 +713,6 @@ export function Onboarding() {
           currentPassword: current,
           newPassword: password,
         });
-      } else if (step === "phone") {
-        if (!challenge) {
-          const result = await api<{ challengeId: string }>(
-            "onboarding/phone",
-            "POST",
-            { phone },
-          );
-          setChallenge(result.challengeId);
-          return;
-        }
-        await api("onboarding/phone/verify", "POST", {
-          challengeId: challenge,
-          code,
-        });
-        query.clear();
-        navigate("/login?setup=complete", { replace: true });
-        return;
       } else if (step === "mfa") {
         if (!mfaSetup) {
           const result = await authClient.twoFactor.enable({
@@ -760,16 +741,12 @@ export function Onboarding() {
         <h1>
           {step === "password"
             ? "Make this account yours"
-            : step === "phone"
-              ? "Verify your phone number"
-              : "Secure your admin account"}
+            : "Secure your admin account"}
         </h1>
         <p>
           {step === "password"
             ? "Replace your temporary password with a new password of at least 12 characters."
-            : step === "phone"
-              ? "We will send a verification code to this number on WhatsApp."
-              : "Set up an authenticator app before opening the platform workspace."}
+            : "Set up an authenticator app before opening the platform workspace."}
         </p>
         <form
           onSubmit={(e) => {
@@ -809,46 +786,6 @@ export function Onboarding() {
                   onChange={(e) => setConfirm(e.target.value)}
                 />
               </Field>
-            </>
-          ) : step === "phone" ? (
-            <>
-              <Field
-                label="Phone number"
-                hint="Include the country code, for example +91 followed by your number."
-              >
-                <input
-                  type="tel"
-                  required
-                  disabled={Boolean(challenge)}
-                  autoComplete="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </Field>
-              {challenge && (
-                <>
-                  <Field label="WhatsApp verification code">
-                    <input
-                      required
-                      autoComplete="one-time-code"
-                      pattern="[0-9]{6}"
-                      inputMode="numeric"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                    />
-                  </Field>
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={() => {
-                      setChallenge("");
-                      setCode("");
-                    }}
-                  >
-                    Change number or request a new code
-                  </button>
-                </>
-              )}
             </>
           ) : (
             <>
@@ -894,11 +831,9 @@ export function Onboarding() {
               ? "Please wait…"
               : step === "password"
                 ? "Save password and continue"
-                : step === "phone" && !challenge
-                  ? "Send WhatsApp code"
-                  : step === "mfa" && !mfaSetup
-                    ? "Set up authenticator"
-                    : "Verify and continue"}
+                : step === "mfa" && !mfaSetup
+                  ? "Set up authenticator"
+                  : "Verify and continue"}
           </button>
         </form>
         <button

@@ -35,12 +35,6 @@ test("organization, branch and student policies enforce live HTTP access without
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        assert.fail("No external phone transport in access tests.");
-      },
-    },
     true,
   );
   const [org, other] = await scoped(connection.db, { platform: true }, (tx) =>

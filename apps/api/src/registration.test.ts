@@ -37,12 +37,6 @@ test("registration staging, approval and encrypted welcome mail are atomic and a
     connection.db,
     auth,
     config,
-    {
-      configured: false,
-      async send() {
-        throw new Error("No real phone transport in tests.");
-      },
-    },
     true,
   );
   const registration = new RegistrationService(service);

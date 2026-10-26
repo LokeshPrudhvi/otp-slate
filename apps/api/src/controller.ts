@@ -19,7 +19,12 @@ import {
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { CourseCatalogService, courseCoverFields, enrollmentInboxQuery, enrollmentReviewInput } from "./course-catalog.js";
+import {
+  CourseCatalogService,
+  courseCoverFields,
+  enrollmentInboxQuery,
+  enrollmentReviewInput,
+} from "./course-catalog.js";
 import { SlateService } from "./service.js";
 import { LessonService } from "./lessons.js";
 import { lessonInput, uploadInput, submissionInput } from "./lesson-input.js";
@@ -163,33 +168,6 @@ export class ApiController {
     const cookies = result.headers.getSetCookie();
     if (cookies.length) res.setHeader("Set-Cookie", cookies);
     return { updated: true };
-  }
-  @Post("onboarding/phone") async phone(
-    @Req() req: Request,
-    @Body() body: unknown,
-  ) {
-    const input = z
-      .object({ phone: z.string().regex(/^\+[1-9]\d{7,14}$/) })
-      .strict()
-      .parse(body);
-    return this.service.sendPhone(
-      await this.service.actor(req, "student", true),
-      input.phone,
-    );
-  }
-  @Post("onboarding/phone/verify") async verify(
-    @Req() req: Request,
-    @Body() body: unknown,
-  ) {
-    const input = z
-      .object({ challengeId: id, code: z.string().regex(/^\d{6}$/) })
-      .strict()
-      .parse(body);
-    return this.service.verifyPhone(
-      await this.service.actor(req, "student", true),
-      input.challengeId,
-      input.code,
-    );
   }
   @Get("platform/integrations") async integrations(@Req() req: Request) {
     await this.service.actor(req, "platform_admin");
@@ -370,28 +348,65 @@ export class ApiController {
     );
   }
   // Only bundled, fictional demonstration assets are public; user uploads remain private.
-  @Get("placement-samples/:file") samplePlacement(@Param("file") file:string,@Res() res:Response) {
-    res.setHeader("Cache-Control","public, max-age=3600");
-    res.setHeader("X-Content-Type-Options","nosniff");
+  @Get("placement-samples/:file") samplePlacement(
+    @Param("file") file: string,
+    @Res() res: Response,
+  ) {
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("X-Content-Type-Options", "nosniff");
     return res.sendFile(placementSamplePath(file));
   }
-  @Get("platform/placement") async placementList(@Req() req:Request,@Query("kind") kind:string) {
-    return new PlacementService(this.service).list(await this.service.actor(req,"platform_admin"),z.enum(["certification","company"]).parse(kind));
+  @Get("platform/placement") async placementList(
+    @Req() req: Request,
+    @Query("kind") kind: string,
+  ) {
+    return new PlacementService(this.service).list(
+      await this.service.actor(req, "platform_admin"),
+      z.enum(["certification", "company"]).parse(kind),
+    );
   }
-  @Post("platform/placement") async placementCreate(@Req() req:Request,@Body() body:unknown) {
-    return new PlacementService(this.service).save(await this.service.actor(req,"platform_admin"),placementInput.parse(body));
+  @Post("platform/placement") async placementCreate(
+    @Req() req: Request,
+    @Body() body: unknown,
+  ) {
+    return new PlacementService(this.service).save(
+      await this.service.actor(req, "platform_admin"),
+      placementInput.parse(body),
+    );
   }
-  @Put("platform/placement/:id") async placementUpdate(@Req() req:Request,@Param("id") resource:string,@Body() body:unknown) {
-    return new PlacementService(this.service).save(await this.service.actor(req,"platform_admin"),placementInput.parse(body),id.parse(resource));
+  @Put("platform/placement/:id") async placementUpdate(
+    @Req() req: Request,
+    @Param("id") resource: string,
+    @Body() body: unknown,
+  ) {
+    return new PlacementService(this.service).save(
+      await this.service.actor(req, "platform_admin"),
+      placementInput.parse(body),
+      id.parse(resource),
+    );
   }
-  @Get("student/placement") async studentPlacement(@Req() req:Request,@Query("kind") kind:string) {
-    return new PlacementService(this.service).list(await this.service.actor(req,"student"),z.enum(["certification","company"]).parse(kind));
+  @Get("student/placement") async studentPlacement(
+    @Req() req: Request,
+    @Query("kind") kind: string,
+  ) {
+    return new PlacementService(this.service).list(
+      await this.service.actor(req, "student"),
+      z.enum(["certification", "company"]).parse(kind),
+    );
   }
-  @Get("platform/company-logos") async companyLogos(@Req() req:Request) {
-    return new JobLogoService(this.service).list(await this.service.actor(req,"platform_admin"));
+  @Get("platform/company-logos") async companyLogos(@Req() req: Request) {
+    return new JobLogoService(this.service).list(
+      await this.service.actor(req, "platform_admin"),
+    );
   }
-  @Post("platform/company-logos") async companyLogoUpload(@Req() req:Request,@Body() body:unknown) {
-    return new JobLogoService(this.service).create(await this.service.actor(req,"platform_admin"),companyLogoInput.parse(body));
+  @Post("platform/company-logos") async companyLogoUpload(
+    @Req() req: Request,
+    @Body() body: unknown,
+  ) {
+    return new JobLogoService(this.service).create(
+      await this.service.actor(req, "platform_admin"),
+      companyLogoInput.parse(body),
+    );
   }
   @Get("platform/jobs") async jobs(
     @Req() req: Request,
@@ -541,19 +556,47 @@ export class ApiController {
     );
   }
   @Get("student/course-catalog") async courseDiscovery(@Req() req: Request) {
-    return new CourseCatalogService(this.service).catalog(await this.service.actor(req, "student"));
+    return new CourseCatalogService(this.service).catalog(
+      await this.service.actor(req, "student"),
+    );
   }
-  @Post("student/courses/:id/opened") async openedCourse(@Req() req: Request, @Param("id") course: string) {
-    return new CourseCatalogService(this.service).opened(await this.service.actor(req, "student"), id.parse(course));
+  @Post("student/courses/:id/opened") async openedCourse(
+    @Req() req: Request,
+    @Param("id") course: string,
+  ) {
+    return new CourseCatalogService(this.service).opened(
+      await this.service.actor(req, "student"),
+      id.parse(course),
+    );
   }
-  @Post("student/courses/:id/enrollment-requests") async requestEnrollment(@Req() req: Request, @Param("id") course: string) {
-    return new CourseCatalogService(this.service).request(await this.service.actor(req, "student"), id.parse(course));
+  @Post("student/courses/:id/enrollment-requests") async requestEnrollment(
+    @Req() req: Request,
+    @Param("id") course: string,
+  ) {
+    return new CourseCatalogService(this.service).request(
+      await this.service.actor(req, "student"),
+      id.parse(course),
+    );
   }
-  @Get("platform/enrollment-requests") async enrollmentRequests(@Req() req: Request, @Query() query: unknown) {
-    return new CourseCatalogService(this.service).inbox(await this.service.actor(req,"platform_admin"), enrollmentInboxQuery.parse(query));
+  @Get("platform/enrollment-requests") async enrollmentRequests(
+    @Req() req: Request,
+    @Query() query: unknown,
+  ) {
+    return new CourseCatalogService(this.service).inbox(
+      await this.service.actor(req, "platform_admin"),
+      enrollmentInboxQuery.parse(query),
+    );
   }
-  @Patch("platform/enrollment-requests/:id") async reviewEnrollment(@Req() req: Request, @Param("id") request: string, @Body() body: unknown) {
-    return new CourseCatalogService(this.service).review(await this.service.actor(req,"platform_admin"), id.parse(request), enrollmentReviewInput.parse(body));
+  @Patch("platform/enrollment-requests/:id") async reviewEnrollment(
+    @Req() req: Request,
+    @Param("id") request: string,
+    @Body() body: unknown,
+  ) {
+    return new CourseCatalogService(this.service).review(
+      await this.service.actor(req, "platform_admin"),
+      id.parse(request),
+      enrollmentReviewInput.parse(body),
+    );
   }
   @Get("student/courses") async studentCourses(@Req() req: Request) {
     return this.service.studentCatalog(req);
@@ -578,9 +621,18 @@ export class ApiController {
   @Get("student/jobs") async studentJobs(@Req() req: Request) {
     return this.service.listJobs(await this.service.actor(req, "student"));
   }
-  @Get("student/rankings") async rankings(@Req() req: Request,@Query("mode") mode?:string,@Query("kind") kind?:string) {
-    const actor = await this.service.actor(req,"student");
-    if (kind === "crt") return crtRankings(this.service,actor,z.enum(["latest","overall"]).default("overall").parse(mode));
+  @Get("student/rankings") async rankings(
+    @Req() req: Request,
+    @Query("mode") mode?: string,
+    @Query("kind") kind?: string,
+  ) {
+    const actor = await this.service.actor(req, "student");
+    if (kind === "crt")
+      return crtRankings(
+        this.service,
+        actor,
+        z.enum(["latest", "overall"]).default("overall").parse(mode),
+      );
     return this.service.rankings(actor);
   }
   @Get("student/resume") async resume(@Req() req: Request) {

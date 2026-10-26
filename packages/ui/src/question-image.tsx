@@ -100,7 +100,7 @@ export function QuestionImageEditor({ image, onChange, disabled = false, onPendi
     }
   };
   return <section className={`question-image-editor${image ? " has-image" : ""}`} aria-label={label}>
-    <div className="question-image-editor-head"><div><strong>{label} <small>Optional</small></strong><p>Add a diagram, chart or illustration. PNG, JPEG or WebP · up to 5 MB.</p></div><div className="question-image-actions">
+    <div className="question-image-editor-head"><div><strong>{label} <small>Optional</small></strong><p>Add a diagram, chart or illustration. PNG, JPEG or WebP · automatically compressed before upload (up to 30 MB original).</p></div><div className="question-image-actions">
       <label className={`question-image-upload${disabled || pending ? " is-disabled" : ""}`}><input type="file" aria-label={image ? `Replace ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`} accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" disabled={disabled || pending} onChange={event => { const selected = event.target.files?.[0]; event.target.value = ""; if (selected) void upload(selected); }} /><span>{pending ? `Uploading ${Math.round(progress)}%…` : image ? "Replace image" : "+ Add image"}</span></label>
       {image && <button type="button" disabled={disabled || pending} onClick={() => { setError(""); onChange(undefined); }}>Remove image</button>}
     </div></div>

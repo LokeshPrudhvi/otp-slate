@@ -9,13 +9,7 @@ import {
 } from "@nestjs/common";
 import type { Request } from "express";
 import { and, desc, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
-import {
-  createHmac,
-  randomBytes,
-  randomInt,
-  randomUUID,
-  timingSafeEqual,
-} from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { createLocalJWKSet, jwtVerify } from "jose";
 import { fromNodeHeaders } from "better-auth/node";
 import type { Course, Identity, Lesson, Role, Resume } from "@slate/contracts";
@@ -24,13 +18,17 @@ import {
   redactLesson,
   type PublishLesson,
 } from "./lesson-input.js";
-import { resolveCourseCovers, validateCourseCover, type CourseCoverInput } from "./course-catalog.js";
+import {
+  resolveCourseCovers,
+  validateCourseCover,
+  type CourseCoverInput,
+} from "./course-catalog.js";
 import { r2LessonStorage, type LessonStorage } from "./lesson-storage.js";
 import { validateQuestionImages } from "./question-images.js";
 import { createAuth, type Auth } from "./auth.js";
 import type { Config } from "./config.js";
 import { scoped, type Database, type Transaction } from "./database.js";
-import { createUpload, r2Configured, type PhoneSender } from "./providers.js";
+import { createUpload, r2Configured } from "./providers.js";
 import * as s from "./schema.js";
 import {
   AccessService,
@@ -62,7 +60,6 @@ export class SlateService {
     readonly db: Database,
     readonly auth: Auth,
     readonly config: Config,
-    readonly phoneSender: PhoneSender,
     readonly local: boolean,
     readonly lessonStorage: LessonStorage = r2LessonStorage,
   ) {}
@@ -168,13 +165,11 @@ export class SlateService {
           }
           const onboardingStep = !found.passwordSetupComplete
             ? "password"
-            : memberRole === "student" && !found.phoneVerifiedAt
-              ? "phone"
-              : memberRole === "platform_admin" &&
-                  this.config.production &&
-                  !identity.user.twoFactorEnabled
-                ? "mfa"
-                : null;
+            : memberRole === "platform_admin" &&
+                this.config.production &&
+                !identity.user.twoFactorEnabled
+              ? "mfa"
+              : null;
           if (onboardingStep && !onboarding)
             throw new ForbiddenException(
               "Complete your account setup before continuing.",
@@ -191,9 +186,7 @@ export class SlateService {
               )
               .execute();
             const snapshot =
-              found.role === "student" &&
-              found.passwordSetupComplete &&
-              found.phoneVerifiedAt
+              found.role === "student" && found.passwordSetupComplete
                 ? new AccessService(this).snapshot(tx, found)
                 : tx
                     .select()
@@ -214,11 +207,7 @@ export class SlateService {
             organization = access.organization;
             if (!organization || organization.status !== "active")
               throw new ForbiddenException("This organization is not active.");
-            if (
-              found.role === "student" &&
-              found.passwordSetupComplete &&
-              found.phoneVerifiedAt
-            )
+            if (found.role === "student" && found.passwordSetupComplete)
               resolved = resolvePolicies(
                 organization,
                 { ...found, branchCode: access.branchCode },
@@ -373,7 +362,6 @@ export class SlateService {
     return {
       database: this.local ? "local-postgres" : "neon-compatible-postgres",
       email: Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM),
-      whatsapp: this.phoneSender.configured,
       storage: r2Configured(),
       execution: process.env.EXECUTION_PROVIDER || "unconfigured",
       environment: this.config.production ? "production" : "development",
@@ -385,10 +373,14 @@ export class SlateService {
         .select()
         .from(s.organizations)
         .orderBy(desc(s.organizations.createdAt))
-        .then((rows) => rows.map((row) => ({
-          ...row,
-          portalDisplay: row.portalDisplay ? supportedDisplay(row.portalDisplay) : null,
-        }))),
+        .then((rows) =>
+          rows.map((row) => ({
+            ...row,
+            portalDisplay: row.portalDisplay
+              ? supportedDisplay(row.portalDisplay)
+              : null,
+          })),
+        ),
     );
   }
   async summary(actor: Actor) {
@@ -435,10 +427,13 @@ export class SlateService {
         .where(eq(s.organizations.id, organizationId))
         .for("update");
       if (!organization) throw new NotFoundException("Organization not found.");
-      if (organization.status === status) return {
-        ...organization,
-        portalDisplay: organization.portalDisplay ? supportedDisplay(organization.portalDisplay) : null,
-      };
+      if (organization.status === status)
+        return {
+          ...organization,
+          portalDisplay: organization.portalDisplay
+            ? supportedDisplay(organization.portalDisplay)
+            : null,
+        };
       const [updated] = await tx
         .update(s.organizations)
         .set({
@@ -462,12 +457,19 @@ export class SlateService {
           ),
         );
       await this.log(
-        tx, actor, status === "archived" ? "organization.archived" : "organization.restored",
-        organizationId, organizationId,
+        tx,
+        actor,
+        status === "archived"
+          ? "organization.archived"
+          : "organization.restored",
+        organizationId,
+        organizationId,
       );
       return {
         ...updated,
-        portalDisplay: updated.portalDisplay ? supportedDisplay(updated.portalDisplay) : null,
+        portalDisplay: updated.portalDisplay
+          ? supportedDisplay(updated.portalDisplay)
+          : null,
       };
     });
   }
@@ -495,10 +497,12 @@ export class SlateService {
         .where(eq(s.members.organizationId, organizationId))
         .orderBy(s.user.name)
         .limit(2000)
-        .then((rows) => rows.map((row) => ({
-          ...row,
-          features: supportedFeatures(row.features),
-        }))),
+        .then((rows) =>
+          rows.map((row) => ({
+            ...row,
+            features: supportedFeatures(row.features),
+          })),
+        ),
     );
   }
   async createMember(
@@ -639,165 +643,77 @@ export class SlateService {
       return response;
     });
   }
-  private challengeHash(
-    id: string,
-    member: string,
-    phone: string,
-    code: string,
-  ) {
-    return createHmac("sha256", this.config.secret)
-      .update(JSON.stringify([id, member, phone, code]))
-      .digest("hex");
-  }
-  async sendPhone(actor: Actor, phone: string) {
-    if (actor.onboardingStep !== "phone")
-      throw new ForbiddenException("Complete password setup first.");
-    if (!this.phoneSender.configured)
-      throw new ServiceUnavailableException(
-        "Phone verification is not available yet. Contact Platform Admin.",
-      );
-    const id = randomUUID(),
-      code = String(randomInt(100000, 1000000));
-    await this.scope(actor, async (tx) => {
-      // Serialize concurrent sends for this account; counters are shared across API replicas.
-      await tx
-        .select()
-        .from(s.members)
-        .where(eq(s.members.id, actor.id))
-        .for("update");
-      const recent = await tx
-        .select()
-        .from(s.phoneChallenges)
-        .where(
-          and(
-            eq(s.phoneChallenges.memberId, actor.id),
-            gt(s.phoneChallenges.createdAt, new Date(Date.now() - 3600_000)),
-          ),
-        )
-        .orderBy(desc(s.phoneChallenges.createdAt));
-      if (
-        recent.length >= 5 ||
-        (recent[0] && recent[0].createdAt.getTime() > Date.now() - 60_000)
-      )
-        throw new BadRequestException(
-          "Please wait before requesting another code.",
-        );
-      await tx
-        .update(s.phoneChallenges)
-        .set({ consumedAt: new Date() })
-        .where(
-          and(
-            eq(s.phoneChallenges.memberId, actor.id),
-            isNull(s.phoneChallenges.consumedAt),
-          ),
-        );
-      await tx.insert(s.phoneChallenges).values({
-        id,
-        organizationId: actor.organizationId!,
-        memberId: actor.id,
-        phone,
-        codeHash: this.challengeHash(id, actor.id, phone, code),
-        expiresAt: new Date(Date.now() + 300_000),
-      });
-    });
-    try {
-      await this.phoneSender.send(phone, code);
-    } catch {
-      await this.scope(actor, (tx) =>
-        tx
-          .update(s.phoneChallenges)
-          .set({ consumedAt: new Date() })
-          .where(eq(s.phoneChallenges.id, id)),
-      );
-      throw new ServiceUnavailableException(
-        "The code could not be sent. Please retry later.",
-      );
-    }
-    return { challengeId: id, expiresIn: 300 };
-  }
-  async verifyPhone(actor: Actor, id: string, code: string) {
-    if (actor.onboardingStep !== "phone") throw new ForbiddenException();
-    const valid = await this.scope(actor, async (tx) => {
-      // Phone corrections and sends take the member lock before challenges.
-      // Keep that order so an older verification cannot undo an admin edit.
-      await tx.select({ id: s.members.id }).from(s.members)
-        .where(eq(s.members.id, actor.id)).for("update");
-      const [challenge] = await tx
-        .select()
-        .from(s.phoneChallenges)
-        .where(
-          and(
-            eq(s.phoneChallenges.id, id),
-            eq(s.phoneChallenges.memberId, actor.id),
-          ),
-        )
-        .for("update");
-      if (
-        !challenge ||
-        challenge.consumedAt ||
-        challenge.expiresAt.getTime() < Date.now() ||
-        challenge.attempts >= 5
-      )
-        return false;
-      await tx
-        .update(s.phoneChallenges)
-        .set({ attempts: challenge.attempts + 1 })
-        .where(eq(s.phoneChallenges.id, id));
-      if (
-        !timingSafeEqual(
-          Buffer.from(challenge.codeHash, "hex"),
-          Buffer.from(
-            this.challengeHash(id, actor.id, challenge.phone, code),
-            "hex",
-          ),
-        )
-      )
-        return false;
-      await tx
-        .update(s.phoneChallenges)
-        .set({ consumedAt: new Date() })
-        .where(eq(s.phoneChallenges.id, id));
-      await tx
-        .update(s.members)
-        .set({
-          phone: challenge.phone,
-          phoneVerifiedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(s.members.id, actor.id));
-      await tx.delete(s.session).where(eq(s.session.userId, actor.authId));
-      return true;
-    });
-    if (!valid)
-      throw new BadRequestException("The code is invalid or expired.");
-    return { verified: true, requiresSignIn: true };
-  }
   async catalog(actor: Actor, transaction?: Transaction) {
-    const read = <T>(work: (tx: Transaction) => Promise<T>) => transaction ? work(transaction) : this.scope(actor, work);
-    if (actor.role === "platform_admin") return read(tx => tx.select().from(s.courses).orderBy(s.courses.title));
+    const read = <T>(work: (tx: Transaction) => Promise<T>) =>
+      transaction ? work(transaction) : this.scope(actor, work);
+    if (actor.role === "platform_admin")
+      return read((tx) => tx.select().from(s.courses).orderBy(s.courses.title));
     this.feature(actor, "courses");
-    return read(async tx => {
-      const ids = actor.access ? Object.values(actor.courseVersionIds || {}) : null;
+    return read(async (tx) => {
+      const ids = actor.access
+        ? Object.values(actor.courseVersionIds || {})
+        : null;
       if (ids && !ids.length) return [];
       const fields = {
-        id:s.courses.id, title:s.versions.title, description:s.versions.description, track:s.courses.track,
-        status:s.courses.status, versionId:s.versions.id, version:s.versions.number,
-        coverImageUrl:s.courses.coverImageUrl, coverUploadId:s.courses.coverUploadId, lastOpenedAt:s.courseActivity.lastOpenedAt,
+        id: s.courses.id,
+        title: s.versions.title,
+        description: s.versions.description,
+        track: s.courses.track,
+        status: s.courses.status,
+        versionId: s.versions.id,
+        version: s.versions.number,
+        coverImageUrl: s.courses.coverImageUrl,
+        coverUploadId: s.courses.coverUploadId,
+        lastOpenedAt: s.courseActivity.lastOpenedAt,
       };
-      const query = tx.select(fields).from(s.versions).innerJoin(s.courses,eq(s.versions.courseId,s.courses.id))
-        .leftJoin(s.courseActivity,and(eq(s.courseActivity.courseId,s.courses.id),eq(s.courseActivity.memberId,actor.id)))
-        .where(ids ? inArray(s.versions.id,ids) : inArray(s.versions.id,tx.select({id:s.grants.versionId}).from(s.grants).where(and(eq(s.grants.memberId,actor.id),unexpired()))))
-        .orderBy(sql`${s.courseActivity.lastOpenedAt} desc nulls last`,s.versions.title,s.courses.id);
-      const courses=await query;
-      return resolveCourseCovers(this,tx,courses.map(c=>({...c,lastOpenedAt:c.lastOpenedAt?.toISOString()||null})));
+      const query = tx
+        .select(fields)
+        .from(s.versions)
+        .innerJoin(s.courses, eq(s.versions.courseId, s.courses.id))
+        .leftJoin(
+          s.courseActivity,
+          and(
+            eq(s.courseActivity.courseId, s.courses.id),
+            eq(s.courseActivity.memberId, actor.id),
+          ),
+        )
+        .where(
+          ids
+            ? inArray(s.versions.id, ids)
+            : inArray(
+                s.versions.id,
+                tx
+                  .select({ id: s.grants.versionId })
+                  .from(s.grants)
+                  .where(and(eq(s.grants.memberId, actor.id), unexpired())),
+              ),
+        )
+        .orderBy(
+          sql`${s.courseActivity.lastOpenedAt} desc nulls last`,
+          s.versions.title,
+          s.courses.id,
+        );
+      const courses = await query;
+      return resolveCourseCovers(
+        this,
+        tx,
+        courses.map((c) => ({
+          ...c,
+          lastOpenedAt: c.lastOpenedAt?.toISOString() || null,
+        })),
+      );
     });
   }
   async createCourse(
     actor: Actor,
-    input: { title: string; description: string; track: string } & CourseCoverInput,
+    input: {
+      title: string;
+      description: string;
+      track: string;
+    } & CourseCoverInput,
   ) {
     return this.scope(actor, async (tx) => {
-      await validateCourseCover(tx,input);
+      await validateCourseCover(tx, input);
       const [course] = await tx.insert(s.courses).values(input).returning();
       await this.log(tx, actor, "course.created", null, course.id);
       return course;
@@ -942,7 +858,9 @@ export class SlateService {
         throw new ForbiddenException(
           "This course has not been assigned to you.",
         );
-      const presentation = isAdmin ? record.course : (await resolveCourseCovers(this,tx,[record.course]))[0];
+      const presentation = isAdmin
+        ? record.course
+        : (await resolveCourseCovers(this, tx, [record.course]))[0];
       return {
         ...presentation,
         ...(record.version
@@ -974,7 +892,7 @@ export class SlateService {
   ) {
     const lessons = input.lessons.map((item) => lessonInput.parse(item));
     return this.scope(actor, async (tx) => {
-      await validateCourseCover(tx,input);
+      await validateCourseCover(tx, input);
       await validateQuestionImages(
         tx,
         lessons.flatMap((lesson) => lesson.quiz?.questions || []),
@@ -1039,7 +957,13 @@ export class SlateService {
         .set({
           title: input.title,
           description: input.description,
-          ...(input.coverImageUrl !== undefined || input.coverUploadId !== undefined ? {coverImageUrl:input.coverImageUrl || null,coverUploadId:input.coverUploadId || null} : {}),
+          ...(input.coverImageUrl !== undefined ||
+          input.coverUploadId !== undefined
+            ? {
+                coverImageUrl: input.coverImageUrl || null,
+                coverUploadId: input.coverUploadId || null,
+              }
+            : {}),
           status: "published",
           updatedAt: new Date(),
         })
@@ -1140,8 +1064,14 @@ export class SlateService {
   async listJobs(actor: Actor, organizationId?: string) {
     if (actor.role === "student") this.feature(actor, "jobs");
     return this.scope(actor, async (tx) => {
-      const jobs=await tx.select().from(s.jobs).where(eq(s.jobs.organizationId,actor.organizationId || organizationId!)).orderBy(desc(s.jobs.postedAt));
-      return new JobLogoService(this).resolve(tx,jobs);
+      const jobs = await tx
+        .select()
+        .from(s.jobs)
+        .where(
+          eq(s.jobs.organizationId, actor.organizationId || organizationId!),
+        )
+        .orderBy(desc(s.jobs.postedAt));
+      return new JobLogoService(this).resolve(tx, jobs);
     });
   }
   async createJob(
@@ -1152,7 +1082,7 @@ export class SlateService {
       company: string;
       description: string;
       url: string;
-      logoId?: string|null;
+      logoId?: string | null;
     },
   ) {
     if (actor.role !== "platform_admin") throw new ForbiddenException();
@@ -1167,15 +1097,21 @@ export class SlateService {
         throw new BadRequestException(
           "Activate the organization before posting a job.",
         );
-      await new JobLogoService(this).validate(tx,input.logoId);
+      await new JobLogoService(this).validate(tx, input.logoId);
       const [job] = await tx.insert(s.jobs).values(input).returning();
       await this.log(tx, actor, "job.published", input.organizationId, job.id);
-      return (await new JobLogoService(this).resolve(tx,[job]))[0];
+      return (await new JobLogoService(this).resolve(tx, [job]))[0];
     });
   }
   async createJobForAll(
     actor: Actor,
-    input: { title: string; company: string; description: string; url: string; logoId?: string|null },
+    input: {
+      title: string;
+      company: string;
+      description: string;
+      url: string;
+      logoId?: string | null;
+    },
   ) {
     if (actor.role !== "platform_admin") throw new ForbiddenException();
     return this.scope(actor, async (tx) => {
@@ -1191,7 +1127,7 @@ export class SlateService {
         throw new BadRequestException(
           "Create or activate an organization before posting a job.",
         );
-      await new JobLogoService(this).validate(tx,input.logoId);
+      await new JobLogoService(this).validate(tx, input.logoId);
       const { title, company, description, url, logoId } = input;
       // Bound each insert's parameter count while keeping every batch and its
       // audit records in the same transaction: publication succeeds as a whole.
@@ -1200,7 +1136,12 @@ export class SlateService {
           .insert(s.jobs)
           .values(
             organizations.slice(offset, offset + 1000).map(({ id }) => ({
-              organizationId: id, title, company, description, url, logoId,
+              organizationId: id,
+              title,
+              company,
+              description,
+              url,
+              logoId,
             })),
           )
           .returning({ id: s.jobs.id, organizationId: s.jobs.organizationId });

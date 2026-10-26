@@ -65,9 +65,9 @@ This remains a UI prototype. Platform sign-in is a preview button; organization 
 
 ## Production plan
 
-[Production architecture](docs/production-architecture.md) describes the confirmed requirements for 2,000 registered students and a ₹20,000 monthly operating target: three separate portals, platform-owned provisioning, required password change and WhatsApp phone verification, server-enforced access, external code execution, timed monitored exams, recorded courses, existing Zoom/Meet classes, analytics and rollout gates. It includes a proposed cost allocation and the usage assumptions that must be verified before launch.
+[Production architecture](docs/production-architecture.md) describes the confirmed requirements for 2,000 registered students and a ₹20,000 monthly operating target: three separate portals, platform-owned provisioning, required password change, server-enforced access, external code execution, timed monitored exams, recorded courses, existing Zoom/Meet classes, analytics and rollout gates. It includes a proposed cost allocation and the usage assumptions that must be verified before launch.
 
-[Production stack review](docs/stack-options-review.md) evaluates Neon, JWT authentication, Resend, official WhatsApp integration and Cloudflare Workers, Sandboxes and R2. It records the accepted choices and leaves queue procurement undecided.
+[Production stack review](docs/stack-options-review.md) evaluates Neon, JWT authentication, Resend and Cloudflare Workers, Sandboxes and R2. It records the accepted choices and leaves queue procurement undecided.
 
 ## Standalone development
 
